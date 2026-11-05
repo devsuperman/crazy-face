@@ -1,7 +1,16 @@
 import './style.css';
 import { drawDefaultFace, loadImageFile } from './image';
 import { Renderer, type Layout } from './renderer';
-import { WarpMesh } from './warp';
+import { WarpMesh, type EffectKind } from './warp';
+import { Sounds } from './sound';
+import {
+  BIG_CAPTIONS,
+  EFFECT_CAPTIONS,
+  HINTS,
+  MEDIUM_CAPTIONS,
+  OUCH_LINES,
+  pick,
+} from './jokes';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -12,6 +21,13 @@ const drop = $<HTMLDivElement>('drop');
 const fileInput = $<HTMLInputElement>('file');
 const radiusInput = $<HTMLInputElement>('radius');
 const clayInput = $<HTMLInputElement>('clay');
+const jellyInput = $<HTMLInputElement>('jelly');
+const muteButton = $<HTMLButtonElement>('mute');
+const caption = $<HTMLParagraphElement>('caption');
+const bubble = $<HTMLDivElement>('bubble');
+
+const sounds = new Sounds();
+$('hint').textContent = pick(HINTS);
 
 let renderer: Renderer;
 try {
@@ -28,6 +44,7 @@ function setImage(image: HTMLCanvasElement): void {
   renderer.setImage(image);
   mesh = new WarpMesh(image.height / image.width);
   mesh.clay = clayInput.checked;
+  mesh.jelly = jellyInput.checked;
   renderer.setMesh(mesh);
   updateLayout();
 }
@@ -62,12 +79,71 @@ function updateBrushSize(): void {
   brush.style.width = brush.style.height = `${px}px`;
 }
 
+// --- Jokes: captions and "ouch" bubbles ---
+
+/** Stretch (world units) after which the face complains. */
+const OUCH_AT = 0.4;
+/** Stretch after which letting go earns a caption. */
+const MEDIUM_AT = 0.22;
+const BIG_AT = 0.42;
+
+let captionTimer = 0;
+let lastCaptionAt = 0;
+
+function showCaption(text: string): void {
+  lastCaptionAt = performance.now();
+  caption.textContent = text;
+  caption.hidden = false;
+  // Restart the CSS animation even if a caption is already showing.
+  caption.style.animation = 'none';
+  void caption.offsetWidth;
+  caption.style.animation = '';
+  clearTimeout(captionTimer);
+  captionTimer = window.setTimeout(() => (caption.hidden = true), 2600);
+}
+
+let bubbleTimer = 0;
+function showBubble(e: PointerEvent): void {
+  const rect = stage.getBoundingClientRect();
+  bubble.textContent = pick(OUCH_LINES);
+  bubble.style.left = `${e.clientX - rect.left}px`;
+  bubble.style.top = `${e.clientY - rect.top - 24}px`;
+  bubble.hidden = false;
+  bubble.style.animation = 'none';
+  void bubble.offsetWidth;
+  bubble.style.animation = '';
+  clearTimeout(bubbleTimer);
+  bubbleTimer = window.setTimeout(() => (bubble.hidden = true), 1100);
+  sounds.ouch();
+}
+
+/** After a stretch, sometimes say something cheeky (but don't spam). */
+function maybeCaption(stretch: number): void {
+  if (stretch < MEDIUM_AT || performance.now() - lastCaptionAt < 3500) return;
+  if (stretch >= BIG_AT) showCaption(pick(BIG_CAPTIONS));
+  else if (Math.random() < 0.5) showCaption(pick(MEDIUM_CAPTIONS));
+}
+
 // --- Pointer interaction (mouse, touch and pen, multi-touch aware) ---
 
+interface Drag {
+  startX: number;
+  startY: number;
+  stretch: number;
+  maxStretch: number;
+  ouched: boolean;
+}
+const drags = new Map<number, Drag>();
+
+const currentStretch = () => Math.max(0, ...[...drags.values()].map((d) => d.stretch));
+
 canvas.addEventListener('pointerdown', (e) => {
+  sounds.unlock();
+  void enableShake();
   canvas.setPointerCapture(e.pointerId);
   const [x, y] = toWorld(e);
   mesh.grab(e.pointerId, x, y, brushRadius());
+  drags.set(e.pointerId, { startX: x, startY: y, stretch: 0, maxStretch: 0, ouched: false });
   canvas.classList.add('dragging');
 });
 
@@ -79,10 +155,28 @@ canvas.addEventListener('pointermove', (e) => {
   }
   const [x, y] = toWorld(e);
   mesh.move(e.pointerId, x, y);
+
+  const drag = drags.get(e.pointerId);
+  if (!drag) return;
+  drag.stretch = Math.hypot(x - drag.startX, y - drag.startY);
+  drag.maxStretch = Math.max(drag.maxStretch, drag.stretch);
+  if (!drag.ouched && drag.stretch > OUCH_AT) {
+    drag.ouched = true;
+    showBubble(e);
+  }
+  sounds.setStretch(currentStretch());
 });
 
 const endPointer = (e: PointerEvent) => {
   mesh.release(e.pointerId);
+  const drag = drags.get(e.pointerId);
+  drags.delete(e.pointerId);
+  if (drag) {
+    sounds.setStretch(currentStretch());
+    // In clay mode nothing springs back, so no boing.
+    if (!mesh.clay) sounds.boing(drag.stretch);
+    maybeCaption(drag.maxStretch);
+  }
   if (!mesh.isDragging) canvas.classList.remove('dragging');
 };
 canvas.addEventListener('pointerup', endPointer);
@@ -107,7 +201,93 @@ fileInput.addEventListener('change', () => {
 
 radiusInput.addEventListener('input', updateBrushSize);
 clayInput.addEventListener('change', () => (mesh.clay = clayInput.checked));
-$('reset').addEventListener('click', () => mesh.reset(performance.now() / 1000));
+jellyInput.addEventListener('change', () => {
+  mesh.jelly = jellyInput.checked;
+  if (mesh.jelly) {
+    showCaption(pick(EFFECT_CAPTIONS.jelly));
+    mesh.chaos(3); // give it a little wobble so you can see the difference
+    sounds.unlock();
+    sounds.boing(0.3);
+  }
+});
+
+// --- Silly effect buttons ---
+
+let effectBusyUntil = 0;
+for (const button of document.querySelectorAll<HTMLButtonElement>('[data-effect]')) {
+  button.addEventListener('click', () => {
+    sounds.unlock();
+    const kind = button.dataset.effect as EffectKind | 'chaos';
+    const now = performance.now() / 1000;
+    if (kind === 'chaos') {
+      mesh.chaos();
+      sounds.chaos();
+    } else {
+      // Ignore button-mashing while a preset is still playing.
+      if (now < effectBusyUntil) return;
+      effectBusyUntil = now + WarpMesh.effectDuration(kind);
+      mesh.playEffect(kind, now);
+      sounds.effect(kind);
+    }
+    showCaption(pick(EFFECT_CAPTIONS[kind]));
+  });
+}
+
+// --- Sound toggle ---
+
+function updateMuteButton(): void {
+  muteButton.textContent = sounds.muted ? '🔇' : '🔊';
+  const label = sounds.muted ? 'Unmute sounds' : 'Mute sounds';
+  muteButton.title = label;
+  muteButton.setAttribute('aria-label', label);
+}
+updateMuteButton();
+muteButton.addEventListener('click', () => {
+  sounds.setMuted(!sounds.muted);
+  sounds.unlock();
+  updateMuteButton();
+  if (!sounds.muted) sounds.boing(0.2);
+});
+
+// --- Shake your phone to wobble the face ---
+
+type MotionPermission = { requestPermission?: () => Promise<'granted' | 'denied'> };
+let shakeState: 'off' | 'asking' | 'on' = 'off';
+let lastShakeAt = 0;
+
+async function enableShake(): Promise<void> {
+  if (shakeState !== 'off' || typeof DeviceMotionEvent === 'undefined') return;
+  shakeState = 'asking';
+  // iOS asks for permission, and only from inside a tap.
+  const request = (DeviceMotionEvent as unknown as MotionPermission).requestPermission;
+  if (request) {
+    try {
+      if ((await request()) !== 'granted') return;
+    } catch {
+      return;
+    }
+  }
+  shakeState = 'on';
+  window.addEventListener('devicemotion', onMotion);
+}
+
+function onMotion(e: DeviceMotionEvent): void {
+  const a = e.acceleration;
+  if (!a || a.x == null || a.y == null) return;
+  const strength = Math.hypot(a.x, a.y);
+  const now = performance.now();
+  if (strength < 12 || now - lastShakeAt < 120) return;
+  lastShakeAt = now;
+  // Device y points up, screen y points down. The face lags behind the motion.
+  const k = Math.min(strength, 40) * 0.04;
+  mesh.shake((-a.x / strength) * k, (a.y / strength) * k);
+  sounds.boing(Math.min(0.5, strength / 60));
+  if (now - lastCaptionAt > 4000 && strength > 20) showCaption(pick(EFFECT_CAPTIONS.shake));
+}
+$('reset').addEventListener('click', () => {
+  effectBusyUntil = 0;
+  mesh.reset(performance.now() / 1000);
+});
 
 $('save').addEventListener('click', () => {
   canvas.toBlob((blob) => {
