@@ -1,0 +1,213 @@
+/**
+ * Cartoon sound effects, synthesized on the fly with the Web Audio API
+ * (no audio files). The AudioContext is created lazily on the first user
+ * gesture, because browsers block audio until then.
+ */
+
+import type { EffectKind } from './warp';
+
+const STORAGE_KEY = 'crazy-face:muted';
+
+interface ToneOptions {
+  type?: OscillatorType;
+  from: number;
+  to: number;
+  duration: number;
+  gain?: number;
+  delay?: number;
+  /** Vibrato speed (Hz) and depth (fraction of the start pitch). */
+  vibrato?: [rate: number, depth: number];
+}
+
+interface StretchVoice {
+  osc: OscillatorNode;
+  filter: BiquadFilterNode;
+  gain: GainNode;
+  lfo: OscillatorNode;
+}
+
+export class Sounds {
+  private ctx: AudioContext | null = null;
+  private master: GainNode | null = null;
+  private stretchVoice: StretchVoice | null = null;
+  muted: boolean;
+
+  constructor() {
+    let muted = false;
+    try {
+      muted = localStorage.getItem(STORAGE_KEY) === '1';
+    } catch {
+      // storage blocked: just start unmuted
+    }
+    this.muted = muted;
+  }
+
+  setMuted(muted: boolean): void {
+    this.muted = muted;
+    try {
+      localStorage.setItem(STORAGE_KEY, muted ? '1' : '0');
+    } catch {
+      // ignore
+    }
+    if (muted) this.setStretch(0);
+    if (this.master) this.master.gain.value = muted ? 0 : 1;
+  }
+
+  /** Call from a user gesture so the browser lets us make noise. */
+  unlock(): void {
+    const ctx = this.audio();
+    if (ctx && ctx.state === 'suspended') void ctx.resume();
+  }
+
+  private audio(): AudioContext | null {
+    if (this.ctx) return this.ctx;
+    const Ctor =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctor) return null;
+    this.ctx = new Ctor();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = this.muted ? 0 : 1;
+    this.master.connect(this.ctx.destination);
+    return this.ctx;
+  }
+
+  private ready(): AudioContext | null {
+    if (this.muted) return null;
+    const ctx = this.audio();
+    return ctx && ctx.state === 'running' ? ctx : null;
+  }
+
+  private tone(o: ToneOptions): void {
+    const ctx = this.ready();
+    if (!ctx || !this.master) return;
+    const t0 = ctx.currentTime + (o.delay ?? 0);
+    const end = t0 + o.duration;
+
+    const osc = ctx.createOscillator();
+    osc.type = o.type ?? 'sine';
+    osc.frequency.setValueAtTime(o.from, t0);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(1, o.to), end);
+
+    const gain = ctx.createGain();
+    const peak = o.gain ?? 0.2;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, end);
+    osc.connect(gain).connect(this.master);
+
+    if (o.vibrato) {
+      const lfo = ctx.createOscillator();
+      const depth = ctx.createGain();
+      lfo.frequency.value = o.vibrato[0];
+      depth.gain.setValueAtTime(o.from * o.vibrato[1], t0);
+      depth.gain.exponentialRampToValueAtTime(1, end);
+      lfo.connect(depth).connect(osc.frequency);
+      lfo.start(t0);
+      lfo.stop(end);
+    }
+
+    osc.start(t0);
+    osc.stop(end + 0.02);
+  }
+
+  /**
+   * Rubbery creak while dragging. `amount` is how far the face is stretched
+   * (world units, ~0..0.6). Pass 0 to stop.
+   */
+  setStretch(amount: number): void {
+    const ctx = this.ready();
+    if (!ctx || !this.master || amount < 0.02) {
+      if (this.stretchVoice) {
+        const v = this.stretchVoice;
+        const now = v.gain.context.currentTime;
+        v.gain.gain.setTargetAtTime(0, now, 0.03);
+        v.osc.stop(now + 0.2);
+        v.lfo.stop(now + 0.2);
+        this.stretchVoice = null;
+      }
+      return;
+    }
+
+    if (!this.stretchVoice) {
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.Q.value = 9;
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 7;
+      const lfoDepth = ctx.createGain();
+      lfoDepth.gain.value = 9;
+      lfo.connect(lfoDepth).connect(osc.frequency);
+      osc.connect(filter).connect(gain).connect(this.master);
+      osc.start();
+      lfo.start();
+      this.stretchVoice = { osc, filter, gain, lfo };
+    }
+
+    const v = this.stretchVoice;
+    const now = ctx.currentTime;
+    const a = Math.min(amount, 0.8);
+    v.osc.frequency.setTargetAtTime(70 + a * 420, now, 0.05);
+    v.filter.frequency.setTargetAtTime(350 + a * 2600, now, 0.05);
+    v.gain.gain.setTargetAtTime(Math.min(0.07, a * 0.2), now, 0.05);
+  }
+
+  /** The classic "boing" when you let go. Bigger stretch, bigger boing. */
+  boing(amount: number): void {
+    if (amount < 0.04) return;
+    const a = Math.min(amount, 0.8);
+    this.tone({
+      from: 160 + a * 520,
+      to: 70,
+      duration: 0.45 + a * 0.6,
+      gain: 0.12 + a * 0.25,
+      vibrato: [13, 0.22],
+    });
+  }
+
+  /** A squeaky "ouch" for when you pull way too far. */
+  ouch(): void {
+    this.tone({ type: 'square', from: 900, to: 1500, duration: 0.09, gain: 0.06 });
+    this.tone({ type: 'square', from: 1500, to: 600, duration: 0.16, gain: 0.06, delay: 0.09 });
+  }
+
+  /** Sound for each preset effect, timed to roughly match its animation. */
+  effect(kind: EffectKind): void {
+    switch (kind) {
+      case 'balloon': // inflating
+        this.tone({ from: 180, to: 900, duration: 0.5, gain: 0.18, vibrato: [22, 0.05] });
+        break;
+      case 'fish': // blub blub blub
+        for (let n = 0; n < 3; n++) {
+          this.tone({ from: 520, to: 160, duration: 0.12, gain: 0.2, delay: n * 0.14 });
+        }
+        break;
+      case 'twist': // rising wobbly swirl
+        this.tone({ type: 'triangle', from: 200, to: 1200, duration: 0.8, gain: 0.16, vibrato: [9, 0.3] });
+        break;
+      case 'melt': // sad slide whistle
+        this.tone({ from: 1100, to: 180, duration: 1.8, gain: 0.14, vibrato: [5, 0.04] });
+        break;
+    }
+  }
+
+  /** A burst of random boings and pops. */
+  chaos(): void {
+    for (let n = 0; n < 7; n++) {
+      const from = 200 + Math.random() * 900;
+      this.tone({
+        type: Math.random() < 0.5 ? 'sine' : 'triangle',
+        from,
+        to: from * (Math.random() < 0.5 ? 0.3 : 2.2),
+        duration: 0.15 + Math.random() * 0.25,
+        gain: 0.12,
+        delay: n * 0.06,
+        vibrato: [10 + Math.random() * 10, 0.15],
+      });
+    }
+  }
+}

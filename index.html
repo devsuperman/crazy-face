@@ -22,15 +22,29 @@
           <input id="clay" type="checkbox" />
           Clay mode
         </label>
+        <label class="toggle">
+          <input id="jelly" type="checkbox" />
+          Jelly mode
+        </label>
         <button id="reset" class="button" type="button">Reset</button>
         <button id="save" class="button" type="button">Save PNG</button>
+        <button id="mute" class="button icon" type="button" aria-label="Mute sounds" title="Mute sounds">🔊</button>
       </div>
     </header>
 
     <main id="stage" class="stage">
       <canvas id="canvas"></canvas>
       <div id="brush" class="brush" hidden></div>
-      <p class="hint">Drag the face to stretch it. Drop or paste a photo to use your own.</p>
+      <div class="effects" role="toolbar" aria-label="Silly effects">
+        <button class="button chip" type="button" data-effect="balloon">🎈 Balloon</button>
+        <button class="button chip" type="button" data-effect="fish">🐟 Fish face</button>
+        <button class="button chip" type="button" data-effect="twist">🌀 Twister</button>
+        <button class="button chip" type="button" data-effect="melt">🫠 Melt</button>
+        <button class="button chip" type="button" data-effect="chaos">🎲 Chaos</button>
+      </div>
+      <p id="caption" class="caption" aria-live="polite" hidden></p>
+      <div id="bubble" class="bubble" hidden></div>
+      <p id="hint" class="hint">Drag the face to stretch it. Drop or paste a photo to use your own.</p>
       <div id="drop" class="drop" hidden>Drop your photo</div>
     </main>
 
