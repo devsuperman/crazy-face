@@ -40,6 +40,7 @@ Everything has only been tested in headless desktop Chromium (fake camera, CDP t
 - Start screen: fits small screens, and 🖼️ Escolher foto opens the gallery.
 - "Ficou boa?" review: 🔁 Tirar outra restarts the camera quickly, also after switching apps.
 - Full-resolution still (`ImageCapture.takePhoto()`, Android Chrome): the photo is sharper, it's mirrored correctly with the front camera, and it isn't slow. If its framing differs a lot from the preview (4:3 sensor vs 16:9 video), consider cropping it to the preview's aspect.
+- 💬 WhatsApp: the share sheet sends the photo with the text on Android and iOS (some apps drop the text when a file is attached).
 - 🎬 Gravar: MP4 on Safari, the share sheet to WhatsApp, and that the sound is in the clip.
 - Group photos: how long the full face detection takes on a mid-range phone (it runs in the background after the quick pass), and whether it causes jank while dragging.
 - 🪢 Cabo de guerra with two people on one phone.
