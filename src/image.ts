@@ -31,6 +31,60 @@ export function fitToCanvas(
   return canvas;
 }
 
+/** A face region in world units (the image is 1 unit wide). */
+interface FaceCircle {
+  x: number;
+  y: number;
+  r: number;
+}
+
+/** Faces are taller than wide: the swapped patch is an ellipse this much taller than the circle. */
+const HEAD_STRETCH = 1.2;
+
+/**
+ * "Troca de cabeças": a copy of `photo` where face i shows face (i + shift) instead.
+ * Each face is scaled to fit its new spot and pasted with feathered edges so it blends.
+ */
+export function swapFaces(photo: HTMLCanvasElement, faces: readonly FaceCircle[], shift: number): HTMLCanvasElement {
+  const out = document.createElement('canvas');
+  out.width = photo.width;
+  out.height = photo.height;
+  const ctx = out.getContext('2d')!;
+  ctx.drawImage(photo, 0, 0);
+  const px = photo.width; // pixels per world unit
+  const patch = document.createElement('canvas');
+  const pctx = patch.getContext('2d')!;
+
+  faces.forEach((to, i) => {
+    const from = faces[(i + shift) % faces.length];
+    if (from === to) return;
+    const rw = to.r * px;
+    const rh = rw * HEAD_STRETCH;
+    patch.width = Math.max(1, Math.ceil(rw * 2));
+    patch.height = Math.max(1, Math.ceil(rh * 2));
+
+    const sw = from.r * px;
+    const sh = sw * HEAD_STRETCH;
+    pctx.globalCompositeOperation = 'source-over';
+    pctx.drawImage(photo, from.x * px - sw, from.y * px - sh, sw * 2, sh * 2, 0, 0, patch.width, patch.height);
+
+    // Feathered elliptical mask: solid in the middle, fading out at the edge.
+    pctx.globalCompositeOperation = 'destination-in';
+    pctx.save();
+    pctx.translate(patch.width / 2, patch.height / 2);
+    pctx.scale(1, HEAD_STRETCH);
+    const g = pctx.createRadialGradient(0, 0, rw * 0.55, 0, 0, rw);
+    g.addColorStop(0, 'rgba(0, 0, 0, 1)');
+    g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    pctx.fillStyle = g;
+    pctx.fillRect(-rw, -rw, rw * 2, rw * 2);
+    pctx.restore();
+
+    ctx.drawImage(patch, to.x * px - rw, to.y * px - rh, rw * 2, rh * 2);
+  });
+  return out;
+}
+
 /** A cartoon face so there is something to play with before any upload. */
 export function drawDefaultFace(): HTMLCanvasElement {
   const size = 768;

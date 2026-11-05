@@ -5,6 +5,8 @@ import { WarpMesh, type EffectKind } from './warp';
 import { Sounds } from './sound';
 import { setupCamera } from './camera';
 import { setupGroup } from './group';
+import { setupMirror } from './mirror';
+import { setupRecorder } from './recorder';
 import {
   BIG_CAPTIONS,
   EFFECT_CAPTIONS,
@@ -12,6 +14,10 @@ import {
   MEDIUM_CAPTIONS,
   OUCH_LINES,
   PHOTO_CAPTIONS,
+  TUG_DRAW,
+  TUG_LEFT_WINS,
+  TUG_RIGHT_WINS,
+  TUG_START,
   pick,
 } from './jokes';
 
@@ -41,6 +47,8 @@ try {
 }
 
 let mesh: WarpMesh;
+/** The photo being warped (before any head swap). */
+let photo: HTMLCanvasElement;
 let layout: Layout = { offsetX: 0, offsetY: 0, scale: 1 };
 /** Presets ignore clicks until this time (seconds), so they don't pile up. */
 let effectBusyUntil = 0;
@@ -51,14 +59,42 @@ const group = setupGroup({
   toWorld,
   sounds,
   showCaption,
+  getPhoto: () => photo,
+  showTexture: (image) => renderer.setImage(image),
+  // Turma works on a still photo: freeze the live mirror first.
+  onOpen: () => mirror.stop(true),
   onEffects: (seconds) => {
     effectBusyUntil = Math.max(effectBusyUntil, performance.now() / 1000 + seconds);
   },
 });
 
+const mirror = setupMirror({
+  sounds,
+  showCaption,
+  onStart: (video) => {
+    renderer.mirrored = true;
+    renderer.setImage(video, true);
+    newMesh(video.videoHeight / video.videoWidth);
+  },
+  onStop: (frame) => {
+    renderer.mirrored = false;
+    if (!frame) return;
+    // Keep the current warp: only the texture changes, to the frozen (already mirrored) frame.
+    photo = frame;
+    renderer.setImage(frame);
+  },
+});
+
+/** Load a new photo: the single entry point for files, the camera and the default face. */
 function setImage(image: HTMLCanvasElement): void {
+  mirror.stop(false);
+  photo = image;
   renderer.setImage(image);
-  mesh = new WarpMesh(image.height / image.width);
+  newMesh(image.height / image.width);
+}
+
+function newMesh(aspect: number): void {
+  mesh = new WarpMesh(aspect);
   mesh.clay = clayInput.checked;
   mesh.jelly = jellyInput.checked;
   renderer.setMesh(mesh);
@@ -153,6 +189,36 @@ interface Drag {
 }
 const drags = new Map<number, Drag>();
 
+/**
+ * Cabo de guerra: two fingers grabbing the face far apart start a tug of war.
+ * When one lets go, whoever stretched further wins.
+ */
+const TUG_MIN_GAP = 0.15; // world units between the two fingers
+const TUG_MIN_PULL = 0.12; // someone has to actually pull for it to count
+let tug: { left: number; right: number } | null = null;
+
+function maybeStartTug(): void {
+  if (tug || drags.size !== 2) return;
+  const [[a, da], [b, db]] = [...drags];
+  if (Math.abs(da.startX - db.startX) < TUG_MIN_GAP) return;
+  tug = da.startX < db.startX ? { left: a, right: b } : { left: b, right: a };
+  showCaption(pick(TUG_START));
+  sounds.beep();
+}
+
+/** Call before a tugging pointer is forgotten: announces the winner. */
+function finishTug(): void {
+  if (!tug) return;
+  const left = drags.get(tug.left)?.maxStretch ?? 0;
+  const right = drags.get(tug.right)?.maxStretch ?? 0;
+  tug = null;
+  const best = Math.max(left, right);
+  if (best < TUG_MIN_PULL) return;
+  if (Math.abs(left - right) < best * 0.12) showCaption(pick(TUG_DRAW));
+  else showCaption(pick(left > right ? TUG_LEFT_WINS : TUG_RIGHT_WINS));
+  sounds.tada();
+}
+
 const currentStretch = () => Math.max(0, ...[...drags.values()].map((d) => d.stretch));
 
 canvas.addEventListener('pointerdown', (e) => {
@@ -167,6 +233,7 @@ canvas.addEventListener('pointerdown', (e) => {
   mesh.grab(e.pointerId, x, y, brushRadius());
   drags.set(e.pointerId, { startX: x, startY: y, stretch: 0, maxStretch: 0, ouched: false });
   canvas.classList.add('dragging');
+  maybeStartTug();
 });
 
 canvas.addEventListener('pointermove', (e) => {
@@ -197,6 +264,7 @@ canvas.addEventListener('pointermove', (e) => {
 const endPointer = (e: PointerEvent) => {
   if (group.pointerUp(e)) return;
   mesh.release(e.pointerId);
+  if (tug && (tug.left === e.pointerId || tug.right === e.pointerId)) finishTug();
   const drag = drags.get(e.pointerId);
   drags.delete(e.pointerId);
   if (drag) {
@@ -233,10 +301,16 @@ cameraFallback.addEventListener('change', () => {
   cameraFallback.value = '';
 });
 
-setupCamera((photo) => {
+setupRecorder({ canvas, sounds, showCaption });
+
+setupCamera((photo, challenge) => {
   setImage(photo);
   showCaption(pick(PHOTO_CAPTIONS));
+  // Desafio de pose: show the photo for a moment, then play the matching effect.
+  if (challenge) window.setTimeout(() => playPreset(challenge.effect, challenge.caption), 900);
 }, sounds);
+// Only one camera at a time: the photo camera freezes the live mirror.
+$('camera-open').addEventListener('click', () => mirror.stop(true));
 
 radiusInput.addEventListener('input', updateBrushSize);
 clayInput.addEventListener('change', () => (mesh.clay = clayInput.checked));
@@ -252,23 +326,25 @@ jellyInput.addEventListener('change', () => {
 
 // --- Silly effect buttons ---
 
+/** Play a whole-image preset with its sound and a caption (a random one unless given). */
+function playPreset(kind: EffectKind | 'chaos', text?: string): void {
+  sounds.unlock();
+  const now = performance.now() / 1000;
+  if (kind === 'chaos') {
+    mesh.chaos();
+    sounds.chaos();
+  } else {
+    // Ignore button-mashing while a preset is still playing.
+    if (now < effectBusyUntil) return;
+    effectBusyUntil = now + WarpMesh.effectDuration(kind);
+    mesh.playEffect(kind, now);
+    sounds.effect(kind);
+  }
+  showCaption(text ?? pick(EFFECT_CAPTIONS[kind]));
+}
+
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-effect]')) {
-  button.addEventListener('click', () => {
-    sounds.unlock();
-    const kind = button.dataset.effect as EffectKind | 'chaos';
-    const now = performance.now() / 1000;
-    if (kind === 'chaos') {
-      mesh.chaos();
-      sounds.chaos();
-    } else {
-      // Ignore button-mashing while a preset is still playing.
-      if (now < effectBusyUntil) return;
-      effectBusyUntil = now + WarpMesh.effectDuration(kind);
-      mesh.playEffect(kind, now);
-      sounds.effect(kind);
-    }
-    showCaption(pick(EFFECT_CAPTIONS[kind]));
-  });
+  button.addEventListener('click', () => playPreset(button.dataset.effect as EffectKind | 'chaos'));
 }
 
 // --- Sound toggle ---
@@ -327,8 +403,37 @@ $('reset').addEventListener('click', () => {
   mesh.reset(performance.now() / 1000);
 });
 
+/** The canvas as it looks now, plus the 🏆 award labels if any are showing. */
+function snapshot(): HTMLCanvasElement {
+  const labels = group.awards();
+  if (!labels.length) return canvas;
+  const out = document.createElement('canvas');
+  out.width = canvas.width;
+  out.height = canvas.height;
+  const ctx = out.getContext('2d')!;
+  ctx.drawImage(canvas, 0, 0);
+  const k = canvas.width / canvas.clientWidth; // CSS pixels -> canvas pixels
+  const font = 13 * k;
+  ctx.font = `800 ${font}px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const l of labels) {
+    const x = (layout.offsetX + l.x * layout.scale) * k;
+    const y = (layout.offsetY + (l.y + l.r) * layout.scale) * k + 6 * k + font;
+    const w = ctx.measureText(l.text).width + 20 * k;
+    const h = font * 1.8;
+    ctx.fillStyle = '#ffe14f';
+    ctx.beginPath();
+    ctx.roundRect(x - w / 2, y - h / 2, w, h, h / 2);
+    ctx.fill();
+    ctx.fillStyle = '#2a2100';
+    ctx.fillText(l.text, x, y);
+  }
+  return out;
+}
+
 $('save').addEventListener('click', () => {
-  canvas.toBlob((blob) => {
+  snapshot().toBlob((blob) => {
     if (!blob) return;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -365,6 +470,8 @@ function frame(ms: number): void {
   const now = ms / 1000;
   mesh.update(now - last, now);
   last = now;
+  const live = mirror.video;
+  if (live && live.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) renderer.setImage(live, true);
   renderer.draw(mesh, layout);
   requestAnimationFrame(frame);
 }

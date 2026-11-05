@@ -1,5 +1,7 @@
 /** Todos os textos engraçados num lugar só, para ficar fácil adicionar mais. */
 
+import type { EffectKind } from './warp';
+
 export const pick = <T>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)];
 
 /** Dica no rodapé, sorteada a cada vez que a página abre. */
@@ -74,3 +76,86 @@ export const EFFECT_CAPTIONS = {
   jelly: ['Modo gelatina: ligado. 🍮', 'Treme, treme.'],
   shake: ['Terremoto! 📳', 'Chacoalha!'],
 } as const;
+
+/** Quando começa a gravar um vídeo. */
+export const RECORD_CAPTIONS = [
+  'Gravando! Capricha na careta. 🎬',
+  'Luz, câmera… careta! 🎬',
+  'Isso vai direto pro grupo da família. 📲',
+  'Gravando! Depois não adianta pedir pra apagar. 😈',
+];
+
+/** Desafio de pose na câmera: a pose pedida e o efeito que toca logo depois da foto. */
+export interface PoseChallenge {
+  prompt: string;
+  effect: EffectKind | 'chaos';
+  caption: string;
+}
+
+export const POSE_CHALLENGES: readonly PoseChallenge[] = [
+  { prompt: 'Todo mundo com cara de quem viu o boleto! 💸', effect: 'melt', caption: 'O boleto venceu. Você também. 🫠' },
+  { prompt: 'Cara de surpresa no amigo secreto! 🎁', effect: 'balloon', caption: 'Ganhou meia de novo! 🧦' },
+  { prompt: 'Pose de capa de disco de pagode! 🎤', effect: 'twist', caption: 'Sucesso nas paradas de 1998! 💿' },
+  { prompt: 'Biquinho de selfie no espelho da academia! 💪', effect: 'fish', caption: 'Foco, força e biquinho. 🐟' },
+  { prompt: 'Cara de quem acordou atrasado pra prova! ⏰', effect: 'chaos', caption: 'Nem a cara chegou a tempo. 🎲' },
+  { prompt: 'Cara de quem mordeu uma pimenta escondida! 🌶️', effect: 'balloon', caption: 'Inchou de tanto arder! 🔥' },
+  { prompt: 'Cara de quem ouviu "a gente precisa conversar"! 😬', effect: 'melt', caption: 'Derreteu de nervoso. 🫠' },
+  { prompt: 'Cara de tio dançando no casamento! 🕺', effect: 'twist', caption: 'O tio rodou a pista toda! 🌀' },
+  { prompt: 'Cara de quem viu o ex no rolê! 👀', effect: 'fish', caption: 'Blub… finge que não viu. 🐟' },
+  { prompt: 'Cara de quem chegou no churrasco e só tinha salada! 🥗', effect: 'melt', caption: 'Cadê a picanha?! 🥩' },
+];
+
+/** Modo turma: troféus engraçados, um diferente para cada rosto. */
+export const AWARDS = [
+  'Drama nível novela 🎭',
+  'Dormiu na foto 😴',
+  'Vai chorar no casamento 😭',
+  'Conta a piada do pavê 🍰',
+  'Cara de segunda-feira 📅',
+  'Some primeiro da festa 🏃',
+  'Fofoca em dia 👂',
+  'Sempre atrasa ⏰',
+  'Comeu o último salgado 🥟',
+  'Manda áudio de 5 minutos 🎙️',
+  'Ainda deve o Pix 💸',
+  'Esqueceu o aniversário 🎂',
+  'Chora em comercial de margarina 🧈',
+  'Responde "kkk" sem rir 😐',
+  'Tira foto do prato 📸',
+  'Rei do "já tô chegando" 🚗',
+];
+
+/** Quando os troféus são entregues. */
+export const AWARD_CAPTIONS = ['E o troféu vai para… 🏆', 'Premiação da turma! 🏆', 'Oscar da família! 🎬', 'Os vencedores são… 🥁'];
+
+/** Quando o app está ocupado e ignora um toque no Modo turma. */
+export const BUSY_HINTS = ['Calma! Espera a brincadeira acabar. ⏳', 'Peraí, ainda tá rolando! ⏳'];
+
+/** Modo turma: troca de cabeças. */
+export const SWAP_CAPTIONS = [
+  'Quem é quem? 🔀',
+  'Troca de cabeças! Ninguém percebeu. 🤫',
+  'Agora sim, a família está completa. 😂',
+  'Cada um com a cara do outro!',
+  'Ficou até mais bonito, né?',
+];
+
+/** Quando as cabeças voltam pro lugar. */
+export const SWAP_BACK_CAPTIONS = ['Tudo de volta ao normal. Será? 🤔', 'Cada cabeça no seu lugar. Ufa! 😮‍💨'];
+
+/** Cabo de guerra: dois dedos puxando a mesma cara. */
+export const TUG_START = ['Cabo de guerra! Puxa! 🪢', 'Quem puxa mais forte? 💪', 'Valendo! Puxa, puxa! 🪢'];
+export const TUG_LEFT_WINS = ['Vitória do lado esquerdo! 🏆⬅️', 'O lado esquerdo levou a cara! ⬅️', 'Esquerda campeã! 💪⬅️'];
+export const TUG_RIGHT_WINS = ['Vitória do lado direito! ➡️🏆', 'O lado direito levou a cara! ➡️', 'Direita campeã! ➡️💪'];
+export const TUG_DRAW = ['Empate! A cara ficou no meio. 🤝', 'Empatou! Ninguém leva a cara. 🤝'];
+
+/** Espelho maluco: câmera ao vivo. */
+export const MIRROR_CAPTIONS = [
+  'Espelho, espelho meu… 🪞',
+  'Ao vivo! Puxa a própria cara! 🪞',
+  'Isso é você. Ao vivo. Sinto muito. 😂',
+  'Espelho de parque de diversões! 🎢',
+];
+
+/** Quando congela o espelho. */
+export const MIRROR_FREEZE_CAPTIONS = ['Congelou! 🧊 Agora pode salvar.', 'Fica assim pra sempre. 🧊', 'Clique! Essa vai pro álbum. 🧊'];

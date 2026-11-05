@@ -30,6 +30,7 @@ export class Sounds {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private stretchVoice: StretchVoice | null = null;
+  private recordTap: MediaStreamAudioDestinationNode | null = null;
   muted: boolean;
 
   constructor() {
@@ -70,6 +71,24 @@ export class Sounds {
     this.master.gain.value = this.muted ? 0 : 1;
     this.master.connect(this.ctx.destination);
     return this.ctx;
+  }
+
+  /**
+   * A live audio stream with every sound we make, so videos can include them.
+   * Returns null when the browser can't route Web Audio into a stream.
+   */
+  stream(): MediaStream | null {
+    const ctx = this.audio();
+    if (!ctx || !this.master) return null;
+    if (!this.recordTap) {
+      try {
+        this.recordTap = ctx.createMediaStreamDestination();
+      } catch {
+        return null;
+      }
+      this.master.connect(this.recordTap);
+    }
+    return this.recordTap.stream;
   }
 
   private ready(): AudioContext | null {
@@ -216,6 +235,19 @@ export class Sounds {
     [523, 659, 784, 1047].forEach((f, n) =>
       this.tone({ type: 'triangle', from: f, to: f, duration: n === 3 ? 0.5 : 0.14, gain: 0.14, delay: n * 0.11 }),
     );
+  }
+
+  /** Recording starts: a quick rising "dee-doo". */
+  recStart(): void {
+    this.tone({ type: 'triangle', from: 660, to: 660, duration: 0.09, gain: 0.1 });
+    this.tone({ type: 'triangle', from: 990, to: 990, duration: 0.12, gain: 0.1, delay: 0.1 });
+  }
+
+  /** Whoosh for swapping heads. */
+  swap(): void {
+    this.tone({ type: 'sawtooth', from: 120, to: 900, duration: 0.25, gain: 0.06 });
+    this.tone({ type: 'sawtooth', from: 900, to: 120, duration: 0.25, gain: 0.06, delay: 0.22 });
+    this.tone({ from: 400, to: 1200, duration: 0.1, gain: 0.15, delay: 0.5 });
   }
 
   /** Little "pop" when a face is marked. */
