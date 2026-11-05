@@ -1,5 +1,7 @@
 /** Todos os textos engraçados num lugar só, para ficar fácil adicionar mais. */
 
+import type { EffectKind } from './warp';
+
 export const pick = <T>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)];
 
 /** Dica no rodapé, sorteada a cada vez que a página abre. */
@@ -81,4 +83,24 @@ export const RECORD_CAPTIONS = [
   'Luz, câmera… careta! 🎬',
   'Isso vai direto pro grupo da família. 📲',
   'Gravando! Depois não adianta pedir pra apagar. 😈',
+];
+
+/** Desafio de pose na câmera: a pose pedida e o efeito que toca logo depois da foto. */
+export interface PoseChallenge {
+  prompt: string;
+  effect: EffectKind | 'chaos';
+  caption: string;
+}
+
+export const POSE_CHALLENGES: readonly PoseChallenge[] = [
+  { prompt: 'Todo mundo com cara de quem viu o boleto! 💸', effect: 'melt', caption: 'O boleto venceu. Você também. 🫠' },
+  { prompt: 'Cara de surpresa no amigo secreto! 🎁', effect: 'balloon', caption: 'Ganhou meia de novo! 🧦' },
+  { prompt: 'Pose de capa de disco de pagode! 🎤', effect: 'twist', caption: 'Sucesso nas paradas de 1998! 💿' },
+  { prompt: 'Biquinho de selfie no espelho da academia! 💪', effect: 'fish', caption: 'Foco, força e biquinho. 🐟' },
+  { prompt: 'Cara de quem acordou atrasado pra prova! ⏰', effect: 'chaos', caption: 'Nem a cara chegou a tempo. 🎲' },
+  { prompt: 'Cara de quem mordeu uma pimenta escondida! 🌶️', effect: 'balloon', caption: 'Inchou de tanto arder! 🔥' },
+  { prompt: 'Cara de quem ouviu "a gente precisa conversar"! 😬', effect: 'melt', caption: 'Derreteu de nervoso. 🫠' },
+  { prompt: 'Cara de tio dançando no casamento! 🕺', effect: 'twist', caption: 'O tio rodou a pista toda! 🌀' },
+  { prompt: 'Cara de quem viu o ex no rolê! 👀', effect: 'fish', caption: 'Blub… finge que não viu. 🐟' },
+  { prompt: 'Cara de quem chegou no churrasco e só tinha salada! 🥗', effect: 'melt', caption: 'Cadê a picanha?! 🥩' },
 ];

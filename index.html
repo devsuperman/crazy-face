@@ -63,6 +63,17 @@
 
     <div id="camera" class="camera" role="dialog" aria-modal="true" aria-label="Câmera" hidden>
       <video id="camera-video" playsinline muted></video>
+      <div class="challenge-bar">
+        <div id="camera-challenge" class="challenge" aria-live="polite">
+          <span class="challenge-label">😜 Desafio de pose</span>
+          <span id="camera-challenge-text" class="challenge-text"></span>
+          <div class="challenge-actions">
+            <button id="camera-challenge-next" class="button chip" type="button">🔀 Outro</button>
+            <button id="camera-challenge-off" class="button chip" type="button">Sem desafio</button>
+          </div>
+        </div>
+        <button id="camera-challenge-on" class="button chip" type="button" hidden>😜 Quero um desafio</button>
+      </div>
       <div id="camera-countdown" class="countdown" aria-live="assertive" hidden></div>
       <div id="camera-flash" class="flash" hidden></div>
       <div class="camera-bar">

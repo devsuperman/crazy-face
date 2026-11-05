@@ -4,6 +4,7 @@
  */
 
 import { fitToCanvas } from './image';
+import { POSE_CHALLENGES, pick, type PoseChallenge } from './jokes';
 import type { Sounds } from './sound';
 
 type Facing = 'user' | 'environment';
@@ -12,7 +13,10 @@ const COUNTDOWN_FROM = 3;
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-export function setupCamera(onPhoto: (photo: HTMLCanvasElement) => void, sounds: Sounds): void {
+/** `challenge` is the pose prompt that was on screen, or null if the user turned it off. */
+export type OnPhoto = (photo: HTMLCanvasElement, challenge: PoseChallenge | null) => void;
+
+export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   const overlay = $<HTMLDivElement>('camera');
   const video = $<HTMLVideoElement>('camera-video');
   const countdown = $<HTMLDivElement>('camera-countdown');
@@ -20,6 +24,9 @@ export function setupCamera(onPhoto: (photo: HTMLCanvasElement) => void, sounds:
   const shutter = $<HTMLButtonElement>('camera-shutter');
   const flip = $<HTMLButtonElement>('camera-flip');
   const fallback = $<HTMLInputElement>('camera-fallback');
+  const challengeBox = $<HTMLDivElement>('camera-challenge');
+  const challengeText = $<HTMLSpanElement>('camera-challenge-text');
+  const challengeOn = $<HTMLButtonElement>('camera-challenge-on');
 
   let stream: MediaStream | null = null;
   let facing: Facing = 'user';
@@ -27,6 +34,28 @@ export function setupCamera(onPhoto: (photo: HTMLCanvasElement) => void, sounds:
   let session = 0;
   let countdownTimer = 0;
   let counting = false;
+  /** The pose prompt on screen; null when the user chose "Sem desafio" (remembered until reload). */
+  let challenge: PoseChallenge | null = null;
+  let wantsChallenge = true;
+
+  function newChallenge(): void {
+    let next = pick(POSE_CHALLENGES);
+    while (POSE_CHALLENGES.length > 1 && next === challenge) next = pick(POSE_CHALLENGES);
+    challenge = next;
+    challengeText.textContent = next.prompt;
+    // Replay the pop-in animation.
+    challengeBox.style.animation = 'none';
+    void challengeBox.offsetWidth;
+    challengeBox.style.animation = '';
+  }
+
+  function showChallenge(on: boolean): void {
+    wantsChallenge = on;
+    challengeBox.hidden = !on;
+    challengeOn.hidden = on;
+    if (on) newChallenge();
+    else challenge = null;
+  }
 
   const supported = () => !!navigator.mediaDevices?.getUserMedia;
 
@@ -39,6 +68,7 @@ export function setupCamera(onPhoto: (photo: HTMLCanvasElement) => void, sounds:
   function cancelCountdown(): void {
     clearTimeout(countdownTimer);
     counting = false;
+    overlay.classList.remove('counting');
     countdown.hidden = true;
     shutter.disabled = false;
   }
@@ -92,6 +122,7 @@ export function setupCamera(onPhoto: (photo: HTMLCanvasElement) => void, sounds:
       return;
     }
     overlay.hidden = false;
+    showChallenge(wantsChallenge);
     shutter.focus();
     void start();
   }
@@ -121,6 +152,7 @@ export function setupCamera(onPhoto: (photo: HTMLCanvasElement) => void, sounds:
     }
     // Keep the photo looking like the (mirrored) selfie preview.
     const photo = fitToCanvas(video, w, h, facing === 'user');
+    const posed = challenge;
     sounds.shutter();
     flash.hidden = false;
     flash.style.animation = 'none';
@@ -129,7 +161,7 @@ export function setupCamera(onPhoto: (photo: HTMLCanvasElement) => void, sounds:
     window.setTimeout(() => {
       flash.hidden = true;
       close();
-      onPhoto(photo);
+      onPhoto(photo, posed);
     }, 250);
   }
 
@@ -139,8 +171,19 @@ export function setupCamera(onPhoto: (photo: HTMLCanvasElement) => void, sounds:
   shutter.addEventListener('click', () => {
     if (counting || !stream) return;
     counting = true;
+    overlay.classList.add('counting');
     shutter.disabled = true;
     tick(COUNTDOWN_FROM);
+  });
+
+  $('camera-challenge-next').addEventListener('click', () => {
+    sounds.pop();
+    newChallenge();
+  });
+  $('camera-challenge-off').addEventListener('click', () => showChallenge(false));
+  challengeOn.addEventListener('click', () => {
+    sounds.pop();
+    showChallenge(true);
   });
 
   flip.addEventListener('click', () => {

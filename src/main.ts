@@ -236,9 +236,11 @@ cameraFallback.addEventListener('change', () => {
 
 setupRecorder({ canvas, sounds, showCaption });
 
-setupCamera((photo) => {
+setupCamera((photo, challenge) => {
   setImage(photo);
   showCaption(pick(PHOTO_CAPTIONS));
+  // Desafio de pose: show the photo for a moment, then play the matching effect.
+  if (challenge) window.setTimeout(() => playPreset(challenge.effect, challenge.caption), 900);
 }, sounds);
 
 radiusInput.addEventListener('input', updateBrushSize);
@@ -255,23 +257,25 @@ jellyInput.addEventListener('change', () => {
 
 // --- Silly effect buttons ---
 
+/** Play a whole-image preset with its sound and a caption (a random one unless given). */
+function playPreset(kind: EffectKind | 'chaos', text?: string): void {
+  sounds.unlock();
+  const now = performance.now() / 1000;
+  if (kind === 'chaos') {
+    mesh.chaos();
+    sounds.chaos();
+  } else {
+    // Ignore button-mashing while a preset is still playing.
+    if (now < effectBusyUntil) return;
+    effectBusyUntil = now + WarpMesh.effectDuration(kind);
+    mesh.playEffect(kind, now);
+    sounds.effect(kind);
+  }
+  showCaption(text ?? pick(EFFECT_CAPTIONS[kind]));
+}
+
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-effect]')) {
-  button.addEventListener('click', () => {
-    sounds.unlock();
-    const kind = button.dataset.effect as EffectKind | 'chaos';
-    const now = performance.now() / 1000;
-    if (kind === 'chaos') {
-      mesh.chaos();
-      sounds.chaos();
-    } else {
-      // Ignore button-mashing while a preset is still playing.
-      if (now < effectBusyUntil) return;
-      effectBusyUntil = now + WarpMesh.effectDuration(kind);
-      mesh.playEffect(kind, now);
-      sounds.effect(kind);
-    }
-    showCaption(pick(EFFECT_CAPTIONS[kind]));
-  });
+  button.addEventListener('click', () => playPreset(button.dataset.effect as EffectKind | 'chaos'));
 }
 
 // --- Sound toggle ---
