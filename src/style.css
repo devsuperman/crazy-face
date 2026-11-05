@@ -693,3 +693,32 @@ body {
     animation: none;
   }
 }
+
+/* Phones: keep the toolbar compact so the photo gets the room. */
+@media (max-width: 520px) {
+  .toolbar {
+    padding: 8px 12px;
+    gap: 6px;
+  }
+  .toolbar h1 {
+    font-size: 1rem;
+  }
+  .controls {
+    gap: 6px 8px;
+    font-size: 0.8rem;
+  }
+  .controls .button {
+    padding: 6px 9px;
+  }
+  .slider input {
+    width: 70px;
+  }
+  .effects {
+    gap: 5px;
+    padding: 0 8px;
+  }
+  .effects .button.chip {
+    padding: 5px 9px;
+    font-size: 0.78rem;
+  }
+}
