@@ -6,7 +6,10 @@ import { detectFaces, preloadFaceDetector } from './faces';
 import { Sounds } from './sound';
 import { setupCamera } from './camera';
 import { setupRecorder } from './recorder';
+import { enhancePhoto, isDark, measureTone, type Tone } from './beauty';
 import {
+  BEAUTY_OFF_CAPTIONS,
+  BEAUTY_ON_CAPTIONS,
   BIG_CAPTIONS,
   EFFECT_CAPTIONS,
   EVERYONE_CAPTIONS,
@@ -34,6 +37,7 @@ const fileInput = $<HTMLInputElement>('file');
 const radiusInput = $<HTMLInputElement>('radius');
 const clayInput = $<HTMLInputElement>('clay');
 const jellyInput = $<HTMLInputElement>('jelly');
+const beautyInput = $<HTMLInputElement>('beauty');
 const muteButton = $<HTMLButtonElement>('mute');
 const caption = $<HTMLParagraphElement>('caption');
 const bubble = $<HTMLDivElement>('bubble');
@@ -57,19 +61,68 @@ let layout: Layout = { offsetX: 0, offsetY: 0, scale: 1 };
 /** Presets ignore clicks until this time (seconds), so they don't pile up. */
 let effectBusyUntil = 0;
 
+interface PhotoOptions {
+  /** Look for the faces the effect buttons aim at (false for the cartoon). */
+  findFaces?: boolean;
+  /** ✨ Luz e beleza: on, off, or 'auto' (on if the photo is dark). */
+  beauty?: boolean | 'auto';
+  /** The photo with the light already fixed (the camera's review made it). */
+  lit?: HTMLCanvasElement | null;
+}
+
 /**
  * Load a new photo: the single entry point for files, the camera and the default face.
- * `findFaces` looks for the faces the effect buttons aim at.
  */
-function setImage(image: HTMLCanvasElement, findFaces = true): void {
+function setImage(image: HTMLCanvasElement, { findFaces = true, beauty = 'auto', lit = null }: PhotoOptions = {}): void {
   photo = image;
-  renderer.setImage(image);
-  newMesh(image.height / image.width);
+  photoTone = findFaces ? measureTone(image) : null;
+  litPhoto = lit;
+  beautyOn = !!photoTone && (beauty === 'auto' ? isDark(photoTone) : beauty);
+  beautyInput.checked = beautyOn;
+  beautyInput.disabled = !photoTone;
   photoFaces = [];
   lensFace = undefined;
+  renderer.setImage(beautyOn ? lightOnly() : image);
+  newMesh(image.height / image.width);
   hint.textContent = pick(HINTS);
-  facesReady = findFaces ? searchFaces(image) : Promise.resolve();
+  // Faces are easier to find in the brightened photo.
+  facesReady = findFaces ? searchFaces(image, beautyOn ? lightOnly() : image) : Promise.resolve();
 }
+
+// --- ✨ Luz e beleza ---
+
+/** How the light correction changes the current photo (null for the cartoon). */
+let photoTone: Tone | null = null;
+/** The current photo with only the light fixed (made on first use). */
+let litPhoto: HTMLCanvasElement | null = null;
+let beautyOn = false;
+
+/** The photo with the light fixed, or the original if WebGL2 can't do it. */
+function lightOnly(): HTMLCanvasElement {
+  if (!photoTone) return photo;
+  litPhoto ??= enhancePhoto(photo, photoTone);
+  return litPhoto ?? photo;
+}
+
+/** Put the right version of the photo on screen. The mesh (and its warps) stays. */
+function showLook(): void {
+  if (!beautyOn || !photoTone) {
+    renderer.setImage(photo);
+    return;
+  }
+  // With faces, also smooth the skin; it's quick, so just redo it when faces change.
+  const look = photoFaces.length ? enhancePhoto(photo, photoTone, photoFaces) : null;
+  renderer.setImage(look ?? lightOnly());
+}
+
+beautyInput.addEventListener('change', () => {
+  sounds.unlock();
+  beautyOn = beautyInput.checked;
+  showLook();
+  if (beautyOn) sounds.sparkle();
+  else sounds.pop();
+  showCaption(pick(beautyOn ? BEAUTY_ON_CAPTIONS : BEAUTY_OFF_CAPTIONS));
+});
 
 // --- The faces: effect buttons aim at every face instead of the whole photo ---
 
@@ -90,16 +143,23 @@ const MAX_FACES = 6;
  * aim at faces right away, then a full one in the background that also finds the
  * small faces in a group photo. Resolves after the quick pass.
  */
-async function searchFaces(image: HTMLCanvasElement): Promise<void> {
-  if (!(await useFaces(image, { quick: true }))) return;
-  void useFaces(image, { quick: false });
+async function searchFaces(image: HTMLCanvasElement, source: HTMLCanvasElement): Promise<void> {
+  if (!(await useFaces(image, source, { quick: true }))) return;
+  void useFaces(image, source, { quick: false });
 }
 
-/** Run one detection pass and keep its faces if it found at least as many. False if it failed or the photo changed. */
-async function useFaces(image: HTMLCanvasElement, options: { quick: boolean }): Promise<boolean> {
+/**
+ * Run one detection pass (on `source`, the same photo maybe brightened) and keep its
+ * faces if it found at least as many. False if it failed or the photo changed.
+ */
+async function useFaces(
+  image: HTMLCanvasElement,
+  source: HTMLCanvasElement,
+  options: { quick: boolean },
+): Promise<boolean> {
   let found: EffectTarget[];
   try {
-    found = await detectFaces(image, MAX_FACES, options);
+    found = await detectFaces(source, MAX_FACES, options);
   } catch {
     // No detector (offline, old browser): effects keep working on the whole photo.
     return false;
@@ -108,6 +168,7 @@ async function useFaces(image: HTMLCanvasElement, options: { quick: boolean }): 
   if (found.length < photoFaces.length) return true;
   const more = found.length > photoFaces.length;
   photoFaces = found;
+  if (found.length) showLook();
   if (more && found.length >= 2) {
     hint.textContent = pick(GROUP_SUGGEST_HINTS).replace('{n}', String(found.length));
   }
@@ -354,8 +415,8 @@ cameraFallback.addEventListener('change', () => {
 
 setupRecorder({ canvas, sounds, showCaption });
 
-setupCamera((shot, challenge) => {
-  setImage(shot);
+setupCamera((shot, challenge, lit) => {
+  setImage(shot, { beauty: !!lit, lit });
   showEditor();
   showCaption(pick(PHOTO_CAPTIONS));
   // Desafio de pose: show the photo for a moment, then play the matching effect on the face.
@@ -552,7 +613,7 @@ function frame(ms: number): void {
 /** The built-in cartoon face (no detection needed: we know where its features are). */
 function showCartoon(): void {
   // It fills the picture: whole-image mesh effects already fit it.
-  setImage(drawDefaultFace(), false);
+  setImage(drawDefaultFace(), { findFaces: false });
   lensFace = DEFAULT_FACE_TARGET;
 }
 

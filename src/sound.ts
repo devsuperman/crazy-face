@@ -245,6 +245,13 @@ export class Sounds {
     this.tone({ type: 'triangle', from: 990, to: 990, duration: 0.12, gain: 0.1, delay: 0.1 });
   }
 
+  /** ✨ A quick twinkle when the light and beauty filter turns on. */
+  sparkle(): void {
+    [1568, 2093, 2637].forEach((f, n) =>
+      this.tone({ type: 'sine', from: f, to: f * 1.05, duration: 0.12, gain: 0.08, delay: n * 0.06 }),
+    );
+  }
+
   /** Little "pop" for small UI moments. */
   pop(): void {
     this.tone({ from: 300, to: 900, duration: 0.08, gain: 0.15 });

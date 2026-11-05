@@ -53,7 +53,15 @@ The live mirror was removed: mesh effects can't follow a moving face. The app is
 2. ✅ **New face effects on the still photo: 👀 Olhão and 👃 Narigão.** `faces.ts` now keeps BlazeFace's keypoints (`EffectTarget.landmarks`: eyes, nose tip, mouth); faces without keypoints get them guessed from the circle (`estimateLandmarks` in `lens.ts`), and the cartoon face has fixed ones (`DEFAULT_FACE_TARGET` in `image.ts`). The bulges are drawn in the fragment shader as a per-pixel UV remap (`src/lens.ts`, up to 16 at once), in the photo's rest space, so they follow dragging and stack with the mesh effects. They go through `mesh.playEffect('eyes' | 'nose', ...)` like the other presets, are part of 🎭 Um efeito pra cada, and have their own pose challenges. With no face in the photo the buttons say so instead of guessing. To check on phones: whether the strength feels right on real selfies, and on side-on faces (eye distance is clamped so the lens never collapses).
 3. **Next idea:** lens strength could follow a drag (pinch an eye to make it bigger) instead of only being a timed preset.
 
-### 3. Ideas and polish
+### 3. ✨ Luz e beleza (dark photos)
+Done: `src/beauty.ts` fixes the light (levels, gamma, white balance, colour denoise) and smooths skin on detected faces; ✨ toggle in the toolbar and in the camera review; 💡 selfie screen light / torch; brightened camera preview. To check on phones:
+- Real selfies in a dim room: is the skin smoothing natural (strength 0.65 in the shader), and is the noise acceptable after brightening (gamma is capped at 0.5)?
+- Does the 💡 glowing screen actually light the face enough, and does the camera's auto-exposure adapt within the last countdown second?
+- `exposureCompensation` and `torch` on Android Chrome; iOS has neither (only the screen light).
+- Time of `enhancePhoto` on a 2048 px photo on a mid-range phone (it runs when the review opens and again when faces are found).
+- Idea: an intensity choice (Leve / Médio / Turbo) instead of on/off.
+
+### 4. Ideas and polish
 - [ ] 🎬 Optionally start recording automatically when 🎭 Um efeito pra cada runs.
 - [ ] 🎬/💾 Draw the current caption into clips and saved PNGs.
 - [ ] 🤖 Detection uses BlazeFace short-range, which is tuned for selfie distance; the sliding windows help, but tiny or side-on faces can still be missed, and there's no manual fallback (by design).

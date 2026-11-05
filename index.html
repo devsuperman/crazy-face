@@ -16,6 +16,10 @@
           <input id="radius" type="range" min="0.05" max="0.45" step="0.01" value="0.18" />
         </label>
         <label class="toggle">
+          <input id="beauty" type="checkbox" />
+          ✨ Luz e beleza
+        </label>
+        <label class="toggle">
           <input id="clay" type="checkbox" />
           Modo massinha
         </label>
@@ -70,6 +74,7 @@
 
     <div id="camera" class="camera" role="dialog" aria-modal="true" aria-label="Câmera" hidden>
       <video id="camera-video" playsinline muted></video>
+      <div id="camera-light" class="screen-light" hidden></div>
       <div class="challenge-bar">
         <div id="camera-challenge" class="challenge" aria-live="polite">
           <span class="challenge-label">😜 Desafio de pose</span>
@@ -85,6 +90,7 @@
       <div id="camera-flash" class="flash" hidden></div>
       <div id="camera-review" class="camera-review" hidden>
         <p class="review-title">Ficou boa? 😎</p>
+        <button id="camera-beauty" class="button chip review-beauty" type="button" aria-pressed="true">✨ Com luz e beleza</button>
         <div id="camera-review-photo" class="review-photo"></div>
         <div class="camera-bar">
           <button id="camera-retake" class="button big" type="button">🔁 Tirar outra</button>
@@ -95,6 +101,7 @@
         <button id="camera-close" class="button icon round" type="button" aria-label="Fechar câmera" title="Fechar">✖</button>
         <button id="camera-shutter" class="shutter" type="button" aria-label="Tirar foto (contagem de 3 segundos)"></button>
         <button id="camera-flip" class="button icon round" type="button" aria-label="Trocar câmera" title="Trocar câmera">🔄</button>
+        <button id="camera-lamp" class="button icon round" type="button" aria-label="Ligar luz" title="Ligar luz" aria-pressed="false" hidden>💡</button>
       </div>
     </div>
 

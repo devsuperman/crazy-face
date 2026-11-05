@@ -4,6 +4,7 @@
  * the camera's image into a canvas.
  */
 
+import { enhancePhoto, measureTone } from './beauty';
 import { fitToCanvas } from './image';
 import { POSE_CHALLENGES, pick, type PoseChallenge } from './jokes';
 import type { Sounds } from './sound';
@@ -14,8 +15,14 @@ const COUNTDOWN_FROM = 3;
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-/** `challenge` is the pose prompt that was on screen, or null if the user turned it off. */
-export type OnPhoto = (photo: HTMLCanvasElement, challenge: PoseChallenge | null) => void;
+/**
+ * `challenge` is the pose prompt that was on screen, or null if the user turned it off.
+ * `lit` is the photo with ✨ Luz e beleza's light fix, or null if the user turned it off.
+ */
+export type OnPhoto = (photo: HTMLCanvasElement, challenge: PoseChallenge | null, lit: HTMLCanvasElement | null) => void;
+
+/** Preview brightness (median, 0..1) below which the room counts as dark. */
+const DARK_ROOM = 0.3;
 
 export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   const overlay = $<HTMLDivElement>('camera');
@@ -31,6 +38,9 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   const reviewBox = $<HTMLDivElement>('camera-review');
   const reviewPhoto = $<HTMLDivElement>('camera-review-photo');
   const useButton = $<HTMLButtonElement>('camera-use');
+  const beautyButton = $<HTMLButtonElement>('camera-beauty');
+  const lamp = $<HTMLButtonElement>('camera-lamp');
+  const screenLight = $<HTMLDivElement>('camera-light');
 
   let stream: MediaStream | null = null;
   let facing: Facing = 'user';
@@ -41,8 +51,17 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   /** The pose prompt on screen; null when the user chose "Sem desafio" (remembered until reload). */
   let challenge: PoseChallenge | null = null;
   let wantsChallenge = true;
-  /** The photo waiting for "Usar esta" / "Tirar outra". */
-  let review: { photo: HTMLCanvasElement; posed: PoseChallenge | null } | null = null;
+  /** The photo waiting for "Usar esta" / "Tirar outra", and its brightened copy. */
+  let review: { photo: HTMLCanvasElement; posed: PoseChallenge | null; lit: HTMLCanvasElement | null } | null = null;
+  /** ✨ Luz e beleza on the photo (remembered until reload). */
+  let wantsBeauty = true;
+  /** 💡: the screen glows (front camera) or the torch is on (back camera). */
+  let lampOn = false;
+  /** The user pressed 💡 themselves, so we stop turning it on when the room is dark. */
+  let lampTouched = false;
+  let torch = false;
+  let meterTimer = 0;
+  let exposureBoosted = false;
 
   function newChallenge(): void {
     let next = pick(POSE_CHALLENGES);
@@ -66,13 +85,65 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   const supported = () => !!navigator.mediaDevices?.getUserMedia;
 
   function stopStream(): void {
+    clearInterval(meterTimer);
     stream?.getTracks().forEach((t) => t.stop());
     stream = null;
     video.srcObject = null;
+    video.style.filter = '';
+    torch = false;
+    exposureBoosted = false;
+    screenLight.hidden = true;
+  }
+
+  // --- 💡 Light: a glowing screen for selfies, the torch on the back camera ---
+
+  function setLamp(on: boolean): void {
+    lampOn = on;
+    const label = on ? 'Desligar luz' : 'Ligar luz';
+    lamp.setAttribute('aria-pressed', String(on));
+    lamp.setAttribute('aria-label', label);
+    lamp.title = label;
+    overlay.classList.toggle('lamp', on && !torch);
+    const track = stream?.getVideoTracks()[0];
+    if (torch && track) void track.applyConstraints({ advanced: [{ torch: on } as MediaTrackConstraintSet] }).catch(() => {});
+  }
+
+  /** Show 💡 when it can do something: always on the front camera, with a torch on the back one. */
+  function updateLamp(track: MediaStreamTrack): void {
+    const caps = capabilities(track);
+    torch = facing === 'environment' && !!caps.torch;
+    lamp.hidden = facing === 'environment' && !torch;
+    setLamp(lampOn && !lamp.hidden);
+    // Ask for automatic exposure and white balance where the camera lets us choose.
+    const tune: Record<string, string> = {};
+    if (caps.exposureMode?.includes('continuous')) tune.exposureMode = 'continuous';
+    if (caps.whiteBalanceMode?.includes('continuous')) tune.whiteBalanceMode = 'continuous';
+    if (Object.keys(tune).length) void track.applyConstraints({ advanced: [tune as MediaTrackConstraintSet] }).catch(() => {});
+  }
+
+  /**
+   * Every so often, measure how bright the preview is: brighten the preview like the
+   * photo will be, ask the camera for more exposure, and turn on 💡 in a dark room.
+   */
+  function meter(): void {
+    const track = stream?.getVideoTracks()[0];
+    if (!track || !video.videoWidth || review || counting) return;
+    const median = previewBrightness(video);
+    const boost = wantsBeauty ? Math.min(2, Math.max(1, Math.pow(0.45 / Math.max(median, 0.05), 0.7))) : 1;
+    video.style.filter = boost > 1.02 ? `brightness(${boost.toFixed(2)}) saturate(1.1)` : '';
+    if (median >= DARK_ROOM) return;
+    if (!lampOn && !lampTouched && !lamp.hidden) setLamp(true);
+    const ev = capabilities(track).exposureCompensation;
+    if (!exposureBoosted && ev && ev.max > 0) {
+      exposureBoosted = true;
+      const value = Math.min(ev.max, 1);
+      void track.applyConstraints({ advanced: [{ exposureCompensation: value } as MediaTrackConstraintSet] }).catch(() => {});
+    }
   }
 
   function cancelCountdown(): void {
     clearTimeout(countdownTimer);
+    screenLight.hidden = true;
     counting = false;
     overlay.classList.remove('counting');
     countdown.hidden = true;
@@ -80,12 +151,23 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   }
 
   function showReview(photo: HTMLCanvasElement, posed: PoseChallenge | null): void {
-    review = { photo, posed };
-    reviewPhoto.replaceChildren(photo);
+    const lit = enhancePhoto(photo, measureTone(photo));
+    review = { photo, posed, lit };
+    beautyButton.hidden = !lit;
+    showReviewPhoto();
     reviewBox.hidden = false;
     overlay.classList.add('reviewing');
     video.pause();
     useButton.focus();
+  }
+
+  /** The review shows the photo with or without ✨ Luz e beleza. */
+  function showReviewPhoto(): void {
+    if (!review) return;
+    const on = wantsBeauty && !!review.lit;
+    reviewPhoto.replaceChildren(on ? review.lit! : review.photo);
+    beautyButton.setAttribute('aria-pressed', String(on));
+    beautyButton.textContent = on ? '✨ Com luz e beleza' : '✨ Sem filtro';
   }
 
   function hideReview(): void {
@@ -120,6 +202,9 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
       video.classList.toggle('mirrored', facing === 'user');
       await video.play();
       void updateFlipButton();
+      updateLamp(s.getVideoTracks()[0]);
+      clearInterval(meterTimer);
+      meterTimer = window.setInterval(meter, 600);
     } catch (err) {
       if (mine !== session) return;
       close();
@@ -163,6 +248,8 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
     void countdown.offsetWidth;
     countdown.style.animation = '';
     sounds.beep(n === 1);
+    // Selfie light: the whole screen glows for the last second, so the camera has time to adjust.
+    if (n === 1 && lampOn && !torch) screenLight.hidden = false;
     countdownTimer = window.setTimeout(() => tick(n - 1), 1000);
   }
 
@@ -187,6 +274,7 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
     flash.style.animation = '';
     window.setTimeout(() => (flash.hidden = true), 250);
     const still = await fullResolutionPhoto(track, mirror);
+    screenLight.hidden = true;
     if (mine !== session) return;
     showReview(still ?? frame, posed);
   }
@@ -196,9 +284,9 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
 
   useButton.addEventListener('click', () => {
     if (!review) return;
-    const { photo, posed } = review;
+    const { photo, posed, lit } = review;
     close();
-    onPhoto(photo, posed);
+    onPhoto(photo, posed, wantsBeauty ? lit : null);
   });
 
   $('camera-retake').addEventListener('click', () => {
@@ -208,6 +296,19 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
     if (stream) void video.play();
     else void start();
     shutter.focus();
+  });
+
+  beautyButton.addEventListener('click', () => {
+    wantsBeauty = !wantsBeauty;
+    if (wantsBeauty) sounds.sparkle();
+    else sounds.pop();
+    showReviewPhoto();
+  });
+
+  lamp.addEventListener('click', () => {
+    lampTouched = true;
+    sounds.pop();
+    setLamp(!lampOn);
   });
 
   shutter.addEventListener('click', () => {
@@ -249,6 +350,37 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
       close();
     }
   });
+}
+
+/** Camera settings some browsers offer (Android Chrome); not in TypeScript's DOM types. */
+interface CameraCapabilities {
+  torch?: boolean;
+  exposureMode?: string[];
+  whiteBalanceMode?: string[];
+  exposureCompensation?: { min: number; max: number; step: number };
+}
+
+function capabilities(track: MediaStreamTrack): CameraCapabilities {
+  try {
+    return (track.getCapabilities?.() ?? {}) as CameraCapabilities;
+  } catch {
+    return {};
+  }
+}
+
+const meterCanvas = document.createElement('canvas');
+meterCanvas.width = 32;
+meterCanvas.height = 18;
+
+/** The median brightness (0..1) of a tiny copy of the video frame. */
+function previewBrightness(video: HTMLVideoElement): number {
+  const ctx = meterCanvas.getContext('2d', { willReadFrequently: true })!;
+  ctx.drawImage(video, 0, 0, meterCanvas.width, meterCanvas.height);
+  const data = ctx.getImageData(0, 0, meterCanvas.width, meterCanvas.height).data;
+  const luma: number[] = [];
+  for (let i = 0; i < data.length; i += 4) luma.push(0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]);
+  luma.sort((a, b) => a - b);
+  return luma[luma.length >> 1] / 255;
 }
 
 /** The parts of ImageCapture we use (not in every browser, nor in TypeScript's DOM types). */
