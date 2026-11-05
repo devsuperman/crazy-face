@@ -218,6 +218,10 @@ export class Sounds {
           this.tone({ type: 'sawtooth', from: 415, to: 380, duration: 0.2, gain: 0.05, delay });
         }
         break;
+      case 'cheeks': // cheeks filling with air, then a "pfff" as it leaks out
+        this.tone({ from: 140, to: 320, duration: 0.35, gain: 0.2, vibrato: [14, 0.08] });
+        this.tone({ type: 'sawtooth', from: 300, to: 90, duration: 0.18, gain: 0.05, delay: 0.38 });
+        break;
     }
   }
 

@@ -1,5 +1,5 @@
 /**
- * Face lenses: 👀 Olhão and 👃 Narigão.
+ * Face lenses: 👀 Olhão, 👃 Narigão and 🐹 Bochechas.
  *
  * A lens is a magnifying bulge drawn by the fragment shader as a texture-coordinate
  * remap, per pixel, so it stays smooth even on the tiny faces of a group photo (a
@@ -21,9 +21,9 @@ export interface Landmarks {
   mouth: Point;
 }
 
-export type LensKind = 'eyes' | 'nose';
+export type LensKind = 'eyes' | 'nose' | 'cheeks';
 
-/** The most lenses drawn at once (6 faces × 2 eyes, plus a few noses). Must match the shader. */
+/** The most lenses drawn at once (6 faces × 2 eyes or cheeks, plus a few noses). Must match the shader. */
 export const MAX_LENSES = 16;
 
 const TIMING = { ramp: 0.4, hold: 1.4, release: 0.5 };
@@ -67,7 +67,7 @@ export class Lenses {
     return TIMING.ramp + TIMING.hold;
   }
 
-  /** Put an eye or nose lens on a face. */
+  /** Put eye, nose or cheek lenses on a face. */
   play(kind: LensKind, now: number, target: EffectTarget): void {
     const lm = target.landmarks ?? estimateLandmarks(target);
     const [a, b] = lm.eyes;
@@ -76,14 +76,34 @@ export class Lenses {
     const add = (lens: Omit<Lens, 'start' | 'releaseAt'>) =>
       this.list.push({ ...lens, start: now, releaseAt: Infinity });
 
+    // "Down" is from between the eyes towards the mouth, so tilted heads work too.
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    const dx = lm.mouth.x - mid.x;
+    const dy = lm.mouth.y - mid.y;
+    const len = Math.hypot(dx, dy) || 1;
+
     if (kind === 'eyes') {
       for (const e of lm.eyes) add({ x: e.x, y: e.y, r: ed * 0.55, strength: 0.62, pullX: 0, pullY: 0 });
+    } else if (kind === 'cheeks') {
+      // Below each eye, level with the nose, a bit towards the side of the face.
+      const r = ed * 0.72;
+      for (const e of lm.eyes) {
+        const ox = e.x - mid.x;
+        const oy = e.y - mid.y;
+        const olen = Math.hypot(ox, oy) || 1;
+        const outX = ox / olen;
+        const outY = oy / olen;
+        add({
+          x: e.x + dx * 0.6 + outX * ed * 0.25,
+          y: e.y + dy * 0.6 + outY * ed * 0.25,
+          r,
+          strength: 0.55,
+          // Puff out sideways and droop a little, like a hamster with full cheeks.
+          pullX: outX * r * 0.22 + (dx / len) * r * 0.08,
+          pullY: outY * r * 0.22 + (dy / len) * r * 0.08,
+        });
+      }
     } else {
-      // "Down" is from between the eyes towards the mouth, so tilted heads work too.
-      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-      const dx = lm.mouth.x - mid.x;
-      const dy = lm.mouth.y - mid.y;
-      const len = Math.hypot(dx, dy) || 1;
       const r = ed * 0.62;
       add({
         x: lm.nose.x + (dx / len) * ed * 0.06,

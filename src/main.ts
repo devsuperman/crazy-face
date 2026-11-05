@@ -129,7 +129,7 @@ beautyInput.addEventListener('change', () => {
 /** The faces in the current photo, biggest first, once found. */
 let photoFaces: EffectTarget[] = [];
 /**
- * Where 👀/👃 aim when there's no detected face: the cartoon's known features.
+ * Where 👀/👃/🐹 aim when there's no detected face: the cartoon's known features.
  * (Mesh presets keep working on the whole cartoon, which fills the picture.)
  */
 let lensFace: EffectTarget | undefined;
@@ -441,20 +441,20 @@ jellyInput.addEventListener('change', () => {
 
 // --- Silly effect buttons ---
 
-const needsFace = (kind: EffectKind) => kind === 'eyes' || kind === 'nose';
-const KINDS: EffectKind[] = ['balloon', 'fish', 'melt', 'eyes', 'nose'];
+const needsFace = (kind: EffectKind) => kind === 'eyes' || kind === 'nose' || kind === 'cheeks';
+const KINDS: EffectKind[] = ['balloon', 'fish', 'melt', 'eyes', 'nose', 'cheeks'];
 /** Gap between the sounds when several faces get an effect (ms). */
 const SOUND_STAGGER = 150;
 
 /**
  * What a preset aims at: every face found, else the whole photo (`undefined`),
- * or the cartoon's features for 👀/👃. Null if there's nothing to aim at (it says so).
+ * or the cartoon's features for 👀/👃/🐹. Null if there's nothing to aim at (it says so).
  */
 async function targetsFor(kind: EffectKind): Promise<(EffectTarget | undefined)[] | null> {
   if (photoFaces.length) return photoFaces;
   if (!needsFace(kind)) return [undefined];
   if (lensFace) return [lensFace];
-  // 👀/👃 need eyes and a nose: give the face search a moment to finish.
+  // 👀/👃/🐹 need a face: give the face search a moment to finish.
   const image = photo;
   effectBusyUntil = Infinity;
   const same = await waitForFace(image, 1500);

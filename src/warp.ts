@@ -28,11 +28,11 @@ const JELLY_STIFFNESS = 90;
 const JELLY_DAMPING = 1.2; // barely damped: wobbles for ages
 const STEP = 1 / 120; // fixed physics timestep in seconds
 
-/** Mesh presets move the grid; lens presets (👀 eyes, 👃 nose) are drawn by the shader. */
+/** Mesh presets move the grid; lens presets (👀 eyes, 👃 nose, 🐹 cheeks) are drawn by the shader. */
 export type MeshEffectKind = 'balloon' | 'fish' | 'melt';
 export type EffectKind = MeshEffectKind | LensKind;
 
-const isLens = (kind: EffectKind): kind is LensKind => kind === 'eyes' || kind === 'nose';
+const isLens = (kind: EffectKind): kind is LensKind => kind === 'eyes' || kind === 'nose' || kind === 'cheeks';
 
 /** How long each preset takes to reach full strength, and how long it holds there. */
 const EFFECT_TIMING: Record<MeshEffectKind, { ramp: number; hold: number }> = {
