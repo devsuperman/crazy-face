@@ -1,6 +1,7 @@
 /**
- * "Tirar foto": a full-screen camera with a 3-2-1 countdown.
- * The photo never leaves the device: we only copy a video frame into a canvas.
+ * "Tirar foto": a full-screen camera with a 3-2-1 countdown, then a "Ficou boa?"
+ * review before the photo is used. The photo never leaves the device: we only copy
+ * the camera's image into a canvas.
  */
 
 import { fitToCanvas } from './image';
@@ -27,6 +28,9 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   const challengeBox = $<HTMLDivElement>('camera-challenge');
   const challengeText = $<HTMLSpanElement>('camera-challenge-text');
   const challengeOn = $<HTMLButtonElement>('camera-challenge-on');
+  const reviewBox = $<HTMLDivElement>('camera-review');
+  const reviewPhoto = $<HTMLDivElement>('camera-review-photo');
+  const useButton = $<HTMLButtonElement>('camera-use');
 
   let stream: MediaStream | null = null;
   let facing: Facing = 'user';
@@ -37,6 +41,8 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   /** The pose prompt on screen; null when the user chose "Sem desafio" (remembered until reload). */
   let challenge: PoseChallenge | null = null;
   let wantsChallenge = true;
+  /** The photo waiting for "Usar esta" / "Tirar outra". */
+  let review: { photo: HTMLCanvasElement; posed: PoseChallenge | null } | null = null;
 
   function newChallenge(): void {
     let next = pick(POSE_CHALLENGES);
@@ -73,8 +79,25 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
     shutter.disabled = false;
   }
 
+  function showReview(photo: HTMLCanvasElement, posed: PoseChallenge | null): void {
+    review = { photo, posed };
+    reviewPhoto.replaceChildren(photo);
+    reviewBox.hidden = false;
+    overlay.classList.add('reviewing');
+    video.pause();
+    useButton.focus();
+  }
+
+  function hideReview(): void {
+    review = null;
+    reviewPhoto.replaceChildren();
+    reviewBox.hidden = true;
+    overlay.classList.remove('reviewing');
+  }
+
   function close(): void {
     session++;
+    hideReview();
     cancelCountdown();
     stopStream();
     overlay.hidden = true;
@@ -130,7 +153,7 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   function tick(n: number): void {
     if (n === 0) {
       countdown.hidden = true;
-      takePhoto();
+      void takePhoto();
       return;
     }
     countdown.textContent = String(n);
@@ -143,30 +166,49 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
     countdownTimer = window.setTimeout(() => tick(n - 1), 1000);
   }
 
-  function takePhoto(): void {
+  async function takePhoto(): Promise<void> {
     const w = video.videoWidth;
     const h = video.videoHeight;
-    if (!w || !h) {
+    const track = stream?.getVideoTracks()[0];
+    if (!w || !h || !track) {
       cancelCountdown();
       return;
     }
+    const mine = session;
     // Keep the photo looking like the (mirrored) selfie preview.
-    const photo = fitToCanvas(video, w, h, facing === 'user');
+    const mirror = facing === 'user';
+    // Grab the preview frame now, in case the full-resolution still isn't available.
+    const frame = fitToCanvas(video, w, h, mirror);
     const posed = challenge;
     sounds.shutter();
     flash.hidden = false;
     flash.style.animation = 'none';
     void flash.offsetWidth;
     flash.style.animation = '';
-    window.setTimeout(() => {
-      flash.hidden = true;
-      close();
-      onPhoto(photo, posed);
-    }, 250);
+    window.setTimeout(() => (flash.hidden = true), 250);
+    const still = await fullResolutionPhoto(track, mirror);
+    if (mine !== session) return;
+    showReview(still ?? frame, posed);
   }
 
   $('camera-open').addEventListener('click', open);
   $('camera-close').addEventListener('click', close);
+
+  useButton.addEventListener('click', () => {
+    if (!review) return;
+    const { photo, posed } = review;
+    close();
+    onPhoto(photo, posed);
+  });
+
+  $('camera-retake').addEventListener('click', () => {
+    sounds.pop();
+    hideReview();
+    cancelCountdown();
+    if (stream) void video.play();
+    else void start();
+    shutter.focus();
+  });
 
   shutter.addEventListener('click', () => {
     if (counting || !stream) return;
@@ -197,15 +239,48 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   });
 
   // Don't keep the camera (and its light) on when the tab is in the background.
+  // A photo waiting for review is kept; "Tirar outra" turns the camera back on.
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && !overlay.hidden) close();
+    if (!document.hidden || overlay.hidden) return;
+    if (review) {
+      session++;
+      stopStream();
+    } else {
+      close();
+    }
   });
+}
+
+/** The parts of ImageCapture we use (not in every browser, nor in TypeScript's DOM types). */
+type ImageCaptureCtor = new (track: MediaStreamTrack) => { takePhoto(): Promise<Blob> };
+
+/**
+ * A still at the camera's full resolution (sharper than a video frame) where the
+ * browser supports ImageCapture, e.g. Android Chrome. Null if it isn't available or fails.
+ */
+async function fullResolutionPhoto(track: MediaStreamTrack, mirror: boolean): Promise<HTMLCanvasElement | null> {
+  const ImageCapture = (window as unknown as { ImageCapture?: ImageCaptureCtor }).ImageCapture;
+  if (!ImageCapture) return null;
+  try {
+    const blob = await Promise.race([
+      new ImageCapture(track).takePhoto(),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500)),
+    ]);
+    const bitmap = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+    try {
+      return fitToCanvas(bitmap, bitmap.width, bitmap.height, mirror);
+    } finally {
+      bitmap.close();
+    }
+  } catch {
+    return null;
+  }
 }
 
 /** A friendly PT-BR message for a getUserMedia failure. */
 export function cameraError(err: unknown): string {
   const name = (err as { name?: string })?.name;
-  const tail = ' Você ainda pode usar o botão "Enviar foto".';
+  const tail = ' Você ainda pode usar o botão "Escolher foto".';
   switch (name) {
     case 'NotAllowedError':
     case 'SecurityError':

@@ -5,10 +5,9 @@ in vec2 aPos;
 in vec2 aUv;
 uniform vec2 uScale;
 uniform vec2 uOffset;
-uniform float uFlipX;
 out vec2 vUv;
 void main() {
-  vUv = vec2(mix(aUv.x, 1.0 - aUv.x, uFlipX), aUv.y);
+  vUv = aUv;
   gl_Position = vec4(aPos * uScale + uOffset, 0.0, 1.0);
 }`;
 
@@ -39,10 +38,7 @@ export class Renderer {
   private readonly texture: WebGLTexture;
   private readonly uScale: WebGLUniformLocation;
   private readonly uOffset: WebGLUniformLocation;
-  private readonly uFlipX: WebGLUniformLocation;
   private indexCount = 0;
-  /** Show the texture flipped sideways (the live selfie camera, like a mirror). */
-  mirrored = false;
 
   constructor(readonly canvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl2', {
@@ -56,7 +52,6 @@ export class Renderer {
     this.program = createProgram(gl, VERTEX, FRAGMENT);
     this.uScale = gl.getUniformLocation(this.program, 'uScale')!;
     this.uOffset = gl.getUniformLocation(this.program, 'uOffset')!;
-    this.uFlipX = gl.getUniformLocation(this.program, 'uFlipX')!;
 
     this.vao = gl.createVertexArray()!;
     this.posBuffer = gl.createBuffer()!;
@@ -77,17 +72,13 @@ export class Renderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   }
 
-  /**
-   * Upload a new texture. `live` is for video frames uploaded every tick: it skips
-   * the mipmaps, which would be too slow to rebuild each frame.
-   */
-  setImage(image: TexImageSource, live = false): void {
+  /** Upload a new texture (with mipmaps, so a zoomed-out photo stays smooth). */
+  setImage(image: TexImageSource): void {
     const gl = this.gl;
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    if (!live) gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, live ? gl.LINEAR : gl.LINEAR_MIPMAP_LINEAR);
+    gl.generateMipmap(gl.TEXTURE_2D);
   }
 
   setMesh(mesh: WarpMesh): void {
@@ -126,7 +117,6 @@ export class Renderer {
     // World units -> CSS pixels -> clip space (y flipped).
     gl.uniform2f(this.uScale, (2 * layout.scale) / cw, (-2 * layout.scale) / ch);
     gl.uniform2f(this.uOffset, (2 * layout.offsetX) / cw - 1, 1 - (2 * layout.offsetY) / ch);
-    gl.uniform1f(this.uFlipX, this.mirrored ? 1 : 0);
 
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);

@@ -6,7 +6,7 @@ export const pick = <T>(list: readonly T[]): T => list[Math.floor(Math.random() 
 
 /** Dica no rodapé, sorteada a cada vez que a página abre. */
 export const HINTS = [
-  'Arraste a cara para esticar. Tire uma foto ou envie a sua.',
+  'Arraste a cara para esticar. Toque em 📸 Nova foto para trocar.',
   'Arraste para esticar. Efeito colateral: crise de riso.',
   'Puxe a cara à vontade. Nenhum rosto foi ferido neste app.',
   'Estica e puxa. Seu cirurgião plástico odeia esse truque.',
@@ -141,19 +141,15 @@ export const SWAP_CAPTIONS = [
 /** Quando as cabeças voltam pro lugar. */
 export const SWAP_BACK_CAPTIONS = ['Tudo de volta ao normal. Será? 🤔', 'Cada cabeça no seu lugar. Ufa! 😮‍💨'];
 
+/** Quando a foto tem mais de um rosto. `{n}` vira o número de rostos. */
+export const GROUP_SUGGEST_HINTS = [
+  'Achei {n} rostos! Toque em 👥 Turma para zoar todo mundo.',
+  '{n} vítimas na foto! 😈 Toque em 👥 Turma.',
+  'Foto em grupo? Toque em 👥 Turma e ninguém escapa! 🎡',
+];
+
 /** Cabo de guerra: dois dedos puxando a mesma cara. */
 export const TUG_START = ['Cabo de guerra! Puxa! 🪢', 'Quem puxa mais forte? 💪', 'Valendo! Puxa, puxa! 🪢'];
 export const TUG_LEFT_WINS = ['Vitória do lado esquerdo! 🏆⬅️', 'O lado esquerdo levou a cara! ⬅️', 'Esquerda campeã! 💪⬅️'];
 export const TUG_RIGHT_WINS = ['Vitória do lado direito! ➡️🏆', 'O lado direito levou a cara! ➡️', 'Direita campeã! ➡️💪'];
 export const TUG_DRAW = ['Empate! A cara ficou no meio. 🤝', 'Empatou! Ninguém leva a cara. 🤝'];
-
-/** Espelho maluco: câmera ao vivo. */
-export const MIRROR_CAPTIONS = [
-  'Espelho, espelho meu… 🪞',
-  'Ao vivo! Puxa a própria cara! 🪞',
-  'Isso é você. Ao vivo. Sinto muito. 😂',
-  'Espelho de parque de diversões! 🎢',
-];
-
-/** Quando congela o espelho. */
-export const MIRROR_FREEZE_CAPTIONS = ['Congelou! 🧊 Agora pode salvar.', 'Fica assim pra sempre. 🧊', 'Clique! Essa vai pro álbum. 🧊'];

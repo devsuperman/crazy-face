@@ -112,15 +112,6 @@ body {
   cursor: grabbing;
 }
 
-/* Feeds the live mirror. Kept in the page (some phones only decode visible videos), but unseen. */
-.offscreen {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .brush {
   position: absolute;
   top: 0;
@@ -145,7 +136,8 @@ body {
 }
 
 .drop {
-  position: absolute;
+  position: fixed;
+  z-index: 15;
   inset: 12px;
   display: grid;
   place-items: center;
@@ -305,6 +297,96 @@ body {
   }
 }
 
+/* --- Start screen: take or pick a photo first --- */
+
+.start {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 79, 139, 0.18), transparent 60%),
+    var(--bg);
+}
+
+.start-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: min(100%, 420px);
+  text-align: center;
+}
+
+.start-emoji {
+  margin: 0;
+  font-size: 4.5rem;
+  line-height: 1;
+  animation: start-wobble 2.4s ease-in-out infinite;
+}
+
+@keyframes start-wobble {
+  0%,
+  100% {
+    transform: rotate(-8deg) scale(1);
+  }
+  50% {
+    transform: rotate(8deg) scale(1.08, 0.94);
+  }
+}
+
+.start-title {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.start-text,
+.start-note {
+  margin: 0;
+  color: var(--muted);
+}
+
+.start-note {
+  font-size: 0.8rem;
+}
+
+.start-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.button.big {
+  padding: 14px 20px;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.link {
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .start-emoji {
+    animation: none;
+  }
+}
+
 /* --- Camera ("Tirar foto") --- */
 
 .camera {
@@ -412,6 +494,50 @@ body {
   }
 }
 
+/* "Ficou boa?": the photo waits here before it's used. */
+.camera-review {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+
+.review-photo {
+  position: absolute;
+  inset: 0;
+}
+
+.review-photo canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.review-title {
+  position: absolute;
+  z-index: 1;
+  top: calc(16px + env(safe-area-inset-top));
+  left: 50%;
+  margin: 0;
+  padding: 8px 18px;
+  border-radius: 14px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 800;
+  transform: translateX(-50%);
+  animation: caption-in 0.35s ease;
+}
+
+.camera-review .camera-bar {
+  gap: 12px;
+}
+
+.camera.reviewing > .camera-bar,
+.camera.reviewing > .challenge-bar {
+  display: none;
+}
+
 /* 😜 Desafio de pose */
 .challenge-bar {
   position: absolute;
@@ -491,6 +617,28 @@ body {
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 600;
+}
+
+/* More than one face in the photo: 👥 Turma calls for attention. */
+.button.chip.pulse {
+  animation: chip-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes chip-pulse {
+  from {
+    box-shadow: 0 0 0 0 rgba(255, 79, 139, 0.6);
+  }
+  to {
+    box-shadow: 0 0 0 7px rgba(255, 79, 139, 0);
+    transform: scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button.chip.pulse {
+    animation: none;
+    background: rgba(255, 79, 139, 0.25);
+  }
 }
 
 .button.chip:disabled {

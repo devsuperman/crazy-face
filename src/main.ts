@@ -1,15 +1,16 @@
 import './style.css';
 import { drawDefaultFace, loadImageFile } from './image';
 import { Renderer, type Layout } from './renderer';
-import { WarpMesh, type EffectKind } from './warp';
+import { WarpMesh, type EffectKind, type EffectTarget } from './warp';
+import { detectFaces, preloadFaceDetector } from './faces';
 import { Sounds } from './sound';
 import { setupCamera } from './camera';
 import { setupGroup } from './group';
-import { setupMirror } from './mirror';
 import { setupRecorder } from './recorder';
 import {
   BIG_CAPTIONS,
   EFFECT_CAPTIONS,
+  GROUP_SUGGEST_HINTS,
   HINTS,
   MEDIUM_CAPTIONS,
   OUCH_LINES,
@@ -34,9 +35,11 @@ const jellyInput = $<HTMLInputElement>('jelly');
 const muteButton = $<HTMLButtonElement>('mute');
 const caption = $<HTMLParagraphElement>('caption');
 const bubble = $<HTMLDivElement>('bubble');
+const hint = $<HTMLParagraphElement>('hint');
+const groupButton = $<HTMLButtonElement>('group-open');
 
 const sounds = new Sounds();
-$('hint').textContent = pick(HINTS);
+hint.textContent = pick(HINTS);
 
 let renderer: Renderer;
 try {
@@ -61,37 +64,89 @@ const group = setupGroup({
   showCaption,
   getPhoto: () => photo,
   showTexture: (image) => renderer.setImage(image),
-  // Turma works on a still photo: freeze the live mirror first.
-  onOpen: () => mirror.stop(true),
   onEffects: (seconds) => {
     effectBusyUntil = Math.max(effectBusyUntil, performance.now() / 1000 + seconds);
   },
 });
 
-const mirror = setupMirror({
-  sounds,
-  showCaption,
-  onStart: (video) => {
-    renderer.mirrored = true;
-    renderer.setImage(video, true);
-    newMesh(video.videoHeight / video.videoWidth);
-  },
-  onStop: (frame) => {
-    renderer.mirrored = false;
-    if (!frame) return;
-    // Keep the current warp: only the texture changes, to the frozen (already mirrored) frame.
-    photo = frame;
-    renderer.setImage(frame);
-  },
-});
-
-/** Load a new photo: the single entry point for files, the camera and the default face. */
-function setImage(image: HTMLCanvasElement): void {
-  mirror.stop(false);
+/**
+ * Load a new photo: the single entry point for files, the camera and the default face.
+ * `findFaces` looks for the main face to aim the effect buttons at.
+ */
+function setImage(image: HTMLCanvasElement, findFaces = true): void {
   photo = image;
   renderer.setImage(image);
   newMesh(image.height / image.width);
+  mainFace = undefined;
+  groupButton.classList.remove('pulse');
+  hint.textContent = pick(HINTS);
+  facesReady = findFaces ? findMainFace(image) : Promise.resolve();
 }
+
+// --- The main face: effect buttons aim at it instead of the whole photo ---
+
+/** The biggest face in the current photo, once found. */
+let mainFace: EffectTarget | undefined;
+/** Resolves when the search for `mainFace` is over (found or not). */
+let facesReady: Promise<void> = Promise.resolve();
+
+async function findMainFace(image: HTMLCanvasElement): Promise<void> {
+  let found: EffectTarget[] = [];
+  try {
+    found = await detectFaces(image, 6, { quick: true });
+  } catch {
+    // No detector (offline, old browser): effects keep working on the whole photo.
+  }
+  if (image !== photo) return; // a newer photo arrived meanwhile
+  mainFace = found[0];
+  if (found.length >= 2 && !group.active) {
+    hint.textContent = pick(GROUP_SUGGEST_HINTS).replace('{n}', String(found.length));
+    groupButton.classList.add('pulse');
+  }
+}
+
+/** Wait (up to `ms`) for the main face of `image`; false if the photo changed meanwhile. */
+async function waitForFace(image: HTMLCanvasElement, ms: number): Promise<boolean> {
+  await Promise.race([facesReady, new Promise((r) => setTimeout(r, ms))]);
+  return image === photo;
+}
+
+// Start downloading the detector as soon as a photo is on its way.
+$('camera-open').addEventListener('click', preloadFaceDetector);
+fileInput.addEventListener('click', preloadFaceDetector);
+groupButton.addEventListener('click', () => groupButton.classList.remove('pulse'));
+
+// --- Two screens: the start screen (take or pick a photo), then the editor ---
+
+const startScreen = $<HTMLElement>('start');
+const startBack = $<HTMLButtonElement>('start-back');
+const editor = [document.querySelector<HTMLElement>('.toolbar')!, stage];
+
+function showStart(): void {
+  startScreen.hidden = false;
+  for (const el of editor) el.inert = true;
+  $<HTMLButtonElement>('camera-open').focus();
+}
+
+function showEditor(): void {
+  startScreen.hidden = true;
+  for (const el of editor) el.inert = false;
+  // From now on there is a photo to go back to.
+  startBack.hidden = false;
+}
+
+$('new-photo').addEventListener('click', () => {
+  sounds.unlock();
+  showStart();
+});
+startBack.addEventListener('click', showEditor);
+$('start-sample').addEventListener('click', () => {
+  sounds.unlock();
+  // The cartoon face fills the picture: whole-image effects already fit it.
+  setImage(drawDefaultFace(), false);
+  showEditor();
+  showCaption(pick(PHOTO_CAPTIONS));
+});
 
 function newMesh(aspect: number): void {
   mesh = new WarpMesh(aspect);
@@ -285,6 +340,7 @@ async function useFile(file: File | undefined | null): Promise<void> {
   if (!file || !file.type.startsWith('image/')) return;
   try {
     setImage(await loadImageFile(file));
+    showEditor();
   } catch {
     alert('Ops! Não consegui abrir essa imagem.');
   }
@@ -303,14 +359,17 @@ cameraFallback.addEventListener('change', () => {
 
 setupRecorder({ canvas, sounds, showCaption });
 
-setupCamera((photo, challenge) => {
-  setImage(photo);
+setupCamera((shot, challenge) => {
+  setImage(shot);
+  showEditor();
   showCaption(pick(PHOTO_CAPTIONS));
-  // Desafio de pose: show the photo for a moment, then play the matching effect.
-  if (challenge) window.setTimeout(() => playPreset(challenge.effect, challenge.caption), 900);
+  // Desafio de pose: show the photo for a moment, then play the matching effect on the face.
+  if (challenge) {
+    window.setTimeout(async () => {
+      if (await waitForFace(shot, 1500)) playPreset(challenge.effect, challenge.caption);
+    }, 900);
+  }
 }, sounds);
-// Only one camera at a time: the photo camera freezes the live mirror.
-$('camera-open').addEventListener('click', () => mirror.stop(true));
 
 radiusInput.addEventListener('input', updateBrushSize);
 clayInput.addEventListener('change', () => (mesh.clay = clayInput.checked));
@@ -326,14 +385,14 @@ jellyInput.addEventListener('change', () => {
 
 // --- Silly effect buttons ---
 
-/** Play a whole-image preset with its sound and a caption (a random one unless given). */
+/** Play a preset on the main face (or the whole photo) with its sound and a caption (a random one unless given). */
 function playPreset(kind: EffectKind, text?: string): void {
   sounds.unlock();
   const now = performance.now() / 1000;
   // Ignore button-mashing while a preset is still playing.
   if (now < effectBusyUntil) return;
   effectBusyUntil = now + WarpMesh.effectDuration(kind);
-  mesh.playEffect(kind, now);
+  mesh.playEffect(kind, now, mainFace);
   sounds.effect(kind);
   showCaption(text ?? pick(EFFECT_CAPTIONS[kind]));
 }
@@ -465,11 +524,11 @@ function frame(ms: number): void {
   const now = ms / 1000;
   mesh.update(now - last, now);
   last = now;
-  const live = mirror.video;
-  if (live && live.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) renderer.setImage(live, true);
   renderer.draw(mesh, layout);
   requestAnimationFrame(frame);
 }
 
-setImage(drawDefaultFace());
+// The cartoon face waits behind the start screen until a photo arrives.
+setImage(drawDefaultFace(), false);
+showStart();
 requestAnimationFrame(frame);
