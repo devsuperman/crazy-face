@@ -2,6 +2,8 @@
 
 Upload a photo and squish, stretch and pull the face around. Let go and it wobbles back.
 
+**Live demo: https://devsuperman.github.io/crazy-face/**
+
 Runs fully in the browser (WebGL2). Photos never leave your device.
 
 ## How it works
@@ -30,4 +32,4 @@ The workflow in `.github/workflows/deploy.yml` builds and deploys on every push 
 
 One-time setup: in the repository go to **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**.
 
-The site will be at `https://<user>.github.io/crazy-face/`.
+The site is published at https://devsuperman.github.io/crazy-face/.
