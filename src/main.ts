@@ -190,7 +190,7 @@ async function useFile(file: File | undefined | null): Promise<void> {
   try {
     setImage(await loadImageFile(file));
   } catch {
-    alert('Sorry, that image could not be opened.');
+    alert('Ops! Não consegui abrir essa imagem.');
   }
 }
 
@@ -237,7 +237,7 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('[data-effect]
 
 function updateMuteButton(): void {
   muteButton.textContent = sounds.muted ? '🔇' : '🔊';
-  const label = sounds.muted ? 'Unmute sounds' : 'Mute sounds';
+  const label = sounds.muted ? 'Ligar sons' : 'Desligar sons';
   muteButton.title = label;
   muteButton.setAttribute('aria-label', label);
 }

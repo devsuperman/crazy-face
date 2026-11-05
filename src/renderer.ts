@@ -46,7 +46,7 @@ export class Renderer {
       premultipliedAlpha: false,
       preserveDrawingBuffer: true, // lets us export the canvas as PNG
     });
-    if (!gl) throw new Error('WebGL2 is not supported in this browser.');
+    if (!gl) throw new Error('Seu navegador não suporta WebGL2. Tente um navegador mais recente.');
     this.gl = gl;
 
     this.program = createProgram(gl, VERTEX, FRAGMENT);
