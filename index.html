@@ -11,6 +11,7 @@
       <h1>Crazy Face</h1>
       <div class="controls">
         <button id="new-photo" class="button primary" type="button">📸 Nova foto</button>
+        <button id="crop-open" class="button" type="button" aria-label="Recortar ou girar a foto" title="Recortar ou girar">✂️ Recortar</button>
         <label class="slider">
           Pincel
           <input id="radius" type="range" min="0.05" max="0.45" step="0.01" value="0.18" />
@@ -93,6 +94,7 @@
       <div id="camera-review" class="camera-review" hidden>
         <p class="review-title">Ficou boa? 😎</p>
         <button id="camera-beauty" class="button chip review-beauty" type="button" aria-pressed="true">✨ Com luz e beleza</button>
+        <button id="camera-crop" class="button chip review-crop" type="button" aria-label="Recortar ou girar a foto">✂️ Recortar</button>
         <div id="camera-review-photo" class="review-photo"></div>
         <div class="camera-bar">
           <button id="camera-retake" class="button big" type="button">🔁 Tirar outra</button>
@@ -104,6 +106,39 @@
         <button id="camera-shutter" class="shutter" type="button" aria-label="Tirar foto (contagem de 3 segundos)"></button>
         <button id="camera-flip" class="button icon round" type="button" aria-label="Trocar câmera" title="Trocar câmera">🔄</button>
         <button id="camera-lamp" class="button icon round" type="button" aria-label="Ligar luz" title="Ligar luz" aria-pressed="false" hidden>💡</button>
+      </div>
+    </div>
+
+    <div id="crop" class="crop" role="dialog" aria-modal="true" aria-labelledby="crop-title" hidden>
+      <p id="crop-title" class="crop-title">✂️ Recortar</p>
+      <div id="crop-area" class="crop-area">
+        <div id="crop-frame" class="crop-frame">
+          <canvas id="crop-canvas"></canvas>
+          <div id="crop-box" class="crop-box">
+            <span class="crop-handle" data-corner="nw"></span>
+            <span class="crop-handle" data-corner="ne"></span>
+            <span class="crop-handle" data-corner="sw"></span>
+            <span class="crop-handle" data-corner="se"></span>
+          </div>
+        </div>
+      </div>
+      <div class="crop-tools">
+        <div class="crop-ratios" role="group" aria-label="Formato do recorte">
+          <button class="button chip" type="button" data-ratio="free" aria-pressed="true">Livre</button>
+          <button class="button chip" type="button" data-ratio="1:1" aria-pressed="false">⬜ 1:1</button>
+          <button class="button chip" type="button" data-ratio="3:4" aria-pressed="false">3:4</button>
+          <button class="button chip" type="button" data-ratio="4:3" aria-pressed="false">4:3</button>
+          <button class="button chip" type="button" data-ratio="9:16" aria-pressed="false">📱 9:16</button>
+        </div>
+        <div class="crop-turns">
+          <button id="crop-left" class="button icon" type="button" aria-label="Girar para a esquerda" title="Girar para a esquerda">↺</button>
+          <button id="crop-right" class="button icon" type="button" aria-label="Girar para a direita" title="Girar para a direita">↻</button>
+          <button id="crop-reset" class="button" type="button">Foto inteira</button>
+        </div>
+      </div>
+      <div class="crop-actions">
+        <button id="crop-cancel" class="button big" type="button">Cancelar</button>
+        <button id="crop-done" class="button primary big" type="button">✔ Pronto</button>
       </div>
     </div>
 

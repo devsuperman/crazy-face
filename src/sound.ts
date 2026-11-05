@@ -256,6 +256,12 @@ export class Sounds {
     );
   }
 
+  /** ✂️ A quick scissors "snip-snip" when a crop is done. */
+  snip(): void {
+    this.tone({ type: 'square', from: 3200, to: 1400, duration: 0.035, gain: 0.07 });
+    this.tone({ type: 'square', from: 3600, to: 1600, duration: 0.04, gain: 0.07, delay: 0.09 });
+  }
+
   /** Little "pop" for small UI moments. */
   pop(): void {
     this.tone({ from: 300, to: 900, duration: 0.08, gain: 0.15 });

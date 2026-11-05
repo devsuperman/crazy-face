@@ -1,6 +1,6 @@
 # Next steps
 
-A handoff note so work can continue in a new chat. Last updated: 2026-11-05 (🐹 Bochechas lens effect).
+A handoff note so work can continue in a new chat. Last updated: 2026-11-05 (✂️ Recortar: crop and rotate).
 
 ## Where things stand
 
@@ -25,6 +25,7 @@ Everything is on `main` (live on GitHub Pages): PT-BR UI, a start screen (take o
 | `src/camera.ts` | 📸 Camera overlay: pose challenge, countdown, flash, switching cameras, "Ficou boa?" review, full-resolution still, fallback to `<input capture>` |
 | `src/recorder.ts` | 🎬 Records canvas + sounds with `MediaRecorder`, then shares or downloads the clip |
 | `src/faces.ts` | 🤖 Face detection (MediaPipe BlazeFace, lazy-loaded, multi-scale windows) |
+| `src/crop.ts` | ✂️ Recortar: crop dialog (free or fixed ratio, quarter turns), `applyCrop` |
 | `src/image.ts` | Loading images, `fitToCanvas` (with mirroring), the default cartoon face |
 | `src/sound.ts` | All sounds |
 | `src/jokes.ts` | All captions and hints (PT-BR) |
@@ -63,7 +64,12 @@ Done: `src/beauty.ts` fixes the light (levels, gamma, white balance, colour deno
 - Time of `enhancePhoto` on a 2048 px photo on a mid-range phone (it runs when the review opens and again when faces are found).
 - Idea: an intensity choice (Leve / Médio / Turbo) instead of on/off.
 
-### 4. Ideas and polish
+### 4. ✂️ Recortar (crop and rotate)
+Done: optional ✂️ in the toolbar and in the camera's "Ficou boa?" review. Free box or Livre / 1:1 / 3:4 / 4:3 / 9:16, ↺/↻ quarter turns, "Foto inteira". The crop is applied before `setImage()`; the uncropped photo is kept, so cropping again can grow back (warps reset). To check on phones:
+- Dragging the corners with a thumb (44 px targets) and the dialog on small screens and with the notch.
+- Ideas: fine straightening (±15°), pinch to zoom the box, and a starting box around the detected faces.
+
+### 5. Ideas and polish
 - [ ] 🎬 Optionally start recording automatically when 🎭 Um efeito pra cada runs.
 - [ ] 🎬/💾 Draw the current caption into clips and saved PNGs.
 - [ ] 🤖 Detection uses BlazeFace short-range, which is tuned for selfie distance; the sliding windows help, but tiny or side-on faces can still be missed, and there's no manual fallback (by design).

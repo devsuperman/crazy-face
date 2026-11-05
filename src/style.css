@@ -783,3 +783,143 @@ body {
   border-color: #ffd34d;
   color: #ffd34d;
 }
+
+/* --- ✂️ Recortar --- */
+
+.review-crop {
+  position: absolute;
+  z-index: 1;
+  top: calc(112px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.crop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+  background: #000;
+  color: var(--text);
+}
+
+.crop[hidden] {
+  display: none;
+}
+
+.crop-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.crop-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.crop-frame {
+  position: relative;
+  touch-action: none;
+  user-select: none;
+}
+
+.crop-frame canvas {
+  display: block;
+}
+
+.crop-box {
+  position: absolute;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.6);
+  cursor: move;
+}
+
+/* Rule-of-thirds lines. */
+.crop-box::before,
+.crop-box::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  border: 0 solid rgba(255, 255, 255, 0.45);
+}
+
+.crop-box::before {
+  inset: 0 33.33%;
+  border-left-width: 1px;
+  border-right-width: 1px;
+}
+
+.crop-box::after {
+  inset: 33.33% 0;
+  border-top-width: 1px;
+  border-bottom-width: 1px;
+}
+
+/* 44 px touch targets with a small visible square in the corner. */
+.crop-handle {
+  position: absolute;
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  margin: -22px;
+}
+
+.crop-handle::after {
+  content: '';
+  position: absolute;
+  inset: 13px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.crop-handle[data-corner='nw'] {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+.crop-handle[data-corner='ne'] {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+.crop-handle[data-corner='sw'] {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+}
+.crop-handle[data-corner='se'] {
+  bottom: 0;
+  right: 0;
+  cursor: nwse-resize;
+}
+
+.crop-tools,
+.crop-ratios,
+.crop-turns,
+.crop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.crop-tools {
+  flex-direction: column;
+  align-items: center;
+}
+
+.crop-ratios .button.chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}

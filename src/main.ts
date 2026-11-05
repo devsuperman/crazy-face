@@ -6,11 +6,13 @@ import { detectFaces, preloadFaceDetector } from './faces';
 import { Sounds } from './sound';
 import { setupCamera } from './camera';
 import { setupRecorder } from './recorder';
+import { FULL_CROP, applyCrop, sameCrop, setupCropper, type Framing } from './crop';
 import { enhancePhoto, isDark, measureTone, type Tone } from './beauty';
 import {
   BEAUTY_OFF_CAPTIONS,
   BEAUTY_ON_CAPTIONS,
   BIG_CAPTIONS,
+  CROP_CAPTIONS,
   EFFECT_CAPTIONS,
   EVERYONE_CAPTIONS,
   GROUP_EFFECT_CAPTIONS,
@@ -44,6 +46,7 @@ const muteButton = $<HTMLButtonElement>('mute');
 const caption = $<HTMLParagraphElement>('caption');
 const bubble = $<HTMLDivElement>('bubble');
 const hint = $<HTMLParagraphElement>('hint');
+const cropButton = $<HTMLButtonElement>('crop-open');
 
 const sounds = new Sounds();
 hint.textContent = pick(HINTS);
@@ -60,6 +63,8 @@ let mesh: WarpMesh;
 /** The photo being warped. */
 let photo: HTMLCanvasElement;
 let layout: Layout = { offsetX: 0, offsetY: 0, scale: 1 };
+/** `photo` before ✂️ Recortar, and how it was cropped (so a new crop can grow back). */
+let photoFraming: Framing;
 /** Presets ignore clicks until this time (seconds), so they don't pile up. */
 let effectBusyUntil = 0;
 
@@ -70,13 +75,21 @@ interface PhotoOptions {
   beauty?: boolean | 'auto';
   /** The photo with the light already fixed (the camera's review made it). */
   lit?: HTMLCanvasElement | null;
+  /** The uncropped photo and its ✂️ crop (default: `image` is uncropped). */
+  framing?: Framing;
 }
 
 /**
  * Load a new photo: the single entry point for files, the camera and the default face.
  */
-function setImage(image: HTMLCanvasElement, { findFaces = true, beauty = 'auto', lit = null }: PhotoOptions = {}): void {
+function setImage(
+  image: HTMLCanvasElement,
+  { findFaces = true, beauty = 'auto', lit = null, framing }: PhotoOptions = {},
+): void {
   photo = image;
+  photoFraming = framing ?? { source: image, crop: FULL_CROP };
+  // ✂️ is for photos; the cartoon's features are at known spots.
+  cropButton.disabled = !findFaces;
   photoTone = findFaces ? measureTone(image) : null;
   litPhoto = lit;
   beautyOn = !!photoTone && (beauty === 'auto' ? isDark(photoTone) : beauty);
@@ -417,8 +430,21 @@ cameraFallback.addEventListener('change', () => {
 
 setupRecorder({ canvas, sounds, showCaption });
 
-setupCamera((shot, challenge, lit) => {
-  setImage(shot, { beauty: !!lit, lit });
+const cropper = setupCropper(sounds);
+
+// ✂️ Recortar in the editor: crop the uncropped photo again. The mesh starts over.
+cropButton.addEventListener('click', async () => {
+  sounds.unlock();
+  sounds.pop();
+  const { source, crop: before } = photoFraming;
+  const crop = await cropper(source, before);
+  if (!crop || sameCrop(crop, before) || photoFraming.source !== source) return;
+  setImage(applyCrop(source, crop), { beauty: beautyOn, framing: { source, crop } });
+  showCaption(pick(CROP_CAPTIONS));
+});
+
+setupCamera((shot, challenge, lit, framing) => {
+  setImage(shot, { beauty: !!lit, lit, framing });
   showEditor();
   showCaption(pick(PHOTO_CAPTIONS));
   // Desafio de pose: show the photo for a moment, then play the matching effect on the face.
@@ -427,7 +453,7 @@ setupCamera((shot, challenge, lit) => {
       if (await waitForFace(shot, 1500)) void playPreset(challenge.effect, challenge.caption);
     }, 900);
   }
-}, sounds);
+}, sounds, cropper);
 
 radiusInput.addEventListener('input', updateBrushSize);
 clayInput.addEventListener('change', () => (mesh.clay = clayInput.checked));
