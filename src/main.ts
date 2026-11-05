@@ -5,11 +5,12 @@ import { WarpMesh, type EffectKind, type EffectTarget } from './warp';
 import { detectFaces, preloadFaceDetector } from './faces';
 import { Sounds } from './sound';
 import { setupCamera } from './camera';
-import { setupGroup } from './group';
 import { setupRecorder } from './recorder';
 import {
   BIG_CAPTIONS,
   EFFECT_CAPTIONS,
+  EVERYONE_CAPTIONS,
+  GROUP_EFFECT_CAPTIONS,
   GROUP_SUGGEST_HINTS,
   HINTS,
   MEDIUM_CAPTIONS,
@@ -37,7 +38,6 @@ const muteButton = $<HTMLButtonElement>('mute');
 const caption = $<HTMLParagraphElement>('caption');
 const bubble = $<HTMLDivElement>('bubble');
 const hint = $<HTMLParagraphElement>('hint');
-const groupButton = $<HTMLButtonElement>('group-open');
 
 const sounds = new Sounds();
 hint.textContent = pick(HINTS);
@@ -51,68 +51,70 @@ try {
 }
 
 let mesh: WarpMesh;
-/** The photo being warped (before any head swap). */
+/** The photo being warped. */
 let photo: HTMLCanvasElement;
 let layout: Layout = { offsetX: 0, offsetY: 0, scale: 1 };
 /** Presets ignore clicks until this time (seconds), so they don't pile up. */
 let effectBusyUntil = 0;
 
-const group = setupGroup({
-  getMesh: () => mesh,
-  getLayout: () => layout,
-  toWorld,
-  sounds,
-  showCaption,
-  getPhoto: () => photo,
-  showTexture: (image) => renderer.setImage(image),
-  onEffects: (seconds) => {
-    effectBusyUntil = Math.max(effectBusyUntil, performance.now() / 1000 + seconds);
-  },
-});
-
 /**
  * Load a new photo: the single entry point for files, the camera and the default face.
- * `findFaces` looks for the main face to aim the effect buttons at.
+ * `findFaces` looks for the faces the effect buttons aim at.
  */
 function setImage(image: HTMLCanvasElement, findFaces = true): void {
   photo = image;
   renderer.setImage(image);
   newMesh(image.height / image.width);
-  mainFace = undefined;
+  photoFaces = [];
   lensFace = undefined;
-  groupButton.classList.remove('pulse');
   hint.textContent = pick(HINTS);
-  facesReady = findFaces ? findMainFace(image) : Promise.resolve();
+  facesReady = findFaces ? searchFaces(image) : Promise.resolve();
 }
 
-// --- The main face: effect buttons aim at it instead of the whole photo ---
+// --- The faces: effect buttons aim at every face instead of the whole photo ---
 
-/** The biggest face in the current photo, once found. */
-let mainFace: EffectTarget | undefined;
+/** The faces in the current photo, biggest first, once found. */
+let photoFaces: EffectTarget[] = [];
 /**
  * Where 👀/👃 aim when there's no detected face: the cartoon's known features.
  * (Mesh presets keep working on the whole cartoon, which fills the picture.)
  */
 let lensFace: EffectTarget | undefined;
-/** Resolves when the search for `mainFace` is over (found or not). */
+/** Resolves when the quick face search is over (found or not). */
 let facesReady: Promise<void> = Promise.resolve();
 
-async function findMainFace(image: HTMLCanvasElement): Promise<void> {
-  let found: EffectTarget[] = [];
-  try {
-    found = await detectFaces(image, 6, { quick: true });
-  } catch {
-    // No detector (offline, old browser): effects keep working on the whole photo.
-  }
-  if (image !== photo) return; // a newer photo arrived meanwhile
-  mainFace = found[0];
-  if (found.length >= 2 && !group.active) {
-    hint.textContent = pick(GROUP_SUGGEST_HINTS).replace('{n}', String(found.length));
-    groupButton.classList.add('pulse');
-  }
+const MAX_FACES = 6;
+
+/**
+ * Two passes: a quick one (a few detector runs, fine for selfies) so the buttons
+ * aim at faces right away, then a full one in the background that also finds the
+ * small faces in a group photo. Resolves after the quick pass.
+ */
+async function searchFaces(image: HTMLCanvasElement): Promise<void> {
+  if (!(await useFaces(image, { quick: true }))) return;
+  void useFaces(image, { quick: false });
 }
 
-/** Wait (up to `ms`) for the main face of `image`; false if the photo changed meanwhile. */
+/** Run one detection pass and keep its faces if it found at least as many. False if it failed or the photo changed. */
+async function useFaces(image: HTMLCanvasElement, options: { quick: boolean }): Promise<boolean> {
+  let found: EffectTarget[];
+  try {
+    found = await detectFaces(image, MAX_FACES, options);
+  } catch {
+    // No detector (offline, old browser): effects keep working on the whole photo.
+    return false;
+  }
+  if (image !== photo) return false; // a newer photo arrived meanwhile
+  if (found.length < photoFaces.length) return true;
+  const more = found.length > photoFaces.length;
+  photoFaces = found;
+  if (more && found.length >= 2) {
+    hint.textContent = pick(GROUP_SUGGEST_HINTS).replace('{n}', String(found.length));
+  }
+  return true;
+}
+
+/** Wait (up to `ms`) for the faces of `image`; false if the photo changed meanwhile. */
 async function waitForFace(image: HTMLCanvasElement, ms: number): Promise<boolean> {
   await Promise.race([facesReady, new Promise((r) => setTimeout(r, ms))]);
   return image === photo;
@@ -121,7 +123,6 @@ async function waitForFace(image: HTMLCanvasElement, ms: number): Promise<boolea
 // Start downloading the detector as soon as a photo is on its way.
 $('camera-open').addEventListener('click', preloadFaceDetector);
 fileInput.addEventListener('click', preloadFaceDetector);
-groupButton.addEventListener('click', () => groupButton.classList.remove('pulse'));
 
 // --- Two screens: the start screen (take or pick a photo), then the editor ---
 
@@ -159,7 +160,6 @@ function newMesh(aspect: number): void {
   mesh.clay = clayInput.checked;
   mesh.jelly = jellyInput.checked;
   renderer.setMesh(mesh);
-  group.clear();
   updateLayout();
 }
 
@@ -176,7 +176,6 @@ function updateLayout(): void {
     offsetY: (h - scale * mesh.aspect) / 2,
   };
   updateBrushSize();
-  group.relayout();
 }
 
 function toWorld(e: PointerEvent): [number, number] {
@@ -285,10 +284,6 @@ const currentStretch = () => Math.max(0, ...[...drags.values()].map((d) => d.str
 canvas.addEventListener('pointerdown', (e) => {
   sounds.unlock();
   void enableShake();
-  if (group.active) {
-    group.pointerDown(e);
-    return;
-  }
   canvas.setPointerCapture(e.pointerId);
   const [x, y] = toWorld(e);
   mesh.grab(e.pointerId, x, y, brushRadius());
@@ -298,11 +293,6 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 
 canvas.addEventListener('pointermove', (e) => {
-  if (group.active) {
-    brush.hidden = true;
-    group.pointerMove(e);
-    return;
-  }
   if (e.pointerType === 'mouse') {
     brush.hidden = false;
     brush.style.left = `${e.offsetX}px`;
@@ -323,7 +313,6 @@ canvas.addEventListener('pointermove', (e) => {
 });
 
 const endPointer = (e: PointerEvent) => {
-  if (group.pointerUp(e)) return;
   mesh.release(e.pointerId);
   if (tug && (tug.left === e.pointerId || tug.right === e.pointerId)) finishTug();
   const drag = drags.get(e.pointerId);
@@ -392,36 +381,75 @@ jellyInput.addEventListener('change', () => {
 // --- Silly effect buttons ---
 
 const needsFace = (kind: EffectKind) => kind === 'eyes' || kind === 'nose';
+const KINDS: EffectKind[] = ['balloon', 'fish', 'melt', 'eyes', 'nose'];
+/** Gap between the sounds when several faces get an effect (ms). */
+const SOUND_STAGGER = 150;
 
-/** Play a preset on the main face (or the whole photo) with its sound and a caption (a random one unless given). */
+/**
+ * What a preset aims at: every face found, else the whole photo (`undefined`),
+ * or the cartoon's features for 👀/👃. Null if there's nothing to aim at (it says so).
+ */
+async function targetsFor(kind: EffectKind): Promise<(EffectTarget | undefined)[] | null> {
+  if (photoFaces.length) return photoFaces;
+  if (!needsFace(kind)) return [undefined];
+  if (lensFace) return [lensFace];
+  // 👀/👃 need eyes and a nose: give the face search a moment to finish.
+  const image = photo;
+  effectBusyUntil = Infinity;
+  const same = await waitForFace(image, 1500);
+  effectBusyUntil = 0;
+  if (!same) return null;
+  if (photoFaces.length) return photoFaces;
+  showCaption(pick(NO_FACE_CAPTIONS));
+  return null;
+}
+
+/** Play a preset on every face (or the whole photo) with its sound and a caption (a random one unless given). */
 async function playPreset(kind: EffectKind, text?: string): Promise<void> {
   sounds.unlock();
   // Ignore button-mashing while a preset is still playing.
   if (performance.now() / 1000 < effectBusyUntil) return;
-  let target = mainFace ?? (needsFace(kind) ? lensFace : undefined);
-  if (needsFace(kind) && !target) {
-    // 👀/👃 need eyes and a nose: give the face search a moment to finish.
-    const image = photo;
-    effectBusyUntil = Infinity;
-    const same = await waitForFace(image, 1500);
-    effectBusyUntil = 0;
-    if (!same) return;
-    target = mainFace;
-    if (!target) {
-      showCaption(pick(NO_FACE_CAPTIONS));
-      return;
-    }
-  }
+  const targets = await targetsFor(kind);
+  if (!targets) return;
   const now = performance.now() / 1000;
   effectBusyUntil = now + WarpMesh.effectDuration(kind);
-  mesh.playEffect(kind, now, target);
-  sounds.effect(kind);
-  showCaption(text ?? pick(EFFECT_CAPTIONS[kind]));
+  for (const target of targets) mesh.playEffect(kind, now, target);
+  // One sound per face sounds like a crowd, but more than 3 is just noise.
+  for (let i = 0; i < Math.min(3, targets.length); i++) {
+    window.setTimeout(() => sounds.effect(kind), i * SOUND_STAGGER);
+  }
+  const captions = targets.length >= 2 ? GROUP_EFFECT_CAPTIONS[kind] : EFFECT_CAPTIONS[kind];
+  showCaption(text ?? pick(captions));
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-effect]')) {
   button.addEventListener('click', () => void playPreset(button.dataset.effect as EffectKind));
 }
+
+/** 🎭 Um efeito pra cada: every face gets a different effect at the same time. */
+function playMix(): void {
+  sounds.unlock();
+  if (performance.now() / 1000 < effectBusyUntil) return;
+  const faces = photoFaces;
+  if (faces.length < 2) {
+    // One face (or none): just a surprise effect.
+    void playPreset(pick(lensFace || faces.length ? KINDS : KINDS.filter((k) => !needsFace(k))));
+    return;
+  }
+  // Shuffle so each round looks different; with more faces than effects some repeat.
+  const kinds = [...KINDS].sort(() => Math.random() - 0.5);
+  const now = performance.now() / 1000;
+  let longest = 0;
+  faces.forEach((face, i) => {
+    const kind = kinds[i % kinds.length];
+    mesh.playEffect(kind, now, face);
+    longest = Math.max(longest, WarpMesh.effectDuration(kind));
+    window.setTimeout(() => sounds.effect(kind), i * SOUND_STAGGER);
+  });
+  effectBusyUntil = now + longest;
+  showCaption(pick(EVERYONE_CAPTIONS));
+}
+$('mix').addEventListener('click', playMix);
 
 // --- Sound toggle ---
 
@@ -479,37 +507,8 @@ $('reset').addEventListener('click', () => {
   mesh.reset(performance.now() / 1000);
 });
 
-/** The canvas as it looks now, plus the 🏆 award labels if any are showing. */
-function snapshot(): HTMLCanvasElement {
-  const labels = group.awards();
-  if (!labels.length) return canvas;
-  const out = document.createElement('canvas');
-  out.width = canvas.width;
-  out.height = canvas.height;
-  const ctx = out.getContext('2d')!;
-  ctx.drawImage(canvas, 0, 0);
-  const k = canvas.width / canvas.clientWidth; // CSS pixels -> canvas pixels
-  const font = 13 * k;
-  ctx.font = `800 ${font}px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  for (const l of labels) {
-    const x = (layout.offsetX + l.x * layout.scale) * k;
-    const y = (layout.offsetY + (l.y + l.r) * layout.scale) * k + 6 * k + font;
-    const w = ctx.measureText(l.text).width + 20 * k;
-    const h = font * 1.8;
-    ctx.fillStyle = '#ffe14f';
-    ctx.beginPath();
-    ctx.roundRect(x - w / 2, y - h / 2, w, h, h / 2);
-    ctx.fill();
-    ctx.fillStyle = '#2a2100';
-    ctx.fillText(l.text, x, y);
-  }
-  return out;
-}
-
 $('save').addEventListener('click', () => {
-  snapshot().toBlob((blob) => {
+  canvas.toBlob((blob) => {
     if (!blob) return;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);

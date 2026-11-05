@@ -232,12 +232,7 @@ export class Sounds {
     this.tone({ type: 'square', from: 1800, to: 200, duration: 0.06, gain: 0.1, delay: 0.08 });
   }
 
-  /** Roulette tick as the spotlight jumps between faces. */
-  tick(): void {
-    this.tone({ type: 'triangle', from: 1400, to: 900, duration: 0.05, gain: 0.1 });
-  }
-
-  /** "Ta-da!" when the roulette picks someone. */
+  /** "Ta-da!" when the tug of war has a winner. */
   tada(): void {
     [523, 659, 784, 1047].forEach((f, n) =>
       this.tone({ type: 'triangle', from: f, to: f, duration: n === 3 ? 0.5 : 0.14, gain: 0.14, delay: n * 0.11 }),
@@ -250,14 +245,7 @@ export class Sounds {
     this.tone({ type: 'triangle', from: 990, to: 990, duration: 0.12, gain: 0.1, delay: 0.1 });
   }
 
-  /** Whoosh for swapping heads. */
-  swap(): void {
-    this.tone({ type: 'sawtooth', from: 120, to: 900, duration: 0.25, gain: 0.06 });
-    this.tone({ type: 'sawtooth', from: 900, to: 120, duration: 0.25, gain: 0.06, delay: 0.22 });
-    this.tone({ from: 400, to: 1200, duration: 0.1, gain: 0.15, delay: 0.5 });
-  }
-
-  /** Little "pop" when a face is marked. */
+  /** Little "pop" for small UI moments. */
   pop(): void {
     this.tone({ from: 300, to: 900, duration: 0.08, gain: 0.15 });
   }
