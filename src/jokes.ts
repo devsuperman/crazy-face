@@ -47,18 +47,7 @@ export const OUCH_LINES = ['AI!', 'EI!', 'CALMA!', 'MEU ROSTO!', 'MEU NARIZ!', '
 /** Logo depois de tirar uma foto. */
 export const PHOTO_CAPTIONS = ['Xiiis! 📸', 'Que beleza… por enquanto. 😈', 'Agora começa a diversão!', 'Foto linda. Vamos estragar?'];
 
-/** Modo turma: o que a roleta diz para quem foi sorteado. */
-export const ROULETTE_CAPTIONS = [
-  'Quem paga a pizza é você! 🍕',
-  'Hoje a louça é sua! 🧽',
-  'O destino escolheu… você! 🫵',
-  'Parabéns, você pagou o mico! 🐒',
-  'Próxima rodada é por sua conta! 🍻',
-  'Você foi eleito o mais bonito. Era mentira. 😈',
-  'Sorteado para contar a piada do pavê! 🍰',
-];
-
-/** Modo turma: quando cada um ganha um efeito diferente. */
+/** 🎭 Um efeito pra cada: quando cada rosto ganha um efeito diferente. */
 export const EVERYONE_CAPTIONS = [
   'Cada um com seu estilo! 🎭',
   'Foto de família para o Natal! 🎄',
@@ -108,53 +97,24 @@ export const POSE_CHALLENGES: readonly PoseChallenge[] = [
   { prompt: 'Cara de fofoqueiro na janela! 🪟', effect: 'eyes', caption: 'Nada escapa desse olhão! 👀' },
 ];
 
-/** Modo turma: troféus engraçados, um diferente para cada rosto. */
-export const AWARDS = [
-  'Drama nível novela 🎭',
-  'Dormiu na foto 😴',
-  'Vai chorar no casamento 😭',
-  'Conta a piada do pavê 🍰',
-  'Cara de segunda-feira 📅',
-  'Some primeiro da festa 🏃',
-  'Fofoca em dia 👂',
-  'Sempre atrasa ⏰',
-  'Comeu o último salgado 🥟',
-  'Manda áudio de 5 minutos 🎙️',
-  'Ainda deve o Pix 💸',
-  'Esqueceu o aniversário 🎂',
-  'Chora em comercial de margarina 🧈',
-  'Responde "kkk" sem rir 😐',
-  'Tira foto do prato 📸',
-  'Rei do "já tô chegando" 🚗',
-];
-
-/** Quando os troféus são entregues. */
-export const AWARD_CAPTIONS = ['E o troféu vai para… 🏆', 'Premiação da turma! 🏆', 'Oscar da família! 🎬', 'Os vencedores são… 🥁'];
-
-/** Quando o app está ocupado e ignora um toque no Modo turma. */
-export const BUSY_HINTS = ['Calma! Espera a brincadeira acabar. ⏳', 'Peraí, ainda tá rolando! ⏳'];
-
-/** Modo turma: troca de cabeças. */
-export const SWAP_CAPTIONS = [
-  'Quem é quem? 🔀',
-  'Troca de cabeças! Ninguém percebeu. 🤫',
-  'Agora sim, a família está completa. 😂',
-  'Cada um com a cara do outro!',
-  'Ficou até mais bonito, né?',
-];
-
-/** Quando as cabeças voltam pro lugar. */
-export const SWAP_BACK_CAPTIONS = ['Tudo de volta ao normal. Será? 🤔', 'Cada cabeça no seu lugar. Ufa! 😮‍💨'];
-
 /** 👀/👃 sem rosto na foto para mirar. */
 export const NO_FACE_CAPTIONS = ['Cadê o rosto? Não achei. 🙈', 'Não achei ninguém nessa foto! 🔍'];
 
 /** Quando a foto tem mais de um rosto. `{n}` vira o número de rostos. */
 export const GROUP_SUGGEST_HINTS = [
-  'Achei {n} rostos! Toque em 👥 Turma para zoar todo mundo.',
-  '{n} vítimas na foto! 😈 Toque em 👥 Turma.',
-  'Foto em grupo? Toque em 👥 Turma e ninguém escapa! 🎡',
+  'Achei {n} rostos! Os efeitos pegam todo mundo. 😈',
+  '{n} vítimas na foto! 😈 Aperta um efeito e ninguém escapa.',
+  'Foto em grupo? Achei {n} rostos. Toca em 🎭 e cada um ganha o seu!',
 ];
+
+/** Legendas dos efeitos quando a foto tem várias pessoas: todo mundo leva junto. */
+export const GROUP_EFFECT_CAPTIONS = {
+  balloon: ['Cabeção pra todo mundo! 🎈', 'A turma toda de ego inflado. 🎈', 'Família cabeçuda! 🎈'],
+  fish: ['Cardume reunido! 🐟', 'Todo mundo fazendo biquinho. 🐟', 'Blub blub em coro! 🐟'],
+  melt: ['Derreteu a turma toda! 🫠', 'Churrasco ao meio-dia no Rio. 🫠', 'Ninguém aguentou o calor! 🫠'],
+  eyes: ['Todo mundo de olho! 👀', 'Arregalou a família inteira! 👀', 'Quem viu o preço da picanha? 👀'],
+  nose: ['Narigão pra todo mundo! 👃', 'A turma toda mentiu! 👃', 'Família Pinóquio reunida! 👃'],
+} as const;
 
 /** Cabo de guerra: dois dedos puxando a mesma cara. */
 export const TUG_START = ['Cabo de guerra! Puxa! 🪢', 'Quem puxa mais forte? 💪', 'Valendo! Puxa, puxa! 🪢'];
