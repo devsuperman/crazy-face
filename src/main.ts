@@ -3,12 +3,14 @@ import { drawDefaultFace, loadImageFile } from './image';
 import { Renderer, type Layout } from './renderer';
 import { WarpMesh, type EffectKind } from './warp';
 import { Sounds } from './sound';
+import { setupCamera } from './camera';
 import {
   BIG_CAPTIONS,
   EFFECT_CAPTIONS,
   HINTS,
   MEDIUM_CAPTIONS,
   OUCH_LINES,
+  PHOTO_CAPTIONS,
   pick,
 } from './jokes';
 
@@ -198,6 +200,17 @@ fileInput.addEventListener('change', () => {
   void useFile(fileInput.files?.[0]);
   fileInput.value = '';
 });
+
+const cameraFallback = $<HTMLInputElement>('camera-fallback');
+cameraFallback.addEventListener('change', () => {
+  void useFile(cameraFallback.files?.[0]);
+  cameraFallback.value = '';
+});
+
+setupCamera((photo) => {
+  setImage(photo);
+  showCaption(pick(PHOTO_CAPTIONS));
+}, sounds);
 
 radiusInput.addEventListener('input', updateBrushSize);
 clayInput.addEventListener('change', () => (mesh.clay = clayInput.checked));

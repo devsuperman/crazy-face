@@ -42,6 +42,9 @@ export const BIG_CAPTIONS = [
 /** Balão de fala quando você puxa demais. */
 export const OUCH_LINES = ['AI!', 'EI!', 'CALMA!', 'MEU ROSTO!', 'MEU NARIZ!', 'SOCORRO!', 'GROSSO!', 'PARA!'];
 
+/** Logo depois de tirar uma foto. */
+export const PHOTO_CAPTIONS = ['Xiiis! 📸', 'Que beleza… por enquanto. 😈', 'Agora começa a diversão!', 'Foto linda. Vamos estragar?'];
+
 /** Legendas de cada botão de efeito. */
 export const EFFECT_CAPTIONS = {
   balloon: ['Cabeção? Eu? 🎈', 'Ego inflado hoje.', 'Enche que cabe!'],

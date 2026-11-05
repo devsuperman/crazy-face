@@ -10,7 +10,9 @@
     <header class="toolbar">
       <h1>Crazy Face</h1>
       <div class="controls">
-        <label class="button primary">
+        <button id="camera-open" class="button primary" type="button">📸 Tirar foto</button>
+        <input id="camera-fallback" type="file" accept="image/*" capture="user" hidden />
+        <label class="button">
           <input id="file" type="file" accept="image/*" hidden />
           Enviar foto
         </label>
@@ -47,6 +49,17 @@
       <p id="hint" class="hint">Arraste a cara para esticar. Solte ou cole uma foto para usar a sua.</p>
       <div id="drop" class="drop" hidden>Solte sua foto aqui</div>
     </main>
+
+    <div id="camera" class="camera" role="dialog" aria-modal="true" aria-label="Câmera" hidden>
+      <video id="camera-video" playsinline muted></video>
+      <div id="camera-countdown" class="countdown" aria-live="assertive" hidden></div>
+      <div id="camera-flash" class="flash" hidden></div>
+      <div class="camera-bar">
+        <button id="camera-close" class="button icon round" type="button" aria-label="Fechar câmera" title="Fechar">✖</button>
+        <button id="camera-shutter" class="shutter" type="button" aria-label="Tirar foto (contagem de 3 segundos)"></button>
+        <button id="camera-flip" class="button icon round" type="button" aria-label="Trocar câmera" title="Trocar câmera">🔄</button>
+      </div>
+    </div>
 
     <script type="module" src="./src/main.ts"></script>
   </body>
