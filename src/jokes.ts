@@ -116,6 +116,20 @@ export const GROUP_EFFECT_CAPTIONS = {
   nose: ['Narigão pra todo mundo! 👃', 'A turma toda mentiu! 👃', 'Família Pinóquio reunida! 👃'],
 } as const;
 
+/** ✨ Luz e beleza: quando liga e desliga o filtro. */
+export const BEAUTY_ON_CAPTIONS = [
+  'Filtro de blogueira ativado ✨',
+  'Luz de novela das nove! 💡',
+  'Ficou até bonito… por enquanto. 😏',
+  'Pele de pêssego. Por pouco tempo. 🍑',
+  'Fotógrafo de casamento aprovou! 📸',
+];
+export const BEAUTY_OFF_CAPTIONS = [
+  'Sem filtro: a verdade nua e crua. 😬',
+  'Voltou ao natural. Corajoso! 💪',
+  'Raiz, sem filtro nenhum. 🌱',
+];
+
 /** Cabo de guerra: dois dedos puxando a mesma cara. */
 export const TUG_START = ['Cabo de guerra! Puxa! 🪢', 'Quem puxa mais forte? 💪', 'Valendo! Puxa, puxa! 🪢'];
 export const TUG_LEFT_WINS = ['Vitória do lado esquerdo! 🏆⬅️', 'O lado esquerdo levou a cara! ⬅️', 'Esquerda campeã! 💪⬅️'];
