@@ -62,6 +62,7 @@ export const EFFECT_CAPTIONS = {
   melt: ['Tá calor aqui? 🫠', 'Eu no verão do Rio.', 'Derretendo… derretendo…'],
   eyes: ['Olho grande, hein? 👀', 'Tô de olho em você. 👀', 'Viu o preço do café? 👀', 'Arregalou geral! 👀'],
   nose: ['Esse nariz tem CEP próprio! 👃', 'Fom fom! 👃', 'Mentiu, né? 👃', 'Nariz de quem sentiu cheiro de churrasco. 🍖'],
+  cheeks: ['Bochechudo! 🐹', 'Guardou comida pra depois? 🐹', 'Tá segurando o riso, né? 😤', 'Vó apertando a bochecha em 3, 2, 1… 👵'],
   jelly: ['Modo gelatina: ligado. 🍮', 'Treme, treme.'],
   shake: ['Terremoto! 📳', 'Chacoalha!'],
 } as const;
@@ -95,9 +96,10 @@ export const POSE_CHALLENGES: readonly PoseChallenge[] = [
   { prompt: 'Cara de quem viu o preço da gasolina! ⛽', effect: 'eyes', caption: 'Quanto?! 👀' },
   { prompt: 'Cara de quem sentiu cheiro de bolo saindo do forno! 🎂', effect: 'nose', caption: 'Farejou o bolo de longe! 👃' },
   { prompt: 'Cara de fofoqueiro na janela! 🪟', effect: 'eyes', caption: 'Nada escapa desse olhão! 👀' },
+  { prompt: 'Enche as bochechas de ar! 🐹', effect: 'cheeks', caption: 'Vai explodir! 🎈' },
 ];
 
-/** 👀/👃 sem rosto na foto para mirar. */
+/** 👀/👃/🐹 sem rosto na foto para mirar. */
 export const NO_FACE_CAPTIONS = ['Cadê o rosto? Não achei. 🙈', 'Não achei ninguém nessa foto! 🔍'];
 
 /** Quando a foto tem mais de um rosto. `{n}` vira o número de rostos. */
@@ -114,6 +116,7 @@ export const GROUP_EFFECT_CAPTIONS = {
   melt: ['Derreteu a turma toda! 🫠', 'Churrasco ao meio-dia no Rio. 🫠', 'Ninguém aguentou o calor! 🫠'],
   eyes: ['Todo mundo de olho! 👀', 'Arregalou a família inteira! 👀', 'Quem viu o preço da picanha? 👀'],
   nose: ['Narigão pra todo mundo! 👃', 'A turma toda mentiu! 👃', 'Família Pinóquio reunida! 👃'],
+  cheeks: ['Família hamster reunida! 🐹', 'Todo mundo comeu escondido! 🐹', 'Bochecha pra vó apertar não falta! 👵'],
 } as const;
 
 /** Cabo de guerra: dois dedos puxando a mesma cara. */

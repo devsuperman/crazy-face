@@ -45,7 +45,7 @@ Faces are **found automatically** right after a photo arrives (`src/faces.ts`, M
 
 ## Silly stuff
 
-- **Effect buttons:** 🎈 Balloon, 🐟 Fish face, 🫠 Melt (`src/warp.ts`), 👀 Big eyes and 👃 Big nose (`src/lens.ts`). They aim at every face in the photo, found automatically (`src/faces.ts`); without a face the mesh ones warp the whole photo.
+- **Effect buttons:** 🎈 Balloon, 🐟 Fish face, 🫠 Melt (`src/warp.ts`), 👀 Big eyes, 👃 Big nose and 🐹 Puffy cheeks (`src/lens.ts`). They aim at every face in the photo, found automatically (`src/faces.ts`); without a face the mesh ones warp the whole photo.
 - **Cartoon sounds:** a rubbery creak while you drag and a boing when you let go. All are made on the fly with the Web Audio API, so there are no audio files (`src/sound.ts`). Use 🔊 to mute.
 - **Cheeky captions** after a big stretch, an **"OUCH!"** bubble when you pull too far, and a random joke hint on each visit (`src/jokes.ts`, where it's easy to add more).
 - **Shake your phone** to make the face jiggle (iOS asks for permission on the first tap).
