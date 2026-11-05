@@ -12,6 +12,7 @@
       <div class="controls">
         <button id="camera-open" class="button primary" type="button">📸 Tirar foto</button>
         <input id="camera-fallback" type="file" accept="image/*" capture="user" hidden />
+        <button id="mirror" class="button" type="button">🪞 Espelho maluco</button>
         <label class="button">
           <input id="file" type="file" accept="image/*" hidden />
           Enviar foto
@@ -37,6 +38,7 @@
 
     <main id="stage" class="stage">
       <canvas id="canvas"></canvas>
+      <video id="mirror-video" class="offscreen" playsinline muted></video>
       <div id="brush" class="brush" hidden></div>
       <div id="effects-bar" class="effects" role="toolbar" aria-label="Efeitos malucos">
         <button class="button chip" type="button" data-effect="balloon">🎈 Balão</button>

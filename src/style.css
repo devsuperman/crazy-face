@@ -112,6 +112,15 @@ body {
   cursor: grabbing;
 }
 
+/* Feeds the live mirror. Kept in the page (some phones only decode visible videos), but unseen. */
+.offscreen {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .brush {
   position: absolute;
   top: 0;

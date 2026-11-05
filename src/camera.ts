@@ -202,7 +202,8 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   });
 }
 
-function cameraError(err: unknown): string {
+/** A friendly PT-BR message for a getUserMedia failure. */
+export function cameraError(err: unknown): string {
   const name = (err as { name?: string })?.name;
   const tail = ' Você ainda pode usar o botão "Enviar foto".';
   switch (name) {

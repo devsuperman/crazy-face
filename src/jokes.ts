@@ -148,3 +148,14 @@ export const TUG_START = ['Cabo de guerra! Puxa! 🪢', 'Quem puxa mais forte? �
 export const TUG_LEFT_WINS = ['Vitória do lado esquerdo! 🏆⬅️', 'O lado esquerdo levou a cara! ⬅️', 'Esquerda campeã! 💪⬅️'];
 export const TUG_RIGHT_WINS = ['Vitória do lado direito! ➡️🏆', 'O lado direito levou a cara! ➡️', 'Direita campeã! ➡️💪'];
 export const TUG_DRAW = ['Empate! A cara ficou no meio. 🤝', 'Empatou! Ninguém leva a cara. 🤝'];
+
+/** Espelho maluco: câmera ao vivo. */
+export const MIRROR_CAPTIONS = [
+  'Espelho, espelho meu… 🪞',
+  'Ao vivo! Puxa a própria cara! 🪞',
+  'Isso é você. Ao vivo. Sinto muito. 😂',
+  'Espelho de parque de diversões! 🎢',
+];
+
+/** Quando congela o espelho. */
+export const MIRROR_FREEZE_CAPTIONS = ['Congelou! 🧊 Agora pode salvar.', 'Fica assim pra sempre. 🧊', 'Clique! Essa vai pro álbum. 🧊'];

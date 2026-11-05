@@ -5,6 +5,7 @@ import { WarpMesh, type EffectKind } from './warp';
 import { Sounds } from './sound';
 import { setupCamera } from './camera';
 import { setupGroup } from './group';
+import { setupMirror } from './mirror';
 import { setupRecorder } from './recorder';
 import {
   BIG_CAPTIONS,
@@ -60,16 +61,40 @@ const group = setupGroup({
   showCaption,
   getPhoto: () => photo,
   showTexture: (image) => renderer.setImage(image),
-  onOpen: () => {},
+  // Turma works on a still photo: freeze the live mirror first.
+  onOpen: () => mirror.stop(true),
   onEffects: (seconds) => {
     effectBusyUntil = Math.max(effectBusyUntil, performance.now() / 1000 + seconds);
   },
 });
 
+const mirror = setupMirror({
+  sounds,
+  showCaption,
+  onStart: (video) => {
+    renderer.mirrored = true;
+    renderer.setImage(video, true);
+    newMesh(video.videoHeight / video.videoWidth);
+  },
+  onStop: (frame) => {
+    renderer.mirrored = false;
+    if (!frame) return;
+    // Keep the current warp: only the texture changes, to the frozen (already mirrored) frame.
+    photo = frame;
+    renderer.setImage(frame);
+  },
+});
+
+/** Load a new photo: the single entry point for files, the camera and the default face. */
 function setImage(image: HTMLCanvasElement): void {
+  mirror.stop(false);
   photo = image;
   renderer.setImage(image);
-  mesh = new WarpMesh(image.height / image.width);
+  newMesh(image.height / image.width);
+}
+
+function newMesh(aspect: number): void {
+  mesh = new WarpMesh(aspect);
   mesh.clay = clayInput.checked;
   mesh.jelly = jellyInput.checked;
   renderer.setMesh(mesh);
@@ -284,6 +309,8 @@ setupCamera((photo, challenge) => {
   // Desafio de pose: show the photo for a moment, then play the matching effect.
   if (challenge) window.setTimeout(() => playPreset(challenge.effect, challenge.caption), 900);
 }, sounds);
+// Only one camera at a time: the photo camera freezes the live mirror.
+$('camera-open').addEventListener('click', () => mirror.stop(true));
 
 radiusInput.addEventListener('input', updateBrushSize);
 clayInput.addEventListener('change', () => (mesh.clay = clayInput.checked));
@@ -443,6 +470,8 @@ function frame(ms: number): void {
   const now = ms / 1000;
   mesh.update(now - last, now);
   last = now;
+  const live = mirror.video;
+  if (live && live.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) renderer.setImage(live, true);
   renderer.draw(mesh, layout);
   requestAnimationFrame(frame);
 }
