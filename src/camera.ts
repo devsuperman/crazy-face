@@ -5,6 +5,7 @@
  */
 
 import { enhancePhoto, measureTone } from './beauty';
+import { FULL_CROP, applyCrop, type Crop, type Cropper, type Framing } from './crop';
 import { fitToCanvas } from './image';
 import { POSE_CHALLENGES, pick, type PoseChallenge } from './jokes';
 import type { Sounds } from './sound';
@@ -18,13 +19,19 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 /**
  * `challenge` is the pose prompt that was on screen, or null if the user turned it off.
  * `lit` is the photo with ✨ Luz e beleza's light fix, or null if the user turned it off.
+ * Both are already cropped; `framing` is the shot before ✂️ Recortar and its crop.
  */
-export type OnPhoto = (photo: HTMLCanvasElement, challenge: PoseChallenge | null, lit: HTMLCanvasElement | null) => void;
+export type OnPhoto = (
+  photo: HTMLCanvasElement,
+  challenge: PoseChallenge | null,
+  lit: HTMLCanvasElement | null,
+  framing: Framing,
+) => void;
 
 /** Preview brightness (median, 0..1) below which the room counts as dark. */
 const DARK_ROOM = 0.3;
 
-export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
+export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper): void {
   const overlay = $<HTMLDivElement>('camera');
   const video = $<HTMLVideoElement>('camera-video');
   const countdown = $<HTMLDivElement>('camera-countdown');
@@ -51,8 +58,17 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   /** The pose prompt on screen; null when the user chose "Sem desafio" (remembered until reload). */
   let challenge: PoseChallenge | null = null;
   let wantsChallenge = true;
-  /** The photo waiting for "Usar esta" / "Tirar outra", and its brightened copy. */
-  let review: { photo: HTMLCanvasElement; posed: PoseChallenge | null; lit: HTMLCanvasElement | null } | null = null;
+  /**
+   * The photo waiting for "Usar esta" / "Tirar outra" and its brightened copy, both
+   * uncropped, then how ✂️ Recortar crops them and the cropped copies.
+   */
+  let review: {
+    photo: HTMLCanvasElement;
+    posed: PoseChallenge | null;
+    lit: HTMLCanvasElement | null;
+    crop: Crop;
+    shown: { photo: HTMLCanvasElement; lit: HTMLCanvasElement | null };
+  } | null = null;
   /** ✨ Luz e beleza on the photo (remembered until reload). */
   let wantsBeauty = true;
   /** 💡: the screen glows (front camera) or the torch is on (back camera). */
@@ -152,7 +168,7 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
 
   function showReview(photo: HTMLCanvasElement, posed: PoseChallenge | null): void {
     const lit = enhancePhoto(photo, measureTone(photo));
-    review = { photo, posed, lit };
+    review = { photo, posed, lit, crop: FULL_CROP, shown: { photo, lit } };
     beautyButton.hidden = !lit;
     showReviewPhoto();
     reviewBox.hidden = false;
@@ -164,8 +180,9 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
   /** The review shows the photo with or without ✨ Luz e beleza. */
   function showReviewPhoto(): void {
     if (!review) return;
-    const on = wantsBeauty && !!review.lit;
-    reviewPhoto.replaceChildren(on ? review.lit! : review.photo);
+    const { shown } = review;
+    const on = wantsBeauty && !!shown.lit;
+    reviewPhoto.replaceChildren(on ? shown.lit! : shown.photo);
     beautyButton.setAttribute('aria-pressed', String(on));
     beautyButton.textContent = on ? '✨ Com luz e beleza' : '✨ Sem filtro';
   }
@@ -284,9 +301,25 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds): void {
 
   useButton.addEventListener('click', () => {
     if (!review) return;
-    const { photo, posed, lit } = review;
+    const { photo, posed, crop, shown } = review;
     close();
-    onPhoto(photo, posed, wantsBeauty ? lit : null);
+    onPhoto(shown.photo, posed, wantsBeauty ? shown.lit : null, { source: photo, crop });
+  });
+
+  // ✂️ Recortar: crop the photo and its brightened copy the same way.
+  $('camera-crop').addEventListener('click', async () => {
+    if (!review) return;
+    sounds.pop();
+    const current = review;
+    const crop = await cropper(wantsBeauty && current.lit ? current.lit : current.photo, current.crop);
+    if (!crop || review !== current) return;
+    current.crop = crop;
+    current.shown = {
+      photo: applyCrop(current.photo, crop),
+      lit: current.lit && applyCrop(current.lit, crop),
+    };
+    showReviewPhoto();
+    useButton.focus();
   });
 
   $('camera-retake').addEventListener('click', () => {

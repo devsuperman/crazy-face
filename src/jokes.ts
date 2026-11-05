@@ -14,6 +14,7 @@ export const HINTS = [
   'Pode esticar! Não vale para foto de RG.',
   'Arraste a cara. Chacoalhe o celular para tremer mais.',
   'Puxa, amassa, repete. Estrague a cara de alguém (com carinho).',
+  'Foto torta ou com muita sobra? ✂️ Recortar resolve.',
 ];
 
 /** Depois de uma esticada média. */
@@ -145,6 +146,14 @@ export const BEAUTY_OFF_CAPTIONS = [
   'Sem filtro: a verdade nua e crua. 😬',
   'Voltou ao natural. Corajoso! 💪',
   'Raiz, sem filtro nenhum. 🌱',
+];
+
+/** ✂️ Depois de recortar ou girar a foto. */
+export const CROP_CAPTIONS = [
+  'Cortou! Agora só o que importa. ✂️',
+  'Tesourada de cabeleireiro! 💇',
+  'Corte fino, cara inteira. 😎',
+  'Sobrou só a melhor parte! ✂️',
 ];
 
 /** Cabo de guerra: dois dedos puxando a mesma cara. */
