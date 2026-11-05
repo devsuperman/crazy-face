@@ -208,6 +208,16 @@ export class Sounds {
       case 'melt': // sad slide whistle
         this.tone({ from: 1100, to: 180, duration: 1.8, gain: 0.14, vibrato: [5, 0.04] });
         break;
+      case 'eyes': // a rising "bloop" for each eye
+        this.tone({ from: 220, to: 880, duration: 0.22, gain: 0.2 });
+        this.tone({ from: 260, to: 1040, duration: 0.24, gain: 0.2, delay: 0.16 });
+        break;
+      case 'nose': // fom fom! a bike horn
+        for (const delay of [0, 0.28]) {
+          this.tone({ type: 'square', from: 330, to: 300, duration: 0.2, gain: 0.07, delay });
+          this.tone({ type: 'sawtooth', from: 415, to: 380, duration: 0.2, gain: 0.05, delay });
+        }
+        break;
     }
   }
 

@@ -1,3 +1,5 @@
+import type { EffectTarget } from './warp';
+
 /** Largest side we upload to the GPU; keeps memory and mobile GPUs happy. */
 const MAX_SIDE = 2048;
 
@@ -84,6 +86,21 @@ export function swapFaces(photo: HTMLCanvasElement, faces: readonly FaceCircle[]
   });
   return out;
 }
+
+/** Where the cartoon face's features are, so 👀/👃 can aim at them without detection. */
+export const DEFAULT_FACE_TARGET: EffectTarget = {
+  x: 0.5,
+  y: 0.56,
+  r: 0.36,
+  landmarks: {
+    eyes: [
+      { x: 0.37, y: 0.51 },
+      { x: 0.63, y: 0.51 },
+    ],
+    nose: { x: 0.5, y: 0.63 },
+    mouth: { x: 0.5, y: 0.79 },
+  },
+};
 
 /** A cartoon face so there is something to play with before any upload. */
 export function drawDefaultFace(): HTMLCanvasElement {

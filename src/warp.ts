@@ -7,6 +7,8 @@
  * pointer (closer points move more); a damped spring pulls them back home.
  */
 
+import { Lenses, type Landmarks, type LensKind } from './lens';
+
 export interface Grab {
   /** Pointer position when the grab started (world units). */
   startX: number;
@@ -26,10 +28,14 @@ const JELLY_STIFFNESS = 90;
 const JELLY_DAMPING = 1.2; // barely damped: wobbles for ages
 const STEP = 1 / 120; // fixed physics timestep in seconds
 
-export type EffectKind = 'balloon' | 'fish' | 'melt';
+/** Mesh presets move the grid; lens presets (👀 eyes, 👃 nose) are drawn by the shader. */
+export type MeshEffectKind = 'balloon' | 'fish' | 'melt';
+export type EffectKind = MeshEffectKind | LensKind;
+
+const isLens = (kind: EffectKind): kind is LensKind => kind === 'eyes' || kind === 'nose';
 
 /** How long each preset takes to reach full strength, and how long it holds there. */
-const EFFECT_TIMING: Record<EffectKind, { ramp: number; hold: number }> = {
+const EFFECT_TIMING: Record<MeshEffectKind, { ramp: number; hold: number }> = {
   balloon: { ramp: 0.35, hold: 0.9 },
   fish: { ramp: 0.3, hold: 0.9 },
   melt: { ramp: 1.6, hold: 1.2 },
@@ -40,6 +46,8 @@ export interface EffectTarget {
   x: number;
   y: number;
   r: number;
+  /** Eyes, nose and mouth, when the detector found them (else they're guessed from the circle). */
+  landmarks?: Landmarks;
 }
 
 interface ActiveEffect {
@@ -56,6 +64,9 @@ interface ActiveEffect {
 
 /** How much bigger than the face an aimed effect reaches, so the head and chin come along. */
 const TARGET_REACH = 1.45;
+
+/** A lens with no face to aim at goes on a face-sized circle in the middle of the image. */
+const UNTARGETED_FACE_R = 0.3;
 
 export class WarpMesh {
   readonly cols: number;
@@ -74,6 +85,8 @@ export class WarpMesh {
   private springBackUntil = 0;
   /** Several effects can play at once, as long as they move different points. */
   private effects: ActiveEffect[] = [];
+  /** 👀/👃 bulges, drawn by the renderer on top of the mesh. */
+  readonly lenses = new Lenses();
 
   /** In clay mode the face keeps its shape after you let go. */
   clay = false;
@@ -168,12 +181,13 @@ export class WarpMesh {
   reset(now: number): void {
     this.grabs.clear();
     this.effects = [];
+    this.lenses.release(now);
     this.springBackUntil = now + 1.5;
   }
 
   /** True while a preset effect is still being applied. */
   get hasEffect(): boolean {
-    return this.effects.length > 0;
+    return this.effects.length > 0 || this.lenses.count > 0;
   }
 
   /**
@@ -182,6 +196,10 @@ export class WarpMesh {
    * so several faces can each get their own effect at the same time.
    */
   playEffect(kind: EffectKind, now: number, target?: EffectTarget): void {
+    if (isLens(kind)) {
+      this.lenses.play(kind, now, target ?? { x: 0.5, y: this.aspect * 0.5, r: UNTARGETED_FACE_R });
+      return;
+    }
     const p = this.positions;
     const cx = target ? target.x : 0.5;
     const cy = target ? target.y : this.aspect * 0.5;
@@ -244,6 +262,7 @@ export class WarpMesh {
 
   /** Total time a preset takes before it lets go, in seconds. */
   static effectDuration(kind: EffectKind): number {
+    if (isLens(kind)) return Lenses.duration();
     return EFFECT_TIMING[kind].ramp + EFFECT_TIMING[kind].hold;
   }
 
@@ -302,6 +321,7 @@ export class WarpMesh {
       this.step(now);
       this.accumulator -= STEP;
     }
+    this.lenses.update(now, this.clay);
   }
 
   private step(now: number): void {
