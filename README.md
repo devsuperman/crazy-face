@@ -25,11 +25,3 @@ npm run dev
 ```bash
 npm run build   # output in dist/
 ```
-
-## Deploy to GitHub Pages
-
-The workflow in `.github/workflows/deploy.yml` builds and deploys on every push to `main`.
-
-One-time setup: in the repository go to **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**.
-
-The site is published at https://devsuperman.github.io/crazy-face/.
