@@ -5,7 +5,6 @@ import { WarpMesh, type EffectKind } from './warp';
 import { Sounds } from './sound';
 import { setupCamera } from './camera';
 import { setupGroup } from './group';
-import { setupMirror } from './mirror';
 import { setupRecorder } from './recorder';
 import {
   BIG_CAPTIONS,
@@ -61,37 +60,48 @@ const group = setupGroup({
   showCaption,
   getPhoto: () => photo,
   showTexture: (image) => renderer.setImage(image),
-  // Turma works on a still photo: freeze the live mirror first.
-  onOpen: () => mirror.stop(true),
   onEffects: (seconds) => {
     effectBusyUntil = Math.max(effectBusyUntil, performance.now() / 1000 + seconds);
   },
 });
 
-const mirror = setupMirror({
-  sounds,
-  showCaption,
-  onStart: (video) => {
-    renderer.mirrored = true;
-    renderer.setImage(video, true);
-    newMesh(video.videoHeight / video.videoWidth);
-  },
-  onStop: (frame) => {
-    renderer.mirrored = false;
-    if (!frame) return;
-    // Keep the current warp: only the texture changes, to the frozen (already mirrored) frame.
-    photo = frame;
-    renderer.setImage(frame);
-  },
-});
-
 /** Load a new photo: the single entry point for files, the camera and the default face. */
 function setImage(image: HTMLCanvasElement): void {
-  mirror.stop(false);
   photo = image;
   renderer.setImage(image);
   newMesh(image.height / image.width);
 }
+
+// --- Two screens: the start screen (take or pick a photo), then the editor ---
+
+const startScreen = $<HTMLElement>('start');
+const startBack = $<HTMLButtonElement>('start-back');
+const editor = [document.querySelector<HTMLElement>('.toolbar')!, stage];
+
+function showStart(): void {
+  startScreen.hidden = false;
+  for (const el of editor) el.inert = true;
+  $<HTMLButtonElement>('camera-open').focus();
+}
+
+function showEditor(): void {
+  startScreen.hidden = true;
+  for (const el of editor) el.inert = false;
+  // From now on there is a photo to go back to.
+  startBack.hidden = false;
+}
+
+$('new-photo').addEventListener('click', () => {
+  sounds.unlock();
+  showStart();
+});
+startBack.addEventListener('click', showEditor);
+$('start-sample').addEventListener('click', () => {
+  sounds.unlock();
+  setImage(drawDefaultFace());
+  showEditor();
+  showCaption(pick(PHOTO_CAPTIONS));
+});
 
 function newMesh(aspect: number): void {
   mesh = new WarpMesh(aspect);
@@ -285,6 +295,7 @@ async function useFile(file: File | undefined | null): Promise<void> {
   if (!file || !file.type.startsWith('image/')) return;
   try {
     setImage(await loadImageFile(file));
+    showEditor();
   } catch {
     alert('Ops! Não consegui abrir essa imagem.');
   }
@@ -305,12 +316,11 @@ setupRecorder({ canvas, sounds, showCaption });
 
 setupCamera((photo, challenge) => {
   setImage(photo);
+  showEditor();
   showCaption(pick(PHOTO_CAPTIONS));
   // Desafio de pose: show the photo for a moment, then play the matching effect.
   if (challenge) window.setTimeout(() => playPreset(challenge.effect, challenge.caption), 900);
 }, sounds);
-// Only one camera at a time: the photo camera freezes the live mirror.
-$('camera-open').addEventListener('click', () => mirror.stop(true));
 
 radiusInput.addEventListener('input', updateBrushSize);
 clayInput.addEventListener('change', () => (mesh.clay = clayInput.checked));
@@ -465,11 +475,11 @@ function frame(ms: number): void {
   const now = ms / 1000;
   mesh.update(now - last, now);
   last = now;
-  const live = mirror.video;
-  if (live && live.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) renderer.setImage(live, true);
   renderer.draw(mesh, layout);
   requestAnimationFrame(frame);
 }
 
+// The cartoon face waits behind the start screen until a photo arrives.
 setImage(drawDefaultFace());
+showStart();
 requestAnimationFrame(frame);

@@ -56,8 +56,6 @@ export interface GroupDeps {
   /** The current photo (unswapped), and a way to show another texture on the same mesh. */
   getPhoto(): HTMLCanvasElement;
   showTexture(image: HTMLCanvasElement): void;
-  /** Called right before Turma opens. */
-  onOpen(): void;
   /** Tells the app how long (seconds) the effects will play, to block other presets meanwhile. */
   onEffects(seconds: number): void;
 }
@@ -195,7 +193,6 @@ export function setupGroup(deps: GroupDeps): Group {
   }
 
   function open(): void {
-    deps.onOpen();
     active = true;
     stage.classList.add('group-mode');
     effectsBar.hidden = true;

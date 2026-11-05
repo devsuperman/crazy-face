@@ -16,18 +16,20 @@ Runs fully in the browser (WebGL2). Photos never leave your device.
 - **Clay mode** turns the spring off so the shape stays; **Reset** springs it back.
 - **Jelly mode** makes the spring much less damped, so the face wobbles for ages.
 
+## Start screen
+
+The app opens on a start screen: **📸 Tirar foto**, **🖼️ Escolher foto**, or play with the built-in cartoon face. You can also drop or paste an image. Once there's a photo, the editor opens; **📸 Nova foto** takes you back.
+
 ## Take a photo
 
 - **📸 Tirar foto** opens the camera full screen, with a 3-2-1 countdown, beeps, a flash and a shutter sound (`src/camera.ts`).
 - The selfie camera is mirrored, and the photo keeps that mirror so it looks like the preview. 🔄 switches cameras when there is more than one.
-- The camera turns off as soon as the photo is taken, the overlay closes, or the tab goes to the background.
+- After the shot, **Ficou boa?** shows the photo: **✔ Usar esta** or **🔁 Tirar outra**.
+- Where the browser supports it (e.g. Android Chrome), the photo is a full-resolution still (`ImageCapture.takePhoto()`), sharper than a video frame.
+- The camera turns off as soon as the photo is used, the overlay closes, or the tab goes to the background.
 - If the browser has no camera support, the button opens the phone's own camera app instead.
 - **😜 Desafio de pose:** before the countdown the camera shows a random pose prompt, like "Cara de quem viu o boleto!". Right after the photo, the prompt's matching effect plays. 🔀 picks another one, or turn it off.
 - Browsers only allow the camera on HTTPS pages or `localhost`. To test on a phone on your Wi-Fi, run `npm run dev:phone` and open the `https://` network address it prints (accept the self-signed certificate warning).
-
-## 🪞 Espelho maluco (live mirror)
-
-The selfie camera feed becomes the texture, so you squish your own face in real time (`src/mirror.ts`). **🧊 Congelar** keeps the current frame as the photo without undoing the warp.
 
 ## 🎬 Gravar (video clips)
 
