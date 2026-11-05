@@ -70,9 +70,7 @@ export const EVERYONE_CAPTIONS = [
 export const EFFECT_CAPTIONS = {
   balloon: ['Cabeção? Eu? 🎈', 'Ego inflado hoje.', 'Enche que cabe!'],
   fish: ['Blub blub. 🐟', 'Tem algo cheirando a peixe…', 'Biquinho de selfie: máximo.'],
-  twist: ['Uhuuul! 🌀', 'Já ficou tonto?', 'Reviravolta!'],
   melt: ['Tá calor aqui? 🫠', 'Eu no verão do Rio.', 'Derretendo… derretendo…'],
-  chaos: ['Modo caos! 🎲', 'Agora ninguém conserta.', 'O que você FEZ?'],
   jelly: ['Modo gelatina: ligado. 🍮', 'Treme, treme.'],
   shake: ['Terremoto! 📳', 'Chacoalha!'],
 } as const;
@@ -88,19 +86,19 @@ export const RECORD_CAPTIONS = [
 /** Desafio de pose na câmera: a pose pedida e o efeito que toca logo depois da foto. */
 export interface PoseChallenge {
   prompt: string;
-  effect: EffectKind | 'chaos';
+  effect: EffectKind;
   caption: string;
 }
 
 export const POSE_CHALLENGES: readonly PoseChallenge[] = [
   { prompt: 'Todo mundo com cara de quem viu o boleto! 💸', effect: 'melt', caption: 'O boleto venceu. Você também. 🫠' },
   { prompt: 'Cara de surpresa no amigo secreto! 🎁', effect: 'balloon', caption: 'Ganhou meia de novo! 🧦' },
-  { prompt: 'Pose de capa de disco de pagode! 🎤', effect: 'twist', caption: 'Sucesso nas paradas de 1998! 💿' },
+  { prompt: 'Pose de capa de disco de pagode! 🎤', effect: 'fish', caption: 'Sucesso nas paradas de 1998! 💿' },
   { prompt: 'Biquinho de selfie no espelho da academia! 💪', effect: 'fish', caption: 'Foco, força e biquinho. 🐟' },
-  { prompt: 'Cara de quem acordou atrasado pra prova! ⏰', effect: 'chaos', caption: 'Nem a cara chegou a tempo. 🎲' },
+  { prompt: 'Cara de quem acordou atrasado pra prova! ⏰', effect: 'balloon', caption: 'Nem a cara chegou a tempo. ⏰' },
   { prompt: 'Cara de quem mordeu uma pimenta escondida! 🌶️', effect: 'balloon', caption: 'Inchou de tanto arder! 🔥' },
   { prompt: 'Cara de quem ouviu "a gente precisa conversar"! 😬', effect: 'melt', caption: 'Derreteu de nervoso. 🫠' },
-  { prompt: 'Cara de tio dançando no casamento! 🕺', effect: 'twist', caption: 'O tio rodou a pista toda! 🌀' },
+  { prompt: 'Cara de tio dançando no casamento! 🕺', effect: 'melt', caption: 'O tio derreteu na pista! 🫠' },
   { prompt: 'Cara de quem viu o ex no rolê! 👀', effect: 'fish', caption: 'Blub… finge que não viu. 🐟' },
   { prompt: 'Cara de quem chegou no churrasco e só tinha salada! 🥗', effect: 'melt', caption: 'Cadê a picanha?! 🥩' },
 ];

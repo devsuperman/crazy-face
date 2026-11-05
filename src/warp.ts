@@ -26,13 +26,12 @@ const JELLY_STIFFNESS = 90;
 const JELLY_DAMPING = 1.2; // barely damped: wobbles for ages
 const STEP = 1 / 120; // fixed physics timestep in seconds
 
-export type EffectKind = 'balloon' | 'fish' | 'twist' | 'melt';
+export type EffectKind = 'balloon' | 'fish' | 'melt';
 
 /** How long each preset takes to reach full strength, and how long it holds there. */
 const EFFECT_TIMING: Record<EffectKind, { ramp: number; hold: number }> = {
   balloon: { ramp: 0.35, hold: 0.9 },
   fish: { ramp: 0.3, hold: 0.9 },
-  twist: { ramp: 0.6, hold: 0.7 },
   melt: { ramp: 1.6, hold: 1.2 },
 };
 
@@ -214,15 +213,6 @@ export class WarpMesh {
           ox = -dx * f * 0.75;
           oy = -dy * f * 0.25;
           break;
-        case 'twist': {
-          // rotate around the centre, most in the middle
-          const a = f * 2.4;
-          const cos = Math.cos(a);
-          const sin = Math.sin(a);
-          ox = dx * cos - dy * sin - dx;
-          oy = dx * sin + dy * cos - dy;
-          break;
-        }
         case 'melt': {
           // droop more towards the bottom, with uneven drips
           const t = Math.min(1.3, Math.max(0, (y - meltTop) / meltHeight));

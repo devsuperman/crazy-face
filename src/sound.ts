@@ -205,9 +205,6 @@ export class Sounds {
           this.tone({ from: 520, to: 160, duration: 0.12, gain: 0.2, delay: n * 0.14 });
         }
         break;
-      case 'twist': // rising wobbly swirl
-        this.tone({ type: 'triangle', from: 200, to: 1200, duration: 0.8, gain: 0.16, vibrato: [9, 0.3] });
-        break;
       case 'melt': // sad slide whistle
         this.tone({ from: 1100, to: 180, duration: 1.8, gain: 0.14, vibrato: [5, 0.04] });
         break;
@@ -255,19 +252,4 @@ export class Sounds {
     this.tone({ from: 300, to: 900, duration: 0.08, gain: 0.15 });
   }
 
-  /** A burst of random boings and pops. */
-  chaos(): void {
-    for (let n = 0; n < 7; n++) {
-      const from = 200 + Math.random() * 900;
-      this.tone({
-        type: Math.random() < 0.5 ? 'sine' : 'triangle',
-        from,
-        to: from * (Math.random() < 0.5 ? 0.3 : 2.2),
-        duration: 0.15 + Math.random() * 0.25,
-        gain: 0.12,
-        delay: n * 0.06,
-        vibrato: [10 + Math.random() * 10, 0.15],
-      });
-    }
-  }
 }

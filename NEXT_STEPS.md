@@ -50,7 +50,7 @@ Goal: in 🪞 Espelho maluco, a short list of effects that **follow the faces in
 
 **Live effect set.** While the mirror is live, the effect row shows only:
 🎈 Balão, 🐟 Cara de peixe, 👀 Olhão (new: bigger eyes), 👃 Narigão (new: bigger nose).
-🌀 Rodamoinho, 🫠 Derreter and 🎲 Caos are hidden. They are whole-image mesh effects and look broken when the person moves.
+🫠 Derreter is hidden: it's a whole-image mesh effect and looks broken when the person moves. (🌀 Rodamoinho and 🎲 Caos were removed from the app.)
 In live mode an effect is a **toggle**: it eases in, stays on while selected, and eases out when tapped again or when another one is picked.
 
 **Why the mesh can't do this.** `playEffect` moves mesh points to fixed spots, but in video the face moves under the mesh. The grid is also too coarse for eyes: a cell is 1/63 of the width, so on a small face in a group shot an eye spans only 1–2 cells.
