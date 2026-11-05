@@ -1,3 +1,4 @@
+import { MAX_LENSES } from './lens';
 import type { WarpMesh } from './warp';
 
 const VERTEX = `#version 300 es
@@ -11,13 +12,31 @@ void main() {
   gl_Position = vec4(aPos * uScale + uOffset, 0.0, 1.0);
 }`;
 
+// Lenses (👀/👃) remap the texture lookup per pixel. They work in the photo's rest
+// space in world units (u, v × aspect), so they follow the photo when it's warped.
 const FRAGMENT = `#version 300 es
-precision mediump float;
+precision highp float;
+#define MAX_LENSES ${MAX_LENSES}
 in vec2 vUv;
 uniform sampler2D uTex;
+uniform float uAspect;
+uniform int uLensCount;
+uniform vec4 uLens[MAX_LENSES]; // centre x, y, radius, strength
+uniform vec2 uLensPull[MAX_LENSES];
 out vec4 outColor;
 void main() {
-  outColor = texture(uTex, vUv);
+  vec2 p = vUv * vec2(1.0, uAspect);
+  for (int i = 0; i < MAX_LENSES; i++) {
+    if (i >= uLensCount) break;
+    vec4 l = uLens[i];
+    vec2 d = p - l.xy;
+    float r2 = dot(d, d) / (l.z * l.z);
+    if (r2 >= 1.0) continue;
+    float f = (1.0 - r2) * (1.0 - r2);
+    // Sample closer to the centre: what's there looks bigger. Smooth at the rim.
+    p = l.xy + d * (1.0 - l.w * f) - uLensPull[i] * f;
+  }
+  outColor = texture(uTex, p / vec2(1.0, uAspect));
 }`;
 
 /** Where the image sits on screen, in CSS pixels. */
@@ -38,6 +57,10 @@ export class Renderer {
   private readonly texture: WebGLTexture;
   private readonly uScale: WebGLUniformLocation;
   private readonly uOffset: WebGLUniformLocation;
+  private readonly uAspect: WebGLUniformLocation;
+  private readonly uLensCount: WebGLUniformLocation;
+  private readonly uLens: WebGLUniformLocation;
+  private readonly uLensPull: WebGLUniformLocation;
   private indexCount = 0;
 
   constructor(readonly canvas: HTMLCanvasElement) {
@@ -52,6 +75,10 @@ export class Renderer {
     this.program = createProgram(gl, VERTEX, FRAGMENT);
     this.uScale = gl.getUniformLocation(this.program, 'uScale')!;
     this.uOffset = gl.getUniformLocation(this.program, 'uOffset')!;
+    this.uAspect = gl.getUniformLocation(this.program, 'uAspect')!;
+    this.uLensCount = gl.getUniformLocation(this.program, 'uLensCount')!;
+    this.uLens = gl.getUniformLocation(this.program, 'uLens')!;
+    this.uLensPull = gl.getUniformLocation(this.program, 'uLensPull')!;
 
     this.vao = gl.createVertexArray()!;
     this.posBuffer = gl.createBuffer()!;
@@ -117,6 +144,13 @@ export class Renderer {
     // World units -> CSS pixels -> clip space (y flipped).
     gl.uniform2f(this.uScale, (2 * layout.scale) / cw, (-2 * layout.scale) / ch);
     gl.uniform2f(this.uOffset, (2 * layout.offsetX) / cw - 1, 1 - (2 * layout.offsetY) / ch);
+    const lenses = mesh.lenses;
+    gl.uniform1f(this.uAspect, mesh.aspect);
+    gl.uniform1i(this.uLensCount, lenses.count);
+    if (lenses.count) {
+      gl.uniform4fv(this.uLens, lenses.shape);
+      gl.uniform2fv(this.uLensPull, lenses.pull);
+    }
 
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);

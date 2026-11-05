@@ -1,6 +1,6 @@
 # Next steps
 
-A handoff note so work can continue in a new chat. Last updated: 2026-11-05.
+A handoff note so work can continue in a new chat. Last updated: 2026-11-05 (👀/👃 face lenses).
 
 ## Where things stand
 
@@ -20,7 +20,8 @@ Everything is on `main` (live on GitHub Pages): PT-BR UI, a start screen (take o
 |---|---|
 | `src/main.ts` | App wiring: pointer handling, controls, captions, main loop |
 | `src/warp.ts` | Elastic mesh. `playEffect(kind, now, target?)` can aim at a face `{x, y, r}`, and several effects can run at once |
-| `src/renderer.ts` | WebGL2 drawing of the mesh |
+| `src/renderer.ts` | WebGL2 drawing of the mesh, plus the 👀/👃 lenses in the fragment shader |
+| `src/lens.ts` | 👀/👃 lenses: landmarks, timing, packed shader uniforms |
 | `src/camera.ts` | 📸 Camera overlay: pose challenge, countdown, flash, switching cameras, "Ficou boa?" review, full-resolution still, fallback to `<input capture>` |
 | `src/recorder.ts` | 🎬 Records canvas + sounds with `MediaRecorder`, then shares or downloads the clip |
 | `src/group.ts` | 👥 Modo turma: face circles, roulette, one effect per face, head swap, awards |
@@ -50,12 +51,8 @@ Everything has only been tested in headless desktop Chromium (fake camera, CDP t
 The live mirror was removed: mesh effects can't follow a moving face. The app is now photo-first (start screen → 📸 or 🖼️ → "Ficou boa?" → editor). Next:
 
 1. ✅ **Effects aim at the face.** A quick detection runs on each new photo (`findMainFace` in `main.ts`, `detectFaces(..., {quick: true})`); 🎈/🐟/🫠 aim at the biggest face, or the whole photo if none is found. The detector preloads when the camera or gallery opens. With 2+ faces, 👥 Turma pulses and the hint suggests it. To check on phones: how long the quick detection takes on a mid-range Android (the pose-challenge effect waits up to 1.5 s for it), and whether a selfie face is too big or too close to the edge to be found.
-2. **New face effects on the still photo.** BlazeFace returns 6 keypoints per face (eyes, nose tip, mouth, ears); `faces.ts` currently keeps only circles, so also keep the keypoints. Then:
-   - 👀 Olhão: a magnify bulge on each eye, radius ≈ 0.35 × eye distance.
-   - 👃 Narigão: a bulge on the nose tip, slightly stretched downwards.
-   - Best done in the fragment shader as a UV remap (per pixel, so small faces look fine; stacks with dragging). A first version can be mesh bulges, but a mesh cell is 1/63 of the width, too coarse for eyes in group shots.
-   - Captions in `src/jokes.ts`, sounds in `src/sound.ts` (a rising "bloop" for the eyes, a honk for the nose).
-   - In 👥 Turma, "🎭 Um efeito pra cada" can include them.
+2. ✅ **New face effects on the still photo: 👀 Olhão and 👃 Narigão.** `faces.ts` now keeps BlazeFace's keypoints (`EffectTarget.landmarks`: eyes, nose tip, mouth); faces tapped by hand in 👥 Turma get them guessed from the circle (`estimateLandmarks` in `lens.ts`), and the cartoon face has fixed ones (`DEFAULT_FACE_TARGET` in `image.ts`). The bulges are drawn in the fragment shader as a per-pixel UV remap (`src/lens.ts`, up to 16 at once), in the photo's rest space, so they follow dragging and stack with the mesh effects. They go through `mesh.playEffect('eyes' | 'nose', ...)` like the other presets, are part of 🎭 Um efeito pra cada and 🎡 Roleta, and have their own pose challenges. With no face in the photo the buttons say so instead of guessing. To check on phones: whether the strength feels right on real selfies, and on side-on faces (eye distance is clamped so the lens never collapses).
+3. **Next idea:** lens strength could follow a drag (pinch an eye to make it bigger) instead of only being a timed preset.
 
 ### 3. Ideas and polish
 - [ ] 🎬 Optionally start recording automatically when 🎡 Roleta or 🎭 Um efeito pra cada runs.

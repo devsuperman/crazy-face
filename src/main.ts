@@ -1,5 +1,5 @@
 import './style.css';
-import { drawDefaultFace, loadImageFile } from './image';
+import { DEFAULT_FACE_TARGET, drawDefaultFace, loadImageFile } from './image';
 import { Renderer, type Layout } from './renderer';
 import { WarpMesh, type EffectKind, type EffectTarget } from './warp';
 import { detectFaces, preloadFaceDetector } from './faces';
@@ -13,6 +13,7 @@ import {
   GROUP_SUGGEST_HINTS,
   HINTS,
   MEDIUM_CAPTIONS,
+  NO_FACE_CAPTIONS,
   OUCH_LINES,
   PHOTO_CAPTIONS,
   TUG_DRAW,
@@ -78,6 +79,7 @@ function setImage(image: HTMLCanvasElement, findFaces = true): void {
   renderer.setImage(image);
   newMesh(image.height / image.width);
   mainFace = undefined;
+  lensFace = undefined;
   groupButton.classList.remove('pulse');
   hint.textContent = pick(HINTS);
   facesReady = findFaces ? findMainFace(image) : Promise.resolve();
@@ -87,6 +89,11 @@ function setImage(image: HTMLCanvasElement, findFaces = true): void {
 
 /** The biggest face in the current photo, once found. */
 let mainFace: EffectTarget | undefined;
+/**
+ * Where 👀/👃 aim when there's no detected face: the cartoon's known features.
+ * (Mesh presets keep working on the whole cartoon, which fills the picture.)
+ */
+let lensFace: EffectTarget | undefined;
 /** Resolves when the search for `mainFace` is over (found or not). */
 let facesReady: Promise<void> = Promise.resolve();
 
@@ -142,8 +149,7 @@ $('new-photo').addEventListener('click', () => {
 startBack.addEventListener('click', showEditor);
 $('start-sample').addEventListener('click', () => {
   sounds.unlock();
-  // The cartoon face fills the picture: whole-image effects already fit it.
-  setImage(drawDefaultFace(), false);
+  showCartoon();
   showEditor();
   showCaption(pick(PHOTO_CAPTIONS));
 });
@@ -366,7 +372,7 @@ setupCamera((shot, challenge) => {
   // Desafio de pose: show the photo for a moment, then play the matching effect on the face.
   if (challenge) {
     window.setTimeout(async () => {
-      if (await waitForFace(shot, 1500)) playPreset(challenge.effect, challenge.caption);
+      if (await waitForFace(shot, 1500)) void playPreset(challenge.effect, challenge.caption);
     }, 900);
   }
 }, sounds);
@@ -385,20 +391,36 @@ jellyInput.addEventListener('change', () => {
 
 // --- Silly effect buttons ---
 
+const needsFace = (kind: EffectKind) => kind === 'eyes' || kind === 'nose';
+
 /** Play a preset on the main face (or the whole photo) with its sound and a caption (a random one unless given). */
-function playPreset(kind: EffectKind, text?: string): void {
+async function playPreset(kind: EffectKind, text?: string): Promise<void> {
   sounds.unlock();
-  const now = performance.now() / 1000;
   // Ignore button-mashing while a preset is still playing.
-  if (now < effectBusyUntil) return;
+  if (performance.now() / 1000 < effectBusyUntil) return;
+  let target = mainFace ?? (needsFace(kind) ? lensFace : undefined);
+  if (needsFace(kind) && !target) {
+    // 👀/👃 need eyes and a nose: give the face search a moment to finish.
+    const image = photo;
+    effectBusyUntil = Infinity;
+    const same = await waitForFace(image, 1500);
+    effectBusyUntil = 0;
+    if (!same) return;
+    target = mainFace;
+    if (!target) {
+      showCaption(pick(NO_FACE_CAPTIONS));
+      return;
+    }
+  }
+  const now = performance.now() / 1000;
   effectBusyUntil = now + WarpMesh.effectDuration(kind);
-  mesh.playEffect(kind, now, mainFace);
+  mesh.playEffect(kind, now, target);
   sounds.effect(kind);
   showCaption(text ?? pick(EFFECT_CAPTIONS[kind]));
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-effect]')) {
-  button.addEventListener('click', () => playPreset(button.dataset.effect as EffectKind));
+  button.addEventListener('click', () => void playPreset(button.dataset.effect as EffectKind));
 }
 
 // --- Sound toggle ---
@@ -528,7 +550,14 @@ function frame(ms: number): void {
   requestAnimationFrame(frame);
 }
 
+/** The built-in cartoon face (no detection needed: we know where its features are). */
+function showCartoon(): void {
+  // It fills the picture: whole-image mesh effects already fit it.
+  setImage(drawDefaultFace(), false);
+  lensFace = DEFAULT_FACE_TARGET;
+}
+
 // The cartoon face waits behind the start screen until a photo arrives.
-setImage(drawDefaultFace(), false);
+showCartoon();
 showStart();
 requestAnimationFrame(frame);

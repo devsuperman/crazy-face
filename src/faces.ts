@@ -12,6 +12,7 @@ import type { FaceDetector } from '@mediapipe/tasks-vision';
 import modelUrl from './assets/blaze_face_short_range.tflite?url';
 import wasmLoaderUrl from '@mediapipe/tasks-vision/vision_wasm_internal.js?url';
 import wasmBinaryUrl from '@mediapipe/tasks-vision/vision_wasm_internal.wasm?url';
+import type { Point } from './lens';
 import type { EffectTarget } from './warp';
 
 interface Box {
@@ -20,6 +21,8 @@ interface Box {
   w: number;
   h: number;
   score: number;
+  /** BlazeFace keypoints in photo pixels: right eye, left eye, nose tip, mouth, right ear, left ear. */
+  keypoints: Point[];
 }
 
 /** Smallest sliding window, in photo pixels: finds faces down to about 1/20 of the photo's short side. */
@@ -85,6 +88,7 @@ export async function detectFaces(
         w: b.width / k,
         h: b.height / k,
         score: d.categories[0]?.score ?? 0,
+        keypoints: d.keypoints.map((p) => ({ x: ox + p.x * tw, y: oy + p.y * th })),
       });
     }
   };
@@ -113,12 +117,16 @@ export async function detectFaces(
   return kept
     .sort((a, b) => b.w * b.h - a.w * a.h)
     .slice(0, max)
-    .map((b) => ({
-      // The box goes from the brows to the chin: nudge the circle up a bit to fit the head.
-      x: (b.x + b.w / 2) / W,
-      y: (b.y + b.h * 0.45) / W,
-      r: (Math.max(b.w, b.h) * 0.62) / W,
-    }));
+    .map((b) => {
+      const [rightEye, leftEye, nose, mouth] = b.keypoints.map((p) => ({ x: p.x / W, y: p.y / W }));
+      return {
+        // The box goes from the brows to the chin: nudge the circle up a bit to fit the head.
+        x: (b.x + b.w / 2) / W,
+        y: (b.y + b.h * 0.45) / W,
+        r: (Math.max(b.w, b.h) * 0.62) / W,
+        landmarks: mouth ? { eyes: [rightEye, leftEye], nose, mouth } : undefined,
+      };
+    });
 }
 
 /** True if the boxes are mostly the same face. */

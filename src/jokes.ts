@@ -71,6 +71,8 @@ export const EFFECT_CAPTIONS = {
   balloon: ['Cabeção? Eu? 🎈', 'Ego inflado hoje.', 'Enche que cabe!'],
   fish: ['Blub blub. 🐟', 'Tem algo cheirando a peixe…', 'Biquinho de selfie: máximo.'],
   melt: ['Tá calor aqui? 🫠', 'Eu no verão do Rio.', 'Derretendo… derretendo…'],
+  eyes: ['Olho grande, hein? 👀', 'Tô de olho em você. 👀', 'Viu o preço do café? 👀', 'Arregalou geral! 👀'],
+  nose: ['Esse nariz tem CEP próprio! 👃', 'Fom fom! 👃', 'Mentiu, né? 👃', 'Nariz de quem sentiu cheiro de churrasco. 🍖'],
   jelly: ['Modo gelatina: ligado. 🍮', 'Treme, treme.'],
   shake: ['Terremoto! 📳', 'Chacoalha!'],
 } as const;
@@ -101,6 +103,9 @@ export const POSE_CHALLENGES: readonly PoseChallenge[] = [
   { prompt: 'Cara de tio dançando no casamento! 🕺', effect: 'melt', caption: 'O tio derreteu na pista! 🫠' },
   { prompt: 'Cara de quem viu o ex no rolê! 👀', effect: 'fish', caption: 'Blub… finge que não viu. 🐟' },
   { prompt: 'Cara de quem chegou no churrasco e só tinha salada! 🥗', effect: 'melt', caption: 'Cadê a picanha?! 🥩' },
+  { prompt: 'Cara de quem viu o preço da gasolina! ⛽', effect: 'eyes', caption: 'Quanto?! 👀' },
+  { prompt: 'Cara de quem sentiu cheiro de bolo saindo do forno! 🎂', effect: 'nose', caption: 'Farejou o bolo de longe! 👃' },
+  { prompt: 'Cara de fofoqueiro na janela! 🪟', effect: 'eyes', caption: 'Nada escapa desse olhão! 👀' },
 ];
 
 /** Modo turma: troféus engraçados, um diferente para cada rosto. */
@@ -140,6 +145,9 @@ export const SWAP_CAPTIONS = [
 
 /** Quando as cabeças voltam pro lugar. */
 export const SWAP_BACK_CAPTIONS = ['Tudo de volta ao normal. Será? 🤔', 'Cada cabeça no seu lugar. Ufa! 😮‍💨'];
+
+/** 👀/👃 sem rosto na foto para mirar. */
+export const NO_FACE_CAPTIONS = ['Cadê o rosto? Não achei. 🙈', 'Não achei ninguém nessa foto! 🔍'];
 
 /** Quando a foto tem mais de um rosto. `{n}` vira o número de rostos. */
 export const GROUP_SUGGEST_HINTS = [

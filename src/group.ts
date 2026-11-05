@@ -24,6 +24,7 @@ import {
   SWAP_CAPTIONS,
   pick,
 } from './jokes';
+import type { Landmarks } from './lens';
 import type { Layout } from './renderer';
 import type { Sounds } from './sound';
 import { WarpMesh, type EffectKind, type EffectTarget } from './warp';
@@ -34,7 +35,7 @@ const DEFAULT_R = 0.12;
 const MIN_R = 0.04;
 /** Below this drag distance a tap counts as "use the default size". */
 const TAP_SLOP = 0.03;
-const KINDS: EffectKind[] = ['balloon', 'fish', 'melt'];
+const KINDS: EffectKind[] = ['balloon', 'fish', 'melt', 'eyes', 'nose'];
 
 interface Face extends EffectTarget {
   el: HTMLDivElement;
@@ -118,13 +119,13 @@ export function setupGroup(deps: GroupDeps): Group {
     });
   }
 
-  function makeFace(x: number, y: number, r = DEFAULT_R): Face {
+  function makeFace(x: number, y: number, r = DEFAULT_R, landmarks?: Landmarks): Face {
     const el = document.createElement('div');
     el.className = 'face-marker draft';
     const num = document.createElement('span');
     el.append(num);
     layer.append(el);
-    const face: Face = { x, y, r, el, num, award: '' };
+    const face: Face = { x, y, r, landmarks, el, num, award: '' };
     el.addEventListener('click', () => {
       if (!active) return;
       if (spinning) {
@@ -222,7 +223,7 @@ export function setupGroup(deps: GroupDeps): Group {
     for (const f of found) {
       if (faces.length >= MAX_FACES) break;
       if (faces.some((g) => Math.hypot(g.x - f.x, g.y - f.y) < Math.max(g.r, f.r))) continue;
-      addFace(makeFace(f.x, f.y, f.r));
+      addFace(makeFace(f.x, f.y, f.r, f.landmarks));
       added++;
     }
     update();
@@ -349,7 +350,7 @@ export function setupGroup(deps: GroupDeps): Group {
   function everyone(): void {
     if (spinning || faces.length === 0) return;
     deps.sounds.unlock();
-    // Shuffle so each round looks different; with more than 4 faces some repeat.
+    // Shuffle so each round looks different; with more faces than effects some repeat.
     const kinds = [...KINDS].sort(() => Math.random() - 0.5);
     let longest = 0;
     faces.forEach((face, i) => {
