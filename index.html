@@ -30,6 +30,7 @@
         </label>
         <button id="reset" class="button" type="button">Resetar</button>
         <button id="save" class="button" type="button">Salvar PNG</button>
+        <button id="record" class="button" type="button">🎬 Gravar</button>
         <button id="mute" class="button icon" type="button" aria-label="Desligar sons" title="Desligar sons">🔊</button>
       </div>
     </header>
@@ -56,6 +57,7 @@
       <p id="caption" class="caption" aria-live="polite" hidden></p>
       <div id="bubble" class="bubble" hidden></div>
       <p id="hint" class="hint">Arraste a cara para esticar. Solte ou cole uma foto para usar a sua.</p>
+      <div id="rec-badge" class="rec-badge" aria-live="polite" hidden></div>
       <div id="drop" class="drop" hidden>Solte sua foto aqui</div>
     </main>
 
@@ -67,6 +69,18 @@
         <button id="camera-close" class="button icon round" type="button" aria-label="Fechar câmera" title="Fechar">✖</button>
         <button id="camera-shutter" class="shutter" type="button" aria-label="Tirar foto (contagem de 3 segundos)"></button>
         <button id="camera-flip" class="button icon round" type="button" aria-label="Trocar câmera" title="Trocar câmera">🔄</button>
+      </div>
+    </div>
+
+    <div id="clip" class="clip" role="dialog" aria-modal="true" aria-label="Vídeo gravado" hidden>
+      <div class="clip-box">
+        <p class="clip-title">Vídeo pronto! 🎬</p>
+        <video id="clip-video" playsinline loop controls></video>
+        <div class="clip-actions">
+          <button id="clip-share" class="button primary" type="button">📤 Compartilhar</button>
+          <button id="clip-download" class="button" type="button">⬇️ Baixar</button>
+          <button id="clip-close" class="button" type="button">Fechar</button>
+        </div>
       </div>
     </div>
 

@@ -74,3 +74,11 @@ export const EFFECT_CAPTIONS = {
   jelly: ['Modo gelatina: ligado. 🍮', 'Treme, treme.'],
   shake: ['Terremoto! 📳', 'Chacoalha!'],
 } as const;
+
+/** Quando começa a gravar um vídeo. */
+export const RECORD_CAPTIONS = [
+  'Gravando! Capricha na careta. 🎬',
+  'Luz, câmera… careta! 🎬',
+  'Isso vai direto pro grupo da família. 📲',
+  'Gravando! Depois não adianta pedir pra apagar. 😈',
+];

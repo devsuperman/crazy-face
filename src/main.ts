@@ -5,6 +5,7 @@ import { WarpMesh, type EffectKind } from './warp';
 import { Sounds } from './sound';
 import { setupCamera } from './camera';
 import { setupGroup } from './group';
+import { setupRecorder } from './recorder';
 import {
   BIG_CAPTIONS,
   EFFECT_CAPTIONS,
@@ -232,6 +233,8 @@ cameraFallback.addEventListener('change', () => {
   void useFile(cameraFallback.files?.[0]);
   cameraFallback.value = '';
 });
+
+setupRecorder({ canvas, sounds, showCaption });
 
 setupCamera((photo) => {
   setImage(photo);

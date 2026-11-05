@@ -506,3 +506,83 @@ body {
     top: 130px;
   }
 }
+
+/* --- 🎬 Gravar (video clips) --- */
+
+.button.recording {
+  background: #e11d48;
+  border-color: #e11d48;
+  color: #fff;
+  font-weight: 600;
+}
+
+.rec-badge {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(225, 29, 72, 0.9);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: rec-blink 1s steps(2, start) infinite;
+}
+
+@keyframes rec-blink {
+  to {
+    opacity: 0.55;
+  }
+}
+
+.clip {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.clip-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 480px);
+  max-height: 100%;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel);
+}
+
+.clip-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.clip video {
+  width: 100%;
+  min-height: 0;
+  max-height: 60vh;
+  border-radius: 10px;
+  background: #000;
+}
+
+.clip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rec-badge {
+    animation: none;
+  }
+}
