@@ -4,6 +4,7 @@ import { Renderer, type Layout } from './renderer';
 import { WarpMesh, type EffectKind } from './warp';
 import { Sounds } from './sound';
 import { setupCamera } from './camera';
+import { setupGroup } from './group';
 import {
   BIG_CAPTIONS,
   EFFECT_CAPTIONS,
@@ -41,6 +42,19 @@ try {
 
 let mesh: WarpMesh;
 let layout: Layout = { offsetX: 0, offsetY: 0, scale: 1 };
+/** Presets ignore clicks until this time (seconds), so they don't pile up. */
+let effectBusyUntil = 0;
+
+const group = setupGroup({
+  getMesh: () => mesh,
+  getLayout: () => layout,
+  toWorld,
+  sounds,
+  showCaption,
+  onEffects: (seconds) => {
+    effectBusyUntil = Math.max(effectBusyUntil, performance.now() / 1000 + seconds);
+  },
+});
 
 function setImage(image: HTMLCanvasElement): void {
   renderer.setImage(image);
@@ -48,6 +62,7 @@ function setImage(image: HTMLCanvasElement): void {
   mesh.clay = clayInput.checked;
   mesh.jelly = jellyInput.checked;
   renderer.setMesh(mesh);
+  group.clear();
   updateLayout();
 }
 
@@ -64,6 +79,7 @@ function updateLayout(): void {
     offsetY: (h - scale * mesh.aspect) / 2,
   };
   updateBrushSize();
+  group.relayout();
 }
 
 function toWorld(e: PointerEvent): [number, number] {
@@ -142,6 +158,10 @@ const currentStretch = () => Math.max(0, ...[...drags.values()].map((d) => d.str
 canvas.addEventListener('pointerdown', (e) => {
   sounds.unlock();
   void enableShake();
+  if (group.active) {
+    group.pointerDown(e);
+    return;
+  }
   canvas.setPointerCapture(e.pointerId);
   const [x, y] = toWorld(e);
   mesh.grab(e.pointerId, x, y, brushRadius());
@@ -150,6 +170,11 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 
 canvas.addEventListener('pointermove', (e) => {
+  if (group.active) {
+    brush.hidden = true;
+    group.pointerMove(e);
+    return;
+  }
   if (e.pointerType === 'mouse') {
     brush.hidden = false;
     brush.style.left = `${e.offsetX}px`;
@@ -170,6 +195,7 @@ canvas.addEventListener('pointermove', (e) => {
 });
 
 const endPointer = (e: PointerEvent) => {
+  if (group.pointerUp(e)) return;
   mesh.release(e.pointerId);
   const drag = drags.get(e.pointerId);
   drags.delete(e.pointerId);
@@ -226,7 +252,6 @@ jellyInput.addEventListener('change', () => {
 
 // --- Silly effect buttons ---
 
-let effectBusyUntil = 0;
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-effect]')) {
   button.addEventListener('click', () => {
     sounds.unlock();

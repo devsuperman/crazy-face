@@ -36,15 +36,27 @@ const EFFECT_TIMING: Record<EffectKind, { ramp: number; hold: number }> = {
   melt: { ramp: 1.6, hold: 1.2 },
 };
 
+/** Where to aim an effect: a face centre and its radius, in world units. */
+export interface EffectTarget {
+  x: number;
+  y: number;
+  r: number;
+}
+
 interface ActiveEffect {
   start: number;
   ramp: number;
   hold: number;
-  /** Positions when the effect started; the effect is applied on top of these. */
+  /** Indices (into `positions`) of the x coordinates of the points this effect moves. */
+  indices: Uint32Array;
+  /** Positions of those points when the effect started; the effect is applied on top. */
   base: Float32Array;
-  /** Full-strength displacement for every point, interleaved x,y. */
+  /** Full-strength displacement of those points, interleaved x,y. */
   disp: Float32Array;
 }
+
+/** How much bigger than the face an aimed effect reaches, so the head and chin come along. */
+const TARGET_REACH = 1.45;
 
 export class WarpMesh {
   readonly cols: number;
@@ -61,7 +73,8 @@ export class WarpMesh {
   private readonly grabs = new Map<number, Grab>();
   private accumulator = 0;
   private springBackUntil = 0;
-  private effect: ActiveEffect | null = null;
+  /** Several effects can play at once, as long as they move different points. */
+  private effects: ActiveEffect[] = [];
 
   /** In clay mode the face keeps its shape after you let go. */
   clay = false;
@@ -155,62 +168,88 @@ export class WarpMesh {
   /** Spring everything back to its original shape, even in clay mode. */
   reset(now: number): void {
     this.grabs.clear();
-    this.effect = null;
+    this.effects = [];
     this.springBackUntil = now + 1.5;
   }
 
   /** True while a preset effect is still being applied. */
   get hasEffect(): boolean {
-    return this.effect !== null;
+    return this.effects.length > 0;
   }
 
-  /** Play a preset warp: it eases in, holds, then springs back (or stays, in clay mode). */
-  playEffect(kind: EffectKind, now: number): void {
-    const base = Float32Array.from(this.positions);
-    const disp = new Float32Array(base.length);
-    const cx = 0.5;
-    const cy = this.aspect * 0.5;
-    const R = 0.5 * Math.max(1, this.aspect) * 0.9;
+  /**
+   * Play a preset warp: it eases in, holds, then springs back (or stays, in clay mode).
+   * Without a target it works on the whole image; with one it only warps that face,
+   * so several faces can each get their own effect at the same time.
+   */
+  playEffect(kind: EffectKind, now: number, target?: EffectTarget): void {
+    const p = this.positions;
+    const cx = target ? target.x : 0.5;
+    const cy = target ? target.y : this.aspect * 0.5;
+    const R = target ? target.r * TARGET_REACH : 0.5 * Math.max(1, this.aspect) * 0.9;
+    // Melt droops from the top of the face (or image) down to the chin (or bottom).
+    const meltTop = target ? cy - target.r : 0;
+    const meltHeight = target ? target.r * 2 : this.aspect;
 
-    for (let i = 0; i < base.length; i += 2) {
-      const x = base[i];
-      const y = base[i + 1];
+    const idx: number[] = [];
+    const base: number[] = [];
+    const disp: number[] = [];
+
+    for (let i = 0; i < p.length; i += 2) {
+      const x = p[i];
+      const y = p[i + 1];
       const dx = x - cx;
       const dy = y - cy;
       const r = Math.hypot(dx, dy);
       const f = r < R ? (1 - (r / R) ** 2) ** 2 : 0; // 1 at the centre, 0 at R
+      let ox = 0;
+      let oy = 0;
 
       switch (kind) {
         case 'balloon': // push everything away from the centre: a big puffy head
-          disp[i] = dx * f * 0.9;
-          disp[i + 1] = dy * f * 0.9;
+          ox = dx * f * 0.9;
+          oy = dy * f * 0.9;
           break;
         case 'fish': // squeeze sideways towards the middle: fishy pout
-          disp[i] = -dx * f * 0.75;
-          disp[i + 1] = -dy * f * 0.25;
+          ox = -dx * f * 0.75;
+          oy = -dy * f * 0.25;
           break;
         case 'twist': {
           // rotate around the centre, most in the middle
           const a = f * 2.4;
           const cos = Math.cos(a);
           const sin = Math.sin(a);
-          disp[i] = dx * cos - dy * sin - dx;
-          disp[i + 1] = dx * sin + dy * cos - dy;
+          ox = dx * cos - dy * sin - dx;
+          oy = dx * sin + dy * cos - dy;
           break;
         }
         case 'melt': {
           // droop more towards the bottom, with uneven drips
-          const t = Math.max(0, y / this.aspect);
-          const drip = 0.6 + 0.4 * Math.sin(x * 14 + 1.3) * Math.sin(x * 5.3);
-          disp[i] = dx * t * t * 0.25;
-          disp[i + 1] = this.aspect * 0.4 * t ** 1.6 * drip;
+          const t = Math.min(1.3, Math.max(0, (y - meltTop) / meltHeight));
+          const wx = target ? (dx / target.r) * 0.5 + 0.5 : x; // same drips at any size
+          const drip = 0.6 + 0.4 * Math.sin(wx * 14 + 1.3) * Math.sin(wx * 5.3);
+          const w = target ? f : 1; // an aimed melt fades out around the face
+          ox = dx * t * t * 0.25 * w;
+          oy = meltHeight * 0.4 * t ** 1.6 * drip * w;
           break;
         }
       }
+
+      if (Math.abs(ox) + Math.abs(oy) < 1e-6) continue;
+      idx.push(i);
+      base.push(x, y);
+      disp.push(ox, oy);
     }
 
     const { ramp, hold } = EFFECT_TIMING[kind];
-    this.effect = { start: now, ramp, hold, base, disp };
+    this.effects.push({
+      start: now,
+      ramp,
+      hold,
+      indices: Uint32Array.from(idx),
+      base: Float32Array.from(base),
+      disp: Float32Array.from(disp),
+    });
   }
 
   /** Total time a preset takes before it lets go, in seconds. */
@@ -297,18 +336,19 @@ export class WarpMesh {
       }
     }
 
-    const fx = this.effect;
-    if (fx) {
-      const elapsed = now - fx.start;
-      if (elapsed >= fx.ramp + fx.hold) {
-        this.effect = null; // let go: spring back (or stay put in clay mode)
-      } else {
-        const t = Math.min(1, Math.max(0, elapsed / fx.ramp));
-        const amount = t * t * (3 - 2 * t); // smoothstep
-        for (let i = 0; i < p.length; i++) {
-          const goal = fx.base[i] + fx.disp[i] * amount;
-          p[i] += (goal - p[i]) * 0.25;
-          v[i] *= 0.75;
+    // Finished effects let go: spring back (or stay put in clay mode).
+    if (this.effects.length) {
+      this.effects = this.effects.filter((fx) => now - fx.start < fx.ramp + fx.hold);
+    }
+    for (const fx of this.effects) {
+      const t = Math.min(1, Math.max(0, (now - fx.start) / fx.ramp));
+      const amount = t * t * (3 - 2 * t); // smoothstep
+      for (let k = 0; k < fx.indices.length; k++) {
+        const i = fx.indices[k];
+        for (let j = 0; j < 2; j++) {
+          const goal = fx.base[k * 2 + j] + fx.disp[k * 2 + j] * amount;
+          p[i + j] += (goal - p[i + j]) * 0.25;
+          v[i + j] *= 0.75;
         }
       }
     }

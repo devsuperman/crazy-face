@@ -45,6 +45,25 @@ export const OUCH_LINES = ['AI!', 'EI!', 'CALMA!', 'MEU ROSTO!', 'MEU NARIZ!', '
 /** Logo depois de tirar uma foto. */
 export const PHOTO_CAPTIONS = ['Xiiis! 📸', 'Que beleza… por enquanto. 😈', 'Agora começa a diversão!', 'Foto linda. Vamos estragar?'];
 
+/** Modo turma: o que a roleta diz para quem foi sorteado. */
+export const ROULETTE_CAPTIONS = [
+  'Quem paga a pizza é você! 🍕',
+  'Hoje a louça é sua! 🧽',
+  'O destino escolheu… você! 🫵',
+  'Parabéns, você pagou o mico! 🐒',
+  'Próxima rodada é por sua conta! 🍻',
+  'Você foi eleito o mais bonito. Era mentira. 😈',
+  'Sorteado para contar a piada do pavê! 🍰',
+];
+
+/** Modo turma: quando cada um ganha um efeito diferente. */
+export const EVERYONE_CAPTIONS = [
+  'Cada um com seu estilo! 🎭',
+  'Foto de família para o Natal! 🎄',
+  'A turma toda reunida. Infelizmente. 😂',
+  'Essa vai pro grupo da família!',
+];
+
 /** Legendas de cada botão de efeito. */
 export const EFFECT_CAPTIONS = {
   balloon: ['Cabeção? Eu? 🎈', 'Ego inflado hoje.', 'Enche que cabe!'],

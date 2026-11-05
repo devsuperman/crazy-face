@@ -37,13 +37,22 @@
     <main id="stage" class="stage">
       <canvas id="canvas"></canvas>
       <div id="brush" class="brush" hidden></div>
-      <div class="effects" role="toolbar" aria-label="Efeitos malucos">
+      <div id="effects-bar" class="effects" role="toolbar" aria-label="Efeitos malucos">
         <button class="button chip" type="button" data-effect="balloon">🎈 Balão</button>
         <button class="button chip" type="button" data-effect="fish">🐟 Cara de peixe</button>
         <button class="button chip" type="button" data-effect="twist">🌀 Rodamoinho</button>
         <button class="button chip" type="button" data-effect="melt">🫠 Derreter</button>
         <button class="button chip" type="button" data-effect="chaos">🎲 Caos</button>
+        <button id="group-open" class="button chip accent" type="button">👥 Turma</button>
       </div>
+      <div id="group-bar" class="effects" role="toolbar" aria-label="Modo turma" hidden>
+        <button id="group-roulette" class="button chip" type="button">🎡 Roleta da vergonha</button>
+        <button id="group-everyone" class="button chip" type="button">🎭 Um efeito pra cada</button>
+        <button id="group-clear" class="button chip" type="button">🧹 Limpar</button>
+        <button id="group-close" class="button chip accent" type="button">✔ Pronto</button>
+        <p id="group-hint" class="group-hint" aria-live="polite"></p>
+      </div>
+      <div id="faces" class="faces" hidden></div>
       <p id="caption" class="caption" aria-live="polite" hidden></p>
       <div id="bubble" class="bubble" hidden></div>
       <p id="hint" class="hint">Arraste a cara para esticar. Solte ou cole uma foto para usar a sua.</p>
