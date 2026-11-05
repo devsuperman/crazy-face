@@ -195,6 +195,17 @@ export class Sounds {
     }
   }
 
+  /** Countdown beep before a photo; the last one is higher. */
+  beep(last = false): void {
+    this.tone({ type: 'square', from: last ? 1320 : 880, to: last ? 1320 : 880, duration: 0.12, gain: 0.08 });
+  }
+
+  /** Camera shutter "click-clack". */
+  shutter(): void {
+    this.tone({ type: 'square', from: 2400, to: 300, duration: 0.05, gain: 0.12 });
+    this.tone({ type: 'square', from: 1800, to: 200, duration: 0.06, gain: 0.1, delay: 0.08 });
+  }
+
   /** A burst of random boings and pops. */
   chaos(): void {
     for (let n = 0; n < 7; n++) {

@@ -11,12 +11,23 @@ export async function loadImageFile(file: Blob): Promise<HTMLCanvasElement> {
   }
 }
 
-function fitToCanvas(source: CanvasImageSource, w: number, h: number): HTMLCanvasElement {
+/** Copy an image (or video frame) into a canvas no bigger than MAX_SIDE, optionally flipped sideways. */
+export function fitToCanvas(
+  source: CanvasImageSource,
+  w: number,
+  h: number,
+  mirror = false,
+): HTMLCanvasElement {
   const scale = Math.min(1, MAX_SIDE / Math.max(w, h));
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(w * scale);
   canvas.height = Math.round(h * scale);
-  canvas.getContext('2d')!.drawImage(source, 0, 0, canvas.width, canvas.height);
+  const ctx = canvas.getContext('2d')!;
+  if (mirror) {
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
   return canvas;
 }
 

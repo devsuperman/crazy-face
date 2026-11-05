@@ -1,53 +1,57 @@
-/** All the silly text in one place, so it's easy to add more. */
+/** Todos os textos engraçados num lugar só, para ficar fácil adicionar mais. */
 
 export const pick = <T>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)];
 
-/** Bottom hint, one picked at random on each page load. */
+/** Dica no rodapé, sorteada a cada vez que a página abre. */
 export const HINTS = [
-  'Drag the face to stretch it. Drop or paste a photo to use your own.',
-  'Drag to stretch. Side effects may include uncontrollable giggling.',
-  'Pull the face around. No faces were harmed in the making of this app.',
-  'Grab and stretch. Your plastic surgeon hates this one weird trick.',
-  'Drag to squish. Paste a photo of your boss (we won’t tell).',
-  'Stretch away! Results not valid for passport photos.',
-  'Drag the face. Shake your phone for extra wobble.',
-  'Pull, squish, repeat. Drop a photo to ruin someone’s face (lovingly).',
+  'Arraste a cara para esticar. Tire uma foto ou envie a sua.',
+  'Arraste para esticar. Efeito colateral: crise de riso.',
+  'Puxe a cara à vontade. Nenhum rosto foi ferido neste app.',
+  'Estica e puxa. Seu cirurgião plástico odeia esse truque.',
+  'Arraste para amassar. Tira uma foto do chefe (a gente não conta).',
+  'Pode esticar! Não vale para foto de RG.',
+  'Arraste a cara. Chacoalhe o celular para tremer mais.',
+  'Puxa, amassa, repete. Estrague a cara de alguém (com carinho).',
 ];
 
-/** Shown after a medium stretch. */
+/** Depois de uma esticada média. */
 export const MEDIUM_CAPTIONS = [
-  'Looking good! 😬',
-  'Is this your passport photo?',
-  'Your mom would be proud.',
-  'Ah yes, Monday morning face.',
-  'Instant profile picture!',
-  'This is fine. 🙂',
-  'Me pretending to understand the meeting.',
-  'Peak beauty achieved.',
+  'Ficou ótimo! 😬',
+  'Foto de RG aprovada ✅',
+  'Sua mãe ficaria orgulhosa.',
+  'Segunda-feira, 7h da manhã.',
+  'Foto de perfil nova!',
+  'Tá tudo bem. 🙂',
+  'Eu fingindo que entendi a reunião.',
+  'Cara de quem viu o boleto.',
+  'Beleza nível máximo.',
 ];
 
-/** Shown after a really big stretch. */
+/** Depois de uma esticada enorme. */
 export const BIG_CAPTIONS = [
-  'Science has gone too far. 🧪',
-  'Somebody call a doctor!',
-  'That’s not a face, that’s modern art.',
-  'Okay, now you’re just being mean.',
-  'We are legally required to say: wow.',
-  'Achievement unlocked: Noodle Face 🍜',
-  'Mirror, mirror… please no.',
-  'Even the spring is tired now.',
+  'A ciência foi longe demais. 🧪',
+  'Chama o SAMU!',
+  'Isso não é um rosto, é arte moderna.',
+  'Agora você tá sendo malvado.',
+  'Somos obrigados por lei a dizer: uau.',
+  'Conquista desbloqueada: Cara de Miojo 🍜',
+  'Espelho, espelho meu… melhor não.',
+  'Até a mola cansou.',
 ];
 
-/** Speech bubble when you pull way too far. */
-export const OUCH_LINES = ['OUCH!', 'HEY!', 'EASY!', 'MY FACE!', 'NOT THE NOSE!', 'OWWW!', 'RUDE!', 'STOP IT!'];
+/** Balão de fala quando você puxa demais. */
+export const OUCH_LINES = ['AI!', 'EI!', 'CALMA!', 'MEU ROSTO!', 'MEU NARIZ!', 'SOCORRO!', 'GROSSO!', 'PARA!'];
 
-/** One caption per preset button. */
+/** Logo depois de tirar uma foto. */
+export const PHOTO_CAPTIONS = ['Xiiis! 📸', 'Que beleza… por enquanto. 😈', 'Agora começa a diversão!', 'Foto linda. Vamos estragar?'];
+
+/** Legendas de cada botão de efeito. */
 export const EFFECT_CAPTIONS = {
-  balloon: ['Big-headed? Who, me? 🎈', 'Too much ego today.', 'Pump it up!'],
-  fish: ['Blub blub. 🐟', 'Something smells fishy…', 'Selfie pout: maximum.'],
-  twist: ['Wheeee! 🌀', 'Dizzy yet?', 'Plot twist!'],
-  melt: ['Is it hot in here? 🫠', 'Me in summer.', 'Melting… melting…'],
-  chaos: ['Chaos mode! 🎲', 'Nobody can fix this now.', 'What did you DO?'],
-  jelly: ['Jelly mode: on. 🍮', 'Wobble wobble.'],
-  shake: ['Earthquake! 📳', 'Shake it off!'],
+  balloon: ['Cabeção? Eu? 🎈', 'Ego inflado hoje.', 'Enche que cabe!'],
+  fish: ['Blub blub. 🐟', 'Tem algo cheirando a peixe…', 'Biquinho de selfie: máximo.'],
+  twist: ['Uhuuul! 🌀', 'Já ficou tonto?', 'Reviravolta!'],
+  melt: ['Tá calor aqui? 🫠', 'Eu no verão do Rio.', 'Derretendo… derretendo…'],
+  chaos: ['Modo caos! 🎲', 'Agora ninguém conserta.', 'O que você FEZ?'],
+  jelly: ['Modo gelatina: ligado. 🍮', 'Treme, treme.'],
+  shake: ['Terremoto! 📳', 'Chacoalha!'],
 } as const;
