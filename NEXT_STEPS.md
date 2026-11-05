@@ -4,13 +4,7 @@ A handoff note so work can continue in a new chat. Last updated: 2026-11-05.
 
 ## Where things stand
 
-| Branch | What it has | Status |
-|---|---|---|
-| `main` | The English prototype: warp, effects, sounds, jokes | Live on GitHub Pages |
-| `claude/kind-wozniak-ju9ute` | 1. All UI text in PT-BR. 2. 📸 Tirar foto (camera with a 3-2-1 countdown) | Pushed, **no PR yet** |
-| `claude/group-photo-fun` | Everything above, plus 3. 👥 Modo turma (mark faces, 🎡 Roleta da vergonha, 🎭 Um efeito pra cada) | Pushed, **no PR yet** |
-
-`claude/group-photo-fun` is built on top of `claude/kind-wozniak-ju9ute`, so merge that one first.
+Everything is on `main` (live on GitHub Pages): PT-BR UI, camera with 😜 pose challenges, 🪞 live mirror, 🎬 video clips, 🪢 tug of war, and Modo turma with automatic face detection, 🎡 roulette, 🎭 one effect per face, 🔀 head swap and 🏆 awards.
 
 ## Ground rules for this project
 
@@ -27,65 +21,41 @@ A handoff note so work can continue in a new chat. Last updated: 2026-11-05.
 | `src/main.ts` | App wiring: pointer handling, controls, captions, main loop |
 | `src/warp.ts` | Elastic mesh. `playEffect(kind, now, target?)` can aim at a face `{x, y, r}`, and several effects can run at once |
 | `src/renderer.ts` | WebGL2 drawing of the mesh |
-| `src/camera.ts` | 📸 Camera overlay: countdown, flash, switching cameras, fallback to `<input capture>` |
-| `src/group.ts` | 👥 Modo turma: face circles, roulette, one effect per face |
-| `src/image.ts` | Loading images, `fitToCanvas` (with mirroring), the default cartoon face |
+| `src/camera.ts` | 📸 Camera overlay: pose challenge, countdown, flash, switching cameras, fallback to `<input capture>` |
+| `src/mirror.ts` | 🪞 Live mirror: the selfie video is the texture; 🧊 freezes a frame as the photo |
+| `src/recorder.ts` | 🎬 Records canvas + sounds with `MediaRecorder`, then shares or downloads the clip |
+| `src/group.ts` | 👥 Modo turma: face circles, roulette, one effect per face, head swap, awards |
+| `src/faces.ts` | 🤖 Face detection (MediaPipe BlazeFace, lazy-loaded, multi-scale windows) |
+| `src/image.ts` | Loading images, `fitToCanvas` (with mirroring), `swapFaces`, the default cartoon face |
 | `src/sound.ts` | All sounds |
 | `src/jokes.ts` | All captions and hints (PT-BR) |
 
 World units: the image is 1 unit wide and `aspect` units tall. `Layout` maps world units to screen pixels.
 
-## Pending tasks (in suggested order)
+## Pending tasks
 
-### 1. Ship what is done
-- [ ] Open a PR for `claude/kind-wozniak-ju9ute` → `main` (PT-BR + camera).
-- [ ] After it merges, open a PR for `claude/group-photo-fun` → `main` (Modo turma).
-- [ ] **Test on real phones** (iOS Safari and Android Chrome). This has only been tested in desktop Chromium with a fake camera. Check:
-  - Camera permission prompt, the front/back switch, the countdown and the mirrored selfie.
-  - The fallback when permission is denied.
-  - Modo turma touch: tap vs. drag to size a circle, removing circles, the roulette.
-  - Captions not covering the toolbars on small screens.
-  - Use `npm run dev:phone` (HTTPS on your Wi-Fi), or the Pages deploy.
+### 1. Test on real phones (iOS Safari and Android Chrome)
+Everything has only been tested in headless desktop Chromium (fake camera, CDP touch). Check:
+- Camera permission, the front/back switch, the countdown, the mirrored selfie, and the fallback when permission is denied.
+- 😜 Desafio de pose: the banner shouldn't cover faces too much on small screens.
+- 🪞 Espelho maluco: frame rate, and that the video keeps updating on iOS (the `<video>` is a 1 px invisible element; if iOS stops decoding it, try making it bigger but still hidden behind the canvas).
+- 🎬 Gravar: MP4 on Safari, the share sheet to WhatsApp, and that the sound is in the clip.
+- 👥 Modo turma: tap vs. drag to size a circle, auto-detection speed on a mid-range phone, head swap.
+- 🪢 Cabo de guerra with two people on one phone.
+- Use `npm run dev:phone` (HTTPS on your Wi-Fi), or the Pages deploy.
 
-### 2. 🎬 Vídeo pro WhatsApp (share a wobble clip)
-Groups share videos far more than still PNGs.
-- [ ] Add a "🎬 Gravar" button that records the canvas for a few seconds: `canvas.captureStream(30)` + `MediaRecorder`.
-- [ ] Include the cartoon sounds: route the `Sounds` master gain into a `MediaStreamAudioDestinationNode` and add its track to the stream.
-- [ ] Pick the format with `MediaRecorder.isTypeSupported`: `video/mp4` (Safari), otherwise `video/webm`.
-- [ ] Share with `navigator.share({ files: [...] })` when `navigator.canShare` allows it, otherwise download the file.
-- [ ] Optional: start recording automatically when 🎡 Roleta or 🎭 Um efeito pra cada runs.
+### 2. Ideas and polish
+- [ ] 🎬 Optionally start recording automatically when 🎡 Roleta or 🎭 Um efeito pra cada runs.
+- [ ] 🎬/💾 Draw the current caption into clips and saved PNGs (only 🏆 awards are drawn onto the PNG today).
+- [ ] 🔀 Trocar cabeças pastes a feathered ellipse around each circle. Face landmarks (MediaPipe Face Landmarker, ~4 MB more) would allow a real face-shaped mask and color matching.
+- [ ] 🤖 Detection uses BlazeFace short-range, which is tuned for selfie distance; the sliding windows help, but tiny or side-on faces can still be missed. Tapping is the fallback.
+- [ ] 🪞 Espelho maluco always uses the front camera; a flip button could reuse the camera's.
 
-### 3. 😜 Desafio de pose (in the camera)
-- [ ] Before the countdown, show a random pose prompt, for example: "Todo mundo com cara de quem viu o boleto!", "Cara de surpresa no amigo secreto!", "Pose de capa de disco de pagode!".
-- [ ] Each prompt has a matching effect that plays automatically right after the photo.
-- [ ] Code: `src/camera.ts` (prompt overlay) + `src/jokes.ts` (prompt list) + the `onPhoto` callback in `src/main.ts`.
-
-### 4. 🏆 Troféus (Modo turma)
-- [ ] A button in the group bar that gives each marked face a funny award label, for example "Mais dramático", "Dormiu na foto" or "Cara de quem vai chorar no casamento".
-- [ ] Show it as a label under each circle. Consider drawing it onto the saved PNG too.
-
-### 5. 🪢 Cabo de guerra (two people, one phone)
-- [ ] Two fingers pull the same face from opposite sides. Multi-touch already works (the `drags` map in `src/main.ts`).
-- [ ] Compare the stretch of the left and right pointers on release, then announce the winner: "Vitória do lado esquerdo!".
-
-### 6. 🤖 Automatic face detection
-- [ ] Use MediaPipe Face Landmarker (`@mediapipe/tasks-vision`), which runs in the browser and handles several faces. It adds about a 4 MB model download: host it with the app or load it lazily, only when 👥 Turma opens.
-- [ ] Pre-fill the Modo turma circles from the detections. Keep tapping as the fallback and for corrections.
-- [ ] Keep photos on the device (the model runs locally).
-
-### 7. 🔀 Troca de cabeças (head swap)
-The funniest idea, but the hardest. It needs task 6 first.
-- [ ] Swap the face regions between people: draw each face again with UVs taken from another face, using a soft-edged (feathered) mask so the edges blend.
-- [ ] Probably needs a second draw pass in `src/renderer.ts`.
-
-### 8. 🪞 Espelho maluco (live fun-house mirror)
-- [ ] A live mode where the camera video is the texture (upload a frame each tick with `texImage2D(video)`), so you warp your own face in real time.
-
-## Small known issues / polish
-- In Modo turma, taps on circles are ignored while the roulette's effect is still playing. That's on purpose, but there's no feedback. Maybe show a hint.
+## Small known issues
 - Face circles stay at the face's original spot and don't follow the warp. That's fine for now.
-- **Salvar PNG** saves only the canvas. Captions and circles are not included.
+- **Salvar PNG** and 🎬 clips don't include captions or face circles (PNG does include 🏆 awards).
 - Untargeted presets (the normal effect buttons) no longer hold points outside the effect radius in place. They spring back on their own instead. The change is barely visible.
+- The face detector's wasm is ~14 MB (~4 MB gzipped). It's only downloaded the first time 👥 Turma opens.
 
 ## How to build and test
 
@@ -104,4 +74,4 @@ Browser testing with Playwright (Chromium is already installed in cloud sessions
 
 ## Starter prompt for a new chat
 
-> Read `NEXT_STEPS.md` on branch `claude/group-photo-fun` of `devsuperman/crazy-face`. Continue with the next pending task, keeping all user-facing text in PT-BR. Work on a new branch based on `claude/group-photo-fun` (or on `main` if the earlier PRs are merged).
+> Read `NEXT_STEPS.md` on `main` of `devsuperman/crazy-face`. Continue with the pending tasks, keeping all user-facing text in PT-BR.

@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Crazy Face is a browser-only toy: take or upload a photo, then squish, stretch and pull the face around (WebGL2). It is plain TypeScript + Vite with no framework, no backend and no tests. `NEXT_STEPS.md` has the roadmap of pending features and known issues. Its "Where things stand" branch table is out of date: those branches are already merged into `main`.
+Crazy Face is a browser-only toy: take or upload a photo, then squish, stretch and pull the face around (WebGL2). It is plain TypeScript + Vite with no framework, no backend and no tests. `NEXT_STEPS.md` has the roadmap of pending features and known issues.
 
 ## Commands
 
@@ -29,7 +29,7 @@ Pushes to `main` deploy to GitHub Pages (`.github/workflows/deploy.yml`). `vite.
 - **All user-facing text is Brazilian Portuguese (PT-BR):** buttons, hints, captions, alerts and `aria-label`s. Jokes should feel Brazilian, not translated word for word. Code, comments, commits and the README stay in English.
 - UI text lives only in `index.html` (static markup) and `src/jokes.ts` (all captions, hints and "ouch" lines; use `pick()`).
 - Sounds are generated with the Web Audio API in `src/sound.ts` (no audio files). Add new sounds as methods on `Sounds`.
-- Photos never leave the device: no uploads, no servers. Any future ML (e.g. face detection) must run locally.
+- Photos never leave the device: no uploads, no servers. ML runs locally (face detection in `src/faces.ts`), and its library, wasm and model are bundled with the app, not loaded from a CDN.
 - No frameworks or UI libraries.
 
 ## Architecture
@@ -38,10 +38,14 @@ Pushes to `main` deploy to GitHub Pages (`.github/workflows/deploy.yml`). `vite.
 
 **Data flow.**
 - `src/main.ts` is the composition root. It owns the single `WarpMesh` and `Layout`, wires all DOM controls, handles pointer events (multi-touch via a `drags` map keyed by `pointerId`), shows captions/bubbles based on stretch distance, and runs the `requestAnimationFrame` loop: `mesh.update(dt, now)` then `renderer.draw(mesh, layout)`.
-- `setImage()` in `main.ts` is the single entry point for a new photo: it uploads the texture, **creates a new `WarpMesh`** (so the mesh reference changes), and resets group mode. Modules that need the mesh get it through a getter (`getMesh: () => mesh`), never by holding a reference.
+- `setImage()` in `main.ts` is the single entry point for a new photo: it stops the live mirror, uploads the texture, and calls `newMesh()`, which **creates a new `WarpMesh`** (so the mesh reference changes) and resets group mode. `photo` holds the current (unswapped) photo. Head swap and freezing the mirror change only the texture (`renderer.setImage`), keeping the mesh and its warp. Modules that need the mesh get it through a getter (`getMesh: () => mesh`), never by holding a reference.
 - `src/warp.ts` (`WarpMesh`) is the physics: a grid of points (64 columns) with rest and current positions, integrated at a fixed 1/120 s step with a damped spring back to rest. `grab/move/release` handle dragging with a falloff radius. `clay` disables the spring, `jelly` lowers damping. `playEffect(kind, now, target?)` runs a timed preset (ramp + hold) as a displacement on top of the current positions; several can run at once, and `target: {x, y, r}` aims one at a face. `chaos`, `poke` and `shake` are impulse helpers.
-- `src/renderer.ts` (`Renderer`) is raw WebGL2: one textured triangle grid whose vertex buffer is re-uploaded from `mesh.positions` each frame. `preserveDrawingBuffer: true` is required for **Salvar PNG** (`canvas.toBlob`), which therefore captures only the canvas, not DOM overlays like captions or face circles.
-- `src/image.ts`: `loadImageFile` and `fitToCanvas` (downscale + optional mirroring) normalize every source to an `HTMLCanvasElement`; `drawDefaultFace` draws the built-in cartoon face.
+- `src/renderer.ts` (`Renderer`) is raw WebGL2: one textured triangle grid whose vertex buffer is re-uploaded from `mesh.positions` each frame. `setImage(source, live)` skips mipmaps for per-frame video uploads; `mirrored` flips the texture sideways. `preserveDrawingBuffer: true` is required for **Salvar PNG**, which captures the canvas (via `snapshot()` in `main.ts`, which also draws 🏆 award labels) but not DOM overlays like captions or face circles.
+- `src/image.ts`: `loadImageFile` and `fitToCanvas` (downscale + optional mirroring) normalize every source to an `HTMLCanvasElement`; `swapFaces` builds the head-swapped texture; `drawDefaultFace` draws the built-in cartoon face.
+- `src/faces.ts`: `detectFaces(image, max)` lazily imports `@mediapipe/tasks-vision` (its own chunk) and runs BlazeFace over the whole photo plus half-overlapping square windows of shrinking size, then merges duplicates. Results are circles in world units.
+- Pointer handling in `main.ts` also runs **Cabo de guerra**: two drags that start far apart become a `tug`, decided in `finishTug()` when either is released.
 - Feature modules use a setup function with injected dependencies instead of importing `main.ts`:
-  - `setupCamera(onPhoto, sounds)` in `src/camera.ts`: full-screen `getUserMedia` overlay with countdown, flash, camera flip, a mirrored selfie, and a fallback to `<input capture>`. It stops the stream on capture, close or tab hide.
-  - `setupGroup(deps)` in `src/group.ts` returns a `Group` object. While `group.active`, `main.ts` forwards pointer events to it instead of warping. It places DOM face circles (in world units, repositioned on `relayout()`), runs the roulette and "one effect per face" by calling `mesh.playEffect(..., target)`, and reports effect durations through `onEffects` so `main.ts` can block preset buttons until they finish (`effectBusyUntil`).
+  - `setupCamera(onPhoto, sounds)` in `src/camera.ts`: full-screen `getUserMedia` overlay with a pose challenge, countdown, flash, camera flip, a mirrored selfie, and a fallback to `<input capture>`. It stops the stream on capture, close or tab hide. `onPhoto(photo, challenge)` gets the pose challenge so `main.ts` can play its effect.
+  - `setupMirror(deps)` in `src/mirror.ts`: live selfie video; `main.ts` uploads `mirror.video` as the texture each frame. `stop(keepFrame)` hands back the frozen frame.
+  - `setupRecorder(deps)` in `src/recorder.ts`: `canvas.captureStream` + `sounds.stream()` (the master bus routed into a `MediaStreamAudioDestinationNode`) into `MediaRecorder`, then a preview dialog with share/download.
+  - `setupGroup(deps)` in `src/group.ts` returns a `Group` object. While `group.active`, `main.ts` forwards pointer events to it instead of warping. It auto-detects faces once per photo, places DOM face circles (in world units, repositioned on `relayout()`), runs the roulette and "one effect per face" by calling `mesh.playEffect(..., target)`, swaps heads via `deps.showTexture`, hands out awards (`awards()` for the PNG), and reports effect durations through `onEffects` so `main.ts` can block preset buttons until they finish (`effectBusyUntil`).

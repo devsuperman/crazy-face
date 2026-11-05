@@ -22,15 +22,27 @@ Runs fully in the browser (WebGL2). Photos never leave your device.
 - The selfie camera is mirrored, and the photo keeps that mirror so it looks like the preview. 🔄 switches cameras when there is more than one.
 - The camera turns off as soon as the photo is taken, the overlay closes, or the tab goes to the background.
 - If the browser has no camera support, the button opens the phone's own camera app instead.
+- **😜 Desafio de pose:** before the countdown the camera shows a random pose prompt, like "Cara de quem viu o boleto!". Right after the photo, the prompt's matching effect plays. 🔀 picks another one, or turn it off.
 - Browsers only allow the camera on HTTPS pages or `localhost`. To test on a phone on your Wi-Fi, run `npm run dev:phone` and open the `https://` network address it prints (accept the self-signed certificate warning).
+
+## 🪞 Espelho maluco (live mirror)
+
+The selfie camera feed becomes the texture, so you squish your own face in real time (`src/mirror.ts`). **🧊 Congelar** keeps the current frame as the photo without undoing the warp.
+
+## 🎬 Gravar (video clips)
+
+Records a 6-second clip of the canvas with the cartoon sounds (`src/recorder.ts`), as MP4 when the browser can, otherwise WebM. When it's done you can share it straight to WhatsApp & co. (Web Share) or download it. Captions and other overlays are not part of the clip.
 
 ## Modo turma (group photos)
 
 Tap **👥 Turma** to play with a photo of two or more people (`src/group.ts`).
 
+- Faces are **found automatically** when Turma opens on a new photo (`src/faces.ts`, MediaPipe's BlazeFace detector run on overlapping windows of a few sizes so small faces in group shots are found too). It runs in the browser; the library and model are bundled with the app and only downloaded the first time Turma opens.
 - Tap each person's face to drop a numbered circle on it. Drag while tapping to size the circle, and tap a circle to remove it (up to 6 faces).
 - **🎡 Roleta da vergonha:** a spotlight jumps between the faces, slows down and picks one person, who gets a random effect and a caption like "Quem paga a pizza é você! 🍕".
 - **🎭 Um efeito pra cada:** every face gets a different effect at the same time.
+- **🔀 Trocar cabeças:** each face is pasted onto the next person with soft edges. Tap again to rotate; after the last rotation everyone gets their own head back.
+- **🏆 Troféus:** each face gets a funny award, like "Dormiu na foto 😴". **Salvar PNG** includes the awards.
 - Effects can be aimed at a face and several can play at once (`playEffect(kind, now, target)` in `src/warp.ts`).
 
 ## Silly stuff
@@ -39,6 +51,7 @@ Tap **👥 Turma** to play with a photo of two or more people (`src/group.ts`).
 - **Cartoon sounds:** a rubbery creak while you drag and a boing when you let go. All are made on the fly with the Web Audio API, so there are no audio files (`src/sound.ts`). Use 🔊 to mute.
 - **Cheeky captions** after a big stretch, an **"OUCH!"** bubble when you pull too far, and a random joke hint on each visit (`src/jokes.ts`, where it's easy to add more).
 - **Shake your phone** to make the face jiggle (iOS asks for permission on the first tap).
+- **🪢 Cabo de guerra:** two people grab the face with one finger each, far apart, and pull. When someone lets go, whoever stretched it further wins.
 
 ## Develop
 
