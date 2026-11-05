@@ -1,7 +1,8 @@
 import './style.css';
 import { drawDefaultFace, loadImageFile } from './image';
 import { Renderer, type Layout } from './renderer';
-import { WarpMesh, type EffectKind } from './warp';
+import { WarpMesh, type EffectKind, type EffectTarget } from './warp';
+import { detectFaces, preloadFaceDetector } from './faces';
 import { Sounds } from './sound';
 import { setupCamera } from './camera';
 import { setupGroup } from './group';
@@ -9,6 +10,7 @@ import { setupRecorder } from './recorder';
 import {
   BIG_CAPTIONS,
   EFFECT_CAPTIONS,
+  GROUP_SUGGEST_HINTS,
   HINTS,
   MEDIUM_CAPTIONS,
   OUCH_LINES,
@@ -33,9 +35,11 @@ const jellyInput = $<HTMLInputElement>('jelly');
 const muteButton = $<HTMLButtonElement>('mute');
 const caption = $<HTMLParagraphElement>('caption');
 const bubble = $<HTMLDivElement>('bubble');
+const hint = $<HTMLParagraphElement>('hint');
+const groupButton = $<HTMLButtonElement>('group-open');
 
 const sounds = new Sounds();
-$('hint').textContent = pick(HINTS);
+hint.textContent = pick(HINTS);
 
 let renderer: Renderer;
 try {
@@ -65,12 +69,52 @@ const group = setupGroup({
   },
 });
 
-/** Load a new photo: the single entry point for files, the camera and the default face. */
-function setImage(image: HTMLCanvasElement): void {
+/**
+ * Load a new photo: the single entry point for files, the camera and the default face.
+ * `findFaces` looks for the main face to aim the effect buttons at.
+ */
+function setImage(image: HTMLCanvasElement, findFaces = true): void {
   photo = image;
   renderer.setImage(image);
   newMesh(image.height / image.width);
+  mainFace = undefined;
+  groupButton.classList.remove('pulse');
+  hint.textContent = pick(HINTS);
+  facesReady = findFaces ? findMainFace(image) : Promise.resolve();
 }
+
+// --- The main face: effect buttons aim at it instead of the whole photo ---
+
+/** The biggest face in the current photo, once found. */
+let mainFace: EffectTarget | undefined;
+/** Resolves when the search for `mainFace` is over (found or not). */
+let facesReady: Promise<void> = Promise.resolve();
+
+async function findMainFace(image: HTMLCanvasElement): Promise<void> {
+  let found: EffectTarget[] = [];
+  try {
+    found = await detectFaces(image, 6, { quick: true });
+  } catch {
+    // No detector (offline, old browser): effects keep working on the whole photo.
+  }
+  if (image !== photo) return; // a newer photo arrived meanwhile
+  mainFace = found[0];
+  if (found.length >= 2 && !group.active) {
+    hint.textContent = pick(GROUP_SUGGEST_HINTS).replace('{n}', String(found.length));
+    groupButton.classList.add('pulse');
+  }
+}
+
+/** Wait (up to `ms`) for the main face of `image`; false if the photo changed meanwhile. */
+async function waitForFace(image: HTMLCanvasElement, ms: number): Promise<boolean> {
+  await Promise.race([facesReady, new Promise((r) => setTimeout(r, ms))]);
+  return image === photo;
+}
+
+// Start downloading the detector as soon as a photo is on its way.
+$('camera-open').addEventListener('click', preloadFaceDetector);
+fileInput.addEventListener('click', preloadFaceDetector);
+groupButton.addEventListener('click', () => groupButton.classList.remove('pulse'));
 
 // --- Two screens: the start screen (take or pick a photo), then the editor ---
 
@@ -98,7 +142,8 @@ $('new-photo').addEventListener('click', () => {
 startBack.addEventListener('click', showEditor);
 $('start-sample').addEventListener('click', () => {
   sounds.unlock();
-  setImage(drawDefaultFace());
+  // The cartoon face fills the picture: whole-image effects already fit it.
+  setImage(drawDefaultFace(), false);
   showEditor();
   showCaption(pick(PHOTO_CAPTIONS));
 });
@@ -314,12 +359,16 @@ cameraFallback.addEventListener('change', () => {
 
 setupRecorder({ canvas, sounds, showCaption });
 
-setupCamera((photo, challenge) => {
-  setImage(photo);
+setupCamera((shot, challenge) => {
+  setImage(shot);
   showEditor();
   showCaption(pick(PHOTO_CAPTIONS));
-  // Desafio de pose: show the photo for a moment, then play the matching effect.
-  if (challenge) window.setTimeout(() => playPreset(challenge.effect, challenge.caption), 900);
+  // Desafio de pose: show the photo for a moment, then play the matching effect on the face.
+  if (challenge) {
+    window.setTimeout(async () => {
+      if (await waitForFace(shot, 1500)) playPreset(challenge.effect, challenge.caption);
+    }, 900);
+  }
 }, sounds);
 
 radiusInput.addEventListener('input', updateBrushSize);
@@ -336,14 +385,14 @@ jellyInput.addEventListener('change', () => {
 
 // --- Silly effect buttons ---
 
-/** Play a whole-image preset with its sound and a caption (a random one unless given). */
+/** Play a preset on the main face (or the whole photo) with its sound and a caption (a random one unless given). */
 function playPreset(kind: EffectKind, text?: string): void {
   sounds.unlock();
   const now = performance.now() / 1000;
   // Ignore button-mashing while a preset is still playing.
   if (now < effectBusyUntil) return;
   effectBusyUntil = now + WarpMesh.effectDuration(kind);
-  mesh.playEffect(kind, now);
+  mesh.playEffect(kind, now, mainFace);
   sounds.effect(kind);
   showCaption(text ?? pick(EFFECT_CAPTIONS[kind]));
 }
@@ -480,6 +529,6 @@ function frame(ms: number): void {
 }
 
 // The cartoon face waits behind the start screen until a photo arrives.
-setImage(drawDefaultFace());
+setImage(drawDefaultFace(), false);
 showStart();
 requestAnimationFrame(frame);

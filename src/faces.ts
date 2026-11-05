@@ -1,9 +1,11 @@
 /**
- * Automatic face detection for Modo turma, with MediaPipe's BlazeFace detector.
+ * Automatic face detection with MediaPipe's BlazeFace detector: it aims the effect
+ * buttons at the face and finds everyone for Modo turma.
  *
  * Runs entirely in the browser: the photo never leaves the device. The library,
  * its WebAssembly runtime and the model are bundled with the app (no CDN) and only
- * downloaded the first time 👥 Turma opens, thanks to the dynamic import below.
+ * downloaded when first needed (opening the camera or the gallery), thanks to the
+ * dynamic import below.
  */
 
 import type { FaceDetector } from '@mediapipe/tasks-vision';
@@ -42,11 +44,22 @@ function loadDetector(): Promise<FaceDetector> {
   return detectorPromise;
 }
 
+/** Start downloading the detector early, so it's ready when the photo arrives. */
+export function preloadFaceDetector(): void {
+  loadDetector().catch(() => {});
+}
+
 /**
  * Find the faces in a photo, biggest first, as circles in world units
  * (the image is 1 unit wide). Returns at most `max` faces.
+ * `quick` only looks at the whole photo and its biggest windows: a few detector runs
+ * instead of over a hundred, enough for selfies but it misses small faces in a crowd.
  */
-export async function detectFaces(image: HTMLCanvasElement, max: number): Promise<EffectTarget[]> {
+export async function detectFaces(
+  image: HTMLCanvasElement,
+  max: number,
+  { quick = false } = {},
+): Promise<EffectTarget[]> {
   const detector = await loadDetector();
   const W = image.width;
   const H = image.height;
@@ -76,7 +89,8 @@ export async function detectFaces(image: HTMLCanvasElement, max: number): Promis
     }
   };
   run(0, 0, W, H);
-  for (let side = short; side >= Math.min(short, MIN_WINDOW); side /= 2) {
+  const minWindow = quick ? short : Math.min(short, MIN_WINDOW);
+  for (let side = short; side >= minWindow; side /= 2) {
     const stride = side / 2;
     const nx = Math.max(1, Math.ceil((W - side) / stride) + 1);
     const ny = Math.max(1, Math.ceil((H - side) / stride) + 1);

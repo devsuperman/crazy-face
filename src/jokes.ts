@@ -141,6 +141,13 @@ export const SWAP_CAPTIONS = [
 /** Quando as cabeças voltam pro lugar. */
 export const SWAP_BACK_CAPTIONS = ['Tudo de volta ao normal. Será? 🤔', 'Cada cabeça no seu lugar. Ufa! 😮‍💨'];
 
+/** Quando a foto tem mais de um rosto. `{n}` vira o número de rostos. */
+export const GROUP_SUGGEST_HINTS = [
+  'Achei {n} rostos! Toque em 👥 Turma para zoar todo mundo.',
+  '{n} vítimas na foto! 😈 Toque em 👥 Turma.',
+  'Foto em grupo? Toque em 👥 Turma e ninguém escapa! 🎡',
+];
+
 /** Cabo de guerra: dois dedos puxando a mesma cara. */
 export const TUG_START = ['Cabo de guerra! Puxa! 🪢', 'Quem puxa mais forte? 💪', 'Valendo! Puxa, puxa! 🪢'];
 export const TUG_LEFT_WINS = ['Vitória do lado esquerdo! 🏆⬅️', 'O lado esquerdo levou a cara! ⬅️', 'Esquerda campeã! 💪⬅️'];

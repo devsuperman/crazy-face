@@ -39,7 +39,7 @@ Records a 6-second clip of the canvas with the cartoon sounds (`src/recorder.ts`
 
 Tap **👥 Turma** to play with a photo of two or more people (`src/group.ts`).
 
-- Faces are **found automatically** when Turma opens on a new photo (`src/faces.ts`, MediaPipe's BlazeFace detector run on overlapping windows of a few sizes so small faces in group shots are found too). It runs in the browser; the library and model are bundled with the app and only downloaded the first time Turma opens.
+- Faces are **found automatically** when Turma opens on a new photo (`src/faces.ts`, MediaPipe's BlazeFace detector run on overlapping windows of a few sizes so small faces in group shots are found too). It runs in the browser; the library and model are bundled with the app and only downloaded when first needed (opening the camera or the gallery).
 - Tap each person's face to drop a numbered circle on it. Drag while tapping to size the circle, and tap a circle to remove it (up to 6 faces).
 - **🎡 Roleta da vergonha:** a spotlight jumps between the faces, slows down and picks one person, who gets a random effect and a caption like "Quem paga a pizza é você! 🍕".
 - **🎭 Um efeito pra cada:** every face gets a different effect at the same time.
@@ -49,7 +49,7 @@ Tap **👥 Turma** to play with a photo of two or more people (`src/group.ts`).
 
 ## Silly stuff
 
-- **Effect buttons:** 🎈 Balloon, 🐟 Fish face and 🫠 Melt (`src/warp.ts`).
+- **Effect buttons:** 🎈 Balloon, 🐟 Fish face and 🫠 Melt (`src/warp.ts`). They aim at the biggest face in the photo, found automatically right after the photo arrives (`src/faces.ts`); without a face they warp the whole photo. In a photo with several people, 👥 Turma lights up.
 - **Cartoon sounds:** a rubbery creak while you drag and a boing when you let go. All are made on the fly with the Web Audio API, so there are no audio files (`src/sound.ts`). Use 🔊 to mute.
 - **Cheeky captions** after a big stretch, an **"OUCH!"** bubble when you pull too far, and a random joke hint on each visit (`src/jokes.ts`, where it's easy to add more).
 - **Shake your phone** to make the face jiggle (iOS asks for permission on the first tap).

@@ -49,7 +49,7 @@ Everything has only been tested in headless desktop Chromium (fake camera, CDP t
 
 The live mirror was removed: mesh effects can't follow a moving face. The app is now photo-first (start screen → 📸 or 🖼️ → "Ficou boa?" → editor). Next:
 
-1. **Aim the normal effects at the face.** Right after a photo is accepted, run `detectFaces()` and aim 🎈/🐟/🫠 at the largest face with `mesh.playEffect(kind, now, target)`. Today they aim at the image centre (`warp.ts`, `playEffect` without a target). Without a face, keep the current behaviour. Start loading the detector (~4 MB gzipped) when the camera opens or a file is picked, so it's usually ready. With 2+ faces, suggest 👥 Turma.
+1. ✅ **Effects aim at the face.** A quick detection runs on each new photo (`findMainFace` in `main.ts`, `detectFaces(..., {quick: true})`); 🎈/🐟/🫠 aim at the biggest face, or the whole photo if none is found. The detector preloads when the camera or gallery opens. With 2+ faces, 👥 Turma pulses and the hint suggests it. To check on phones: how long the quick detection takes on a mid-range Android (the pose-challenge effect waits up to 1.5 s for it), and whether a selfie face is too big or too close to the edge to be found.
 2. **New face effects on the still photo.** BlazeFace returns 6 keypoints per face (eyes, nose tip, mouth, ears); `faces.ts` currently keeps only circles, so also keep the keypoints. Then:
    - 👀 Olhão: a magnify bulge on each eye, radius ≈ 0.35 × eye distance.
    - 👃 Narigão: a bulge on the nose tip, slightly stretched downwards.
@@ -67,7 +67,7 @@ The live mirror was removed: mesh effects can't follow a moving face. The app is
 - Face circles stay at the face's original spot and don't follow the warp. That's fine for now.
 - **Salvar PNG** and 🎬 clips don't include captions or face circles (PNG does include 🏆 awards).
 - Untargeted presets (the normal effect buttons) no longer hold points outside the effect radius in place. They spring back on their own instead. The change is barely visible.
-- The face detector's wasm is ~14 MB (~4 MB gzipped). It's only downloaded the first time 👥 Turma opens.
+- The face detector's wasm is ~14 MB (~4 MB gzipped). It's downloaded when the camera or gallery first opens (not for the cartoon face).
 
 ## How to build and test
 
