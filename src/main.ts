@@ -13,6 +13,10 @@ import {
   MEDIUM_CAPTIONS,
   OUCH_LINES,
   PHOTO_CAPTIONS,
+  TUG_DRAW,
+  TUG_LEFT_WINS,
+  TUG_RIGHT_WINS,
+  TUG_START,
   pick,
 } from './jokes';
 
@@ -160,6 +164,36 @@ interface Drag {
 }
 const drags = new Map<number, Drag>();
 
+/**
+ * Cabo de guerra: two fingers grabbing the face far apart start a tug of war.
+ * When one lets go, whoever stretched further wins.
+ */
+const TUG_MIN_GAP = 0.15; // world units between the two fingers
+const TUG_MIN_PULL = 0.12; // someone has to actually pull for it to count
+let tug: { left: number; right: number } | null = null;
+
+function maybeStartTug(): void {
+  if (tug || drags.size !== 2) return;
+  const [[a, da], [b, db]] = [...drags];
+  if (Math.abs(da.startX - db.startX) < TUG_MIN_GAP) return;
+  tug = da.startX < db.startX ? { left: a, right: b } : { left: b, right: a };
+  showCaption(pick(TUG_START));
+  sounds.beep();
+}
+
+/** Call before a tugging pointer is forgotten: announces the winner. */
+function finishTug(): void {
+  if (!tug) return;
+  const left = drags.get(tug.left)?.maxStretch ?? 0;
+  const right = drags.get(tug.right)?.maxStretch ?? 0;
+  tug = null;
+  const best = Math.max(left, right);
+  if (best < TUG_MIN_PULL) return;
+  if (Math.abs(left - right) < best * 0.12) showCaption(pick(TUG_DRAW));
+  else showCaption(pick(left > right ? TUG_LEFT_WINS : TUG_RIGHT_WINS));
+  sounds.tada();
+}
+
 const currentStretch = () => Math.max(0, ...[...drags.values()].map((d) => d.stretch));
 
 canvas.addEventListener('pointerdown', (e) => {
@@ -174,6 +208,7 @@ canvas.addEventListener('pointerdown', (e) => {
   mesh.grab(e.pointerId, x, y, brushRadius());
   drags.set(e.pointerId, { startX: x, startY: y, stretch: 0, maxStretch: 0, ouched: false });
   canvas.classList.add('dragging');
+  maybeStartTug();
 });
 
 canvas.addEventListener('pointermove', (e) => {
@@ -204,6 +239,7 @@ canvas.addEventListener('pointermove', (e) => {
 const endPointer = (e: PointerEvent) => {
   if (group.pointerUp(e)) return;
   mesh.release(e.pointerId);
+  if (tug && (tug.left === e.pointerId || tug.right === e.pointerId)) finishTug();
   const drag = drags.get(e.pointerId);
   drags.delete(e.pointerId);
   if (drag) {
