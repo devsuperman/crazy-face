@@ -75,6 +75,20 @@ export const RECORD_CAPTIONS = [
   'Gravando! Depois não adianta pedir pra apagar. 😈',
 ];
 
+/** Texto que vai junto com a foto no WhatsApp. */
+export const SHARE_TEXTS = [
+  'Olha o que eu fiz com essa cara! 🤪',
+  'Ficou melhor que a original, né? 😂',
+  'Manda pro grupo da família! 🤪',
+  'Não me pergunte o que aconteceu com essa cara. 😂',
+];
+
+/** Sem compartilhamento direto (computador): a foto foi baixada e o WhatsApp abriu. */
+export const SHARE_FALLBACK_CAPTIONS = [
+  'Foto baixada! Agora é só anexar no WhatsApp. 📎',
+  'Baixei a foto! Anexa ela na conversa. 📎',
+];
+
 /** Desafio de pose na câmera: a pose pedida e o efeito que toca logo depois da foto. */
 export interface PoseChallenge {
   prompt: string;

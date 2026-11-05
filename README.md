@@ -35,6 +35,10 @@ The app opens on a start screen: **📸 Tirar foto**, **🖼️ Escolher foto**,
 
 Records a 6-second clip of the canvas with the cartoon sounds (`src/recorder.ts`), as MP4 when the browser can, otherwise WebM. When it's done you can share it straight to WhatsApp & co. (Web Share) or download it. Captions and other overlays are not part of the clip.
 
+## 💬 WhatsApp
+
+Sends the current picture (the same PNG as **Salvar PNG**) with a joke line. On phones it opens the share sheet (Web Share with files), where WhatsApp is listed. Web pages can't attach a file to WhatsApp directly, so where file sharing isn't available (most desktops) it downloads the PNG and opens WhatsApp (`wa.me`) with the text, and you attach the photo there.
+
 ## Group photos
 
 Faces are **found automatically** right after a photo arrives (`src/faces.ts`, MediaPipe's BlazeFace detector run on overlapping windows of a few sizes so small faces in group shots are found too). It runs in the browser; the library and model are bundled with the app and only downloaded when first needed (opening the camera or the gallery). There's nothing to mark by hand.

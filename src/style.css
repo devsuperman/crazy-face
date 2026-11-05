@@ -70,6 +70,13 @@ body {
   border-color: var(--muted);
 }
 
+.button.whatsapp {
+  background: #25d366;
+  border-color: #25d366;
+  color: #08310f;
+  font-weight: 600;
+}
+
 .button.primary {
   background: var(--accent);
   border-color: var(--accent);
