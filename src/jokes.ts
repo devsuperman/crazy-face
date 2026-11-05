@@ -104,3 +104,41 @@ export const POSE_CHALLENGES: readonly PoseChallenge[] = [
   { prompt: 'Cara de quem viu o ex no rolê! 👀', effect: 'fish', caption: 'Blub… finge que não viu. 🐟' },
   { prompt: 'Cara de quem chegou no churrasco e só tinha salada! 🥗', effect: 'melt', caption: 'Cadê a picanha?! 🥩' },
 ];
+
+/** Modo turma: troféus engraçados, um diferente para cada rosto. */
+export const AWARDS = [
+  'Drama nível novela 🎭',
+  'Dormiu na foto 😴',
+  'Vai chorar no casamento 😭',
+  'Conta a piada do pavê 🍰',
+  'Cara de segunda-feira 📅',
+  'Some primeiro da festa 🏃',
+  'Fofoca em dia 👂',
+  'Sempre atrasa ⏰',
+  'Comeu o último salgado 🥟',
+  'Manda áudio de 5 minutos 🎙️',
+  'Ainda deve o Pix 💸',
+  'Esqueceu o aniversário 🎂',
+  'Chora em comercial de margarina 🧈',
+  'Responde "kkk" sem rir 😐',
+  'Tira foto do prato 📸',
+  'Rei do "já tô chegando" 🚗',
+];
+
+/** Quando os troféus são entregues. */
+export const AWARD_CAPTIONS = ['E o troféu vai para… 🏆', 'Premiação da turma! 🏆', 'Oscar da família! 🎬', 'Os vencedores são… 🥁'];
+
+/** Quando o app está ocupado e ignora um toque no Modo turma. */
+export const BUSY_HINTS = ['Calma! Espera a brincadeira acabar. ⏳', 'Peraí, ainda tá rolando! ⏳'];
+
+/** Modo turma: troca de cabeças. */
+export const SWAP_CAPTIONS = [
+  'Quem é quem? 🔀',
+  'Troca de cabeças! Ninguém percebeu. 🤫',
+  'Agora sim, a família está completa. 😂',
+  'Cada um com a cara do outro!',
+  'Ficou até mais bonito, né?',
+];
+
+/** Quando as cabeças voltam pro lugar. */
+export const SWAP_BACK_CAPTIONS = ['Tudo de volta ao normal. Será? 🤔', 'Cada cabeça no seu lugar. Ufa! 😮‍💨'];

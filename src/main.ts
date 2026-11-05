@@ -42,6 +42,8 @@ try {
 }
 
 let mesh: WarpMesh;
+/** The photo being warped (before any head swap). */
+let photo: HTMLCanvasElement;
 let layout: Layout = { offsetX: 0, offsetY: 0, scale: 1 };
 /** Presets ignore clicks until this time (seconds), so they don't pile up. */
 let effectBusyUntil = 0;
@@ -52,12 +54,16 @@ const group = setupGroup({
   toWorld,
   sounds,
   showCaption,
+  getPhoto: () => photo,
+  showTexture: (image) => renderer.setImage(image),
+  onOpen: () => {},
   onEffects: (seconds) => {
     effectBusyUntil = Math.max(effectBusyUntil, performance.now() / 1000 + seconds);
   },
 });
 
 function setImage(image: HTMLCanvasElement): void {
+  photo = image;
   renderer.setImage(image);
   mesh = new WarpMesh(image.height / image.width);
   mesh.clay = clayInput.checked;
@@ -334,8 +340,37 @@ $('reset').addEventListener('click', () => {
   mesh.reset(performance.now() / 1000);
 });
 
+/** The canvas as it looks now, plus the 🏆 award labels if any are showing. */
+function snapshot(): HTMLCanvasElement {
+  const labels = group.awards();
+  if (!labels.length) return canvas;
+  const out = document.createElement('canvas');
+  out.width = canvas.width;
+  out.height = canvas.height;
+  const ctx = out.getContext('2d')!;
+  ctx.drawImage(canvas, 0, 0);
+  const k = canvas.width / canvas.clientWidth; // CSS pixels -> canvas pixels
+  const font = 13 * k;
+  ctx.font = `800 ${font}px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const l of labels) {
+    const x = (layout.offsetX + l.x * layout.scale) * k;
+    const y = (layout.offsetY + (l.y + l.r) * layout.scale) * k + 6 * k + font;
+    const w = ctx.measureText(l.text).width + 20 * k;
+    const h = font * 1.8;
+    ctx.fillStyle = '#ffe14f';
+    ctx.beginPath();
+    ctx.roundRect(x - w / 2, y - h / 2, w, h, h / 2);
+    ctx.fill();
+    ctx.fillStyle = '#2a2100';
+    ctx.fillText(l.text, x, y);
+  }
+  return out;
+}
+
 $('save').addEventListener('click', () => {
-  canvas.toBlob((blob) => {
+  snapshot().toBlob((blob) => {
     if (!blob) return;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
