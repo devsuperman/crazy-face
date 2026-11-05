@@ -34,7 +34,7 @@ const DEFAULT_R = 0.12;
 const MIN_R = 0.04;
 /** Below this drag distance a tap counts as "use the default size". */
 const TAP_SLOP = 0.03;
-const KINDS: EffectKind[] = ['balloon', 'fish', 'twist', 'melt'];
+const KINDS: EffectKind[] = ['balloon', 'fish', 'melt'];
 
 interface Face extends EffectTarget {
   el: HTMLDivElement;
