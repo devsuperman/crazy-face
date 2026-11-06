@@ -30,7 +30,6 @@ export class Sounds {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private stretchVoice: StretchVoice | null = null;
-  private recordTap: MediaStreamAudioDestinationNode | null = null;
   muted: boolean;
 
   constructor() {
@@ -71,24 +70,6 @@ export class Sounds {
     this.master.gain.value = this.muted ? 0 : 1;
     this.master.connect(this.ctx.destination);
     return this.ctx;
-  }
-
-  /**
-   * A live audio stream with every sound we make, so videos can include them.
-   * Returns null when the browser can't route Web Audio into a stream.
-   */
-  stream(): MediaStream | null {
-    const ctx = this.audio();
-    if (!ctx || !this.master) return null;
-    if (!this.recordTap) {
-      try {
-        this.recordTap = ctx.createMediaStreamDestination();
-      } catch {
-        return null;
-      }
-      this.master.connect(this.recordTap);
-    }
-    return this.recordTap.stream;
   }
 
   private ready(): AudioContext | null {
@@ -234,19 +215,6 @@ export class Sounds {
   shutter(): void {
     this.tone({ type: 'square', from: 2400, to: 300, duration: 0.05, gain: 0.12 });
     this.tone({ type: 'square', from: 1800, to: 200, duration: 0.06, gain: 0.1, delay: 0.08 });
-  }
-
-  /** "Ta-da!" when the tug of war has a winner. */
-  tada(): void {
-    [523, 659, 784, 1047].forEach((f, n) =>
-      this.tone({ type: 'triangle', from: f, to: f, duration: n === 3 ? 0.5 : 0.14, gain: 0.14, delay: n * 0.11 }),
-    );
-  }
-
-  /** Recording starts: a quick rising "dee-doo". */
-  recStart(): void {
-    this.tone({ type: 'triangle', from: 660, to: 660, duration: 0.09, gain: 0.1 });
-    this.tone({ type: 'triangle', from: 990, to: 990, duration: 0.12, gain: 0.1, delay: 0.1 });
   }
 
   /** ✨ A quick twinkle when the light and beauty filter turns on. */
