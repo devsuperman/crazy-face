@@ -20,6 +20,7 @@
 
     <main id="stage" class="stage">
       <canvas id="canvas"></canvas>
+      <button id="reset" class="button reset" type="button" data-i18n="reset">↺ Resetar</button>
       <div id="brush" class="brush" hidden></div>
       <div id="bubble" class="bubble" hidden></div>
       <p id="hint" class="hint">Arraste a cara para esticar. Toque em 📸 Nova foto para trocar.</p>
@@ -44,7 +45,6 @@
           <span data-i18n="brush">Pincel</span>
           <input id="radius" type="range" min="0.05" max="0.45" step="0.01" value="0.18" />
         </label>
-        <button id="reset" class="button" type="button" data-i18n="reset">Resetar</button>
       </div>
       <div id="effects-bar" class="effects" role="toolbar" aria-label="Efeitos malucos" data-i18n-aria="effects">
         <button class="button chip" type="button" data-effect="balloon" data-i18n="balloon">🎈 Balão</button>

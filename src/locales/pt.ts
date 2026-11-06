@@ -20,7 +20,7 @@ export const pt = {
     beauty: '✨ Luz e beleza',
     clay: 'Modo massinha',
     friday: '🎉 Sextou',
-    reset: 'Resetar',
+    reset: '↺ Resetar',
     save: '💾 Salvar',
     settings: '⚙️ Ajustes',
     settingsAria: 'Ajustes',

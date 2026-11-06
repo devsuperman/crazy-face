@@ -17,7 +17,7 @@ export const en: Messages = {
     beauty: '✨ Light & beauty',
     clay: 'Clay mode',
     friday: '🎉 Friday',
-    reset: 'Reset',
+    reset: '↺ Reset',
     save: '💾 Save',
     settings: '⚙️ Settings',
     settingsAria: 'Settings',
