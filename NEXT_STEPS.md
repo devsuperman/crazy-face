@@ -1,6 +1,6 @@
 # Next steps
 
-A handoff note so work can continue in a new chat. Last updated: 2026-11-06 (cleanup: removed captions, 🎬 Gravar, 🪢 Cabo de guerra and Modo gelatina; Modo massinha is on by default).
+A handoff note so work can continue in a new chat. Last updated: 2026-11-06 (🎉 Sextou: Friday sticker; before that, a cleanup removed captions, 🎬 Gravar, 🪢 Cabo de guerra and Modo gelatina, and made Modo massinha on by default).
 
 ## Where things stand
 
@@ -67,7 +67,12 @@ Done: optional ✂️ in the toolbar and in the camera's "Ficou boa?" review. Fr
 - Dragging the corners with a thumb (44 px targets) and the dialog on small screens and with the notch.
 - Ideas: fine straightening (±15°), pinch to zoom the box, and a starting box around the detected faces.
 
-### 5. Ideas and polish
+### 5. 🎉 Sextou (Friday sticker)
+Done: on Fridays (device time) a "SEXTOU!" sticker sits in the photo's bottom-right corner. Drag to move, pinch (or mouse wheel, Shift to turn) to resize and rotate, tap for a wiggle and a party sound; 🎉 Sextou in the toolbar turns it off. It's drawn on the canvas, so it's in saved PNGs and WhatsApp shares. Test any day with `?sextou=1`. To check on phones:
+- The pinch with real fingers, and that a tap on the sticker never starts a face drag.
+- Ideas: other days or dates (only Friday for now, by choice), and remembering where the sticker was put.
+
+### 6. Ideas and polish
 - [ ] 🤖 Detection uses BlazeFace short-range, which is tuned for selfie distance; the sliding windows help, but tiny or side-on faces can still be missed, and there's no manual fallback (by design).
 
 ## Small known issues

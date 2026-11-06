@@ -1,4 +1,5 @@
 import { MAX_LENSES } from './lens';
+import type { StickerPose } from './sticker';
 import type { WarpMesh } from './warp';
 
 const VERTEX = `#version 300 es
@@ -39,6 +40,44 @@ void main() {
   outColor = texture(uTex, p / vec2(1.0, uAspect));
 }`;
 
+// 🎉 The sticker: one textured quad on top of the photo, placed in world units.
+const STICKER_VERTEX = `#version 300 es
+in vec2 aCorner; // -0.5..0.5
+uniform vec2 uScale;
+uniform vec2 uOffset;
+uniform vec2 uCenter;
+uniform vec2 uSize;
+uniform float uAngle;
+out vec2 vUv;
+void main() {
+  vUv = aCorner + 0.5;
+  vec2 p = aCorner * uSize;
+  float c = cos(uAngle);
+  float s = sin(uAngle);
+  vec2 world = uCenter + vec2(p.x * c - p.y * s, p.x * s + p.y * c);
+  gl_Position = vec4(world * uScale + uOffset, 0.0, 1.0);
+}`;
+
+const STICKER_FRAGMENT = `#version 300 es
+precision mediump float;
+in vec2 vUv;
+uniform sampler2D uTex;
+out vec4 outColor;
+void main() {
+  outColor = texture(uTex, vUv);
+}`;
+
+interface StickerGl {
+  program: WebGLProgram;
+  vao: WebGLVertexArrayObject;
+  texture: WebGLTexture;
+  uScale: WebGLUniformLocation;
+  uOffset: WebGLUniformLocation;
+  uCenter: WebGLUniformLocation;
+  uSize: WebGLUniformLocation;
+  uAngle: WebGLUniformLocation;
+}
+
 /** Where the image sits on screen, in CSS pixels. */
 export interface Layout {
   offsetX: number;
@@ -62,6 +101,7 @@ export class Renderer {
   private readonly uLens: WebGLUniformLocation;
   private readonly uLensPull: WebGLUniformLocation;
   private indexCount = 0;
+  private readonly sticker: StickerGl;
 
   constructor(readonly canvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl2', {
@@ -97,6 +137,17 @@ export class Renderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+    this.sticker = createStickerProgram(gl);
+  }
+
+  /** Upload the 🎉 sticker art. */
+  setSticker(image: TexImageSource): void {
+    const gl = this.gl;
+    gl.bindTexture(gl.TEXTURE_2D, this.sticker.texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.generateMipmap(gl.TEXTURE_2D);
   }
 
   /** Upload a new texture (with mipmaps, so a zoomed-out photo stays smooth). */
@@ -131,7 +182,8 @@ export class Renderer {
     }
   }
 
-  draw(mesh: WarpMesh, layout: Layout): void {
+  /** Draw the warped photo, then the 🎉 sticker on top when there is one. */
+  draw(mesh: WarpMesh, layout: Layout, sticker?: StickerPose | null): void {
     const gl = this.gl;
     const cw = this.canvas.clientWidth;
     const ch = this.canvas.clientHeight;
@@ -158,7 +210,60 @@ export class Renderer {
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.drawElements(gl.TRIANGLES, this.indexCount, gl.UNSIGNED_INT, 0);
     gl.bindVertexArray(null);
+
+    if (sticker && sticker.w > 0) this.drawSticker(sticker, layout);
   }
+
+  private drawSticker(pose: StickerPose, layout: Layout): void {
+    const gl = this.gl;
+    const st = this.sticker;
+    const cw = this.canvas.clientWidth;
+    const ch = this.canvas.clientHeight;
+    gl.useProgram(st.program);
+    gl.uniform2f(st.uScale, (2 * layout.scale) / cw, (-2 * layout.scale) / ch);
+    gl.uniform2f(st.uOffset, (2 * layout.offsetX) / cw - 1, 1 - (2 * layout.offsetY) / ch);
+    gl.uniform2f(st.uCenter, pose.x, pose.y);
+    gl.uniform2f(st.uSize, pose.w, pose.h);
+    gl.uniform1f(st.uAngle, pose.angle);
+    // Blend over the photo; alpha adds up so the saved PNG keeps the sticker solid.
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.bindVertexArray(st.vao);
+    gl.bindTexture(gl.TEXTURE_2D, st.texture);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.bindVertexArray(null);
+    gl.disable(gl.BLEND);
+  }
+}
+
+function createStickerProgram(gl: WebGL2RenderingContext): StickerGl {
+  const program = createProgram(gl, STICKER_VERTEX, STICKER_FRAGMENT);
+  const vao = gl.createVertexArray()!;
+  const buffer = gl.createBuffer()!;
+  gl.bindVertexArray(vao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5]), gl.STATIC_DRAW);
+  bindAttribute(gl, program, 'aCorner', buffer);
+  gl.bindVertexArray(null);
+
+  const texture = gl.createTexture()!;
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+  const at = (name: string) => gl.getUniformLocation(program, name)!;
+  return {
+    program,
+    vao,
+    texture,
+    uScale: at('uScale'),
+    uOffset: at('uOffset'),
+    uCenter: at('uCenter'),
+    uSize: at('uSize'),
+    uAngle: at('uAngle'),
+  };
 }
 
 function bindAttribute(

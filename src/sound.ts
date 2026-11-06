@@ -230,6 +230,15 @@ export class Sounds {
     this.tone({ type: 'square', from: 3600, to: 1600, duration: 0.04, gain: 0.07, delay: 0.09 });
   }
 
+  /** 🎉 Sextou: a party blower ("língua de sogra") and a little fanfare. */
+  party(): void {
+    this.tone({ type: 'sawtooth', from: 380, to: 760, duration: 0.25, gain: 0.06, vibrato: [30, 0.03] });
+    this.tone({ type: 'sawtooth', from: 760, to: 520, duration: 0.18, gain: 0.05, delay: 0.25 });
+    [784, 988, 1175, 1568].forEach((f, n) =>
+      this.tone({ type: 'triangle', from: f, to: f, duration: n === 3 ? 0.35 : 0.1, gain: 0.12, delay: 0.45 + n * 0.08 }),
+    );
+  }
+
   /** Little "pop" for small UI moments. */
   pop(): void {
     this.tone({ from: 300, to: 900, duration: 0.08, gain: 0.15 });

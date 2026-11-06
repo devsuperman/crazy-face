@@ -119,6 +119,10 @@ body {
   cursor: grabbing;
 }
 
+#canvas.on-sticker {
+  cursor: move;
+}
+
 .brush {
   position: absolute;
   top: 0;

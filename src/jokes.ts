@@ -57,3 +57,11 @@ export const GROUP_SUGGEST_HINTS = [
   '{n} vítimas na foto! 😈 Aperta um efeito e ninguém escapa.',
   'Foto em grupo? Achei {n} rostos. Toca em 🎭 e cada um ganha o seu!',
 ];
+
+/** 🎉 Sextou: o adesivo de sexta-feira (o texto vai desenhado no adesivo). */
+export const FRIDAY_STICKERS = ['SEXTOU! 🎉', 'SEXTOOOU! 🥳', 'É SEXTA! 🍻', 'SEXTOU 😎'];
+/** A dica da primeira foto numa sexta. */
+export const FRIDAY_HINTS = [
+  'Sextou! 🎉 Arraste o adesivo, faça pinça para girar e toque nele.',
+  'É sexta! 🥳 Mude o adesivo de lugar ou toque nele pra festa.',
+];
