@@ -5,35 +5,10 @@ import { WarpMesh, type EffectKind, type EffectTarget } from './warp';
 import { detectFaces, preloadFaceDetector } from './faces';
 import { Sounds } from './sound';
 import { setupCamera } from './camera';
-import { setupRecorder } from './recorder';
 import { FULL_CROP, applyCrop, sameCrop, setupCropper, type Framing } from './crop';
 import { enhancePhoto, isDark, measureTone, type Tone } from './beauty';
 import { Sticker, drawSticker, isFriday } from './sticker';
-import {
-  BEAUTY_OFF_CAPTIONS,
-  BEAUTY_ON_CAPTIONS,
-  BIG_CAPTIONS,
-  CROP_CAPTIONS,
-  EFFECT_CAPTIONS,
-  EVERYONE_CAPTIONS,
-  FRIDAY_CAPTIONS,
-  FRIDAY_HINTS,
-  FRIDAY_STICKERS,
-  GROUP_EFFECT_CAPTIONS,
-  GROUP_SUGGEST_HINTS,
-  HINTS,
-  MEDIUM_CAPTIONS,
-  NO_FACE_CAPTIONS,
-  OUCH_LINES,
-  PHOTO_CAPTIONS,
-  SHARE_FALLBACK_CAPTIONS,
-  SHARE_TEXTS,
-  TUG_DRAW,
-  TUG_LEFT_WINS,
-  TUG_RIGHT_WINS,
-  TUG_START,
-  pick,
-} from './jokes';
+import { FRIDAY_HINTS, FRIDAY_STICKERS, GROUP_SUGGEST_HINTS, HINTS, OUCH_LINES, SHARE_TEXTS, pick } from './jokes';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -44,10 +19,8 @@ const drop = $<HTMLDivElement>('drop');
 const fileInput = $<HTMLInputElement>('file');
 const radiusInput = $<HTMLInputElement>('radius');
 const clayInput = $<HTMLInputElement>('clay');
-const jellyInput = $<HTMLInputElement>('jelly');
 const beautyInput = $<HTMLInputElement>('beauty');
 const muteButton = $<HTMLButtonElement>('mute');
-const caption = $<HTMLParagraphElement>('caption');
 const bubble = $<HTMLDivElement>('bubble');
 const hint = $<HTMLParagraphElement>('hint');
 const cropButton = $<HTMLButtonElement>('crop-open');
@@ -141,7 +114,6 @@ beautyInput.addEventListener('change', () => {
   showLook();
   if (beautyOn) sounds.sparkle();
   else sounds.pop();
-  showCaption(pick(beautyOn ? BEAUTY_ON_CAPTIONS : BEAUTY_OFF_CAPTIONS));
 });
 
 // --- The faces: effect buttons aim at every face instead of the whole photo ---
@@ -238,7 +210,6 @@ fridayInput.addEventListener('change', () => {
 function fridayParty(): void {
   sticker.wiggle(performance.now() / 1000);
   sounds.party();
-  showCaption(pick(FRIDAY_CAPTIONS));
 }
 
 // --- Two screens: the start screen (take or pick a photo), then the editor ---
@@ -274,13 +245,11 @@ $('start-sample').addEventListener('click', () => {
   sounds.unlock();
   showCartoon();
   showEditor();
-  showCaption(pick(PHOTO_CAPTIONS));
 });
 
 function newMesh(aspect: number): void {
   mesh = new WarpMesh(aspect);
   mesh.clay = clayInput.checked;
-  mesh.jelly = jellyInput.checked;
   renderer.setMesh(mesh);
   updateLayout();
 }
@@ -315,28 +284,10 @@ function updateBrushSize(): void {
   brush.style.width = brush.style.height = `${px}px`;
 }
 
-// --- Jokes: captions and "ouch" bubbles ---
+// --- Jokes: "ouch" bubbles ---
 
 /** Stretch (world units) after which the face complains. */
 const OUCH_AT = 0.4;
-/** Stretch after which letting go earns a caption. */
-const MEDIUM_AT = 0.22;
-const BIG_AT = 0.42;
-
-let captionTimer = 0;
-let lastCaptionAt = 0;
-
-function showCaption(text: string): void {
-  lastCaptionAt = performance.now();
-  caption.textContent = text;
-  caption.hidden = false;
-  // Restart the CSS animation even if a caption is already showing.
-  caption.style.animation = 'none';
-  void caption.offsetWidth;
-  caption.style.animation = '';
-  clearTimeout(captionTimer);
-  captionTimer = window.setTimeout(() => (caption.hidden = true), 2600);
-}
 
 let bubbleTimer = 0;
 function showBubble(e: PointerEvent): void {
@@ -353,53 +304,15 @@ function showBubble(e: PointerEvent): void {
   sounds.ouch();
 }
 
-/** After a stretch, sometimes say something cheeky (but don't spam). */
-function maybeCaption(stretch: number): void {
-  if (stretch < MEDIUM_AT || performance.now() - lastCaptionAt < 3500) return;
-  if (stretch >= BIG_AT) showCaption(pick(BIG_CAPTIONS));
-  else if (Math.random() < 0.5) showCaption(pick(MEDIUM_CAPTIONS));
-}
-
 // --- Pointer interaction (mouse, touch and pen, multi-touch aware) ---
 
 interface Drag {
   startX: number;
   startY: number;
   stretch: number;
-  maxStretch: number;
   ouched: boolean;
 }
 const drags = new Map<number, Drag>();
-
-/**
- * Cabo de guerra: two fingers grabbing the face far apart start a tug of war.
- * When one lets go, whoever stretched further wins.
- */
-const TUG_MIN_GAP = 0.15; // world units between the two fingers
-const TUG_MIN_PULL = 0.12; // someone has to actually pull for it to count
-let tug: { left: number; right: number } | null = null;
-
-function maybeStartTug(): void {
-  if (tug || drags.size !== 2) return;
-  const [[a, da], [b, db]] = [...drags];
-  if (Math.abs(da.startX - db.startX) < TUG_MIN_GAP) return;
-  tug = da.startX < db.startX ? { left: a, right: b } : { left: b, right: a };
-  showCaption(pick(TUG_START));
-  sounds.beep();
-}
-
-/** Call before a tugging pointer is forgotten: announces the winner. */
-function finishTug(): void {
-  if (!tug) return;
-  const left = drags.get(tug.left)?.maxStretch ?? 0;
-  const right = drags.get(tug.right)?.maxStretch ?? 0;
-  tug = null;
-  const best = Math.max(left, right);
-  if (best < TUG_MIN_PULL) return;
-  if (Math.abs(left - right) < best * 0.12) showCaption(pick(TUG_DRAW));
-  else showCaption(pick(left > right ? TUG_LEFT_WINS : TUG_RIGHT_WINS));
-  sounds.tada();
-}
 
 const currentStretch = () => Math.max(0, ...[...drags.values()].map((d) => d.stretch));
 
@@ -416,9 +329,8 @@ canvas.addEventListener('pointerdown', (e) => {
     return;
   }
   mesh.grab(e.pointerId, x, y, brushRadius());
-  drags.set(e.pointerId, { startX: x, startY: y, stretch: 0, maxStretch: 0, ouched: false });
+  drags.set(e.pointerId, { startX: x, startY: y, stretch: 0, ouched: false });
   canvas.classList.add('dragging');
-  maybeStartTug();
 });
 
 canvas.addEventListener('pointermove', (e) => {
@@ -439,7 +351,6 @@ canvas.addEventListener('pointermove', (e) => {
   const drag = drags.get(e.pointerId);
   if (!drag) return;
   drag.stretch = Math.hypot(x - drag.startX, y - drag.startY);
-  drag.maxStretch = Math.max(drag.maxStretch, drag.stretch);
   if (!drag.ouched && drag.stretch > OUCH_AT) {
     drag.ouched = true;
     showBubble(e);
@@ -455,14 +366,12 @@ const endPointer = (e: PointerEvent) => {
     return;
   }
   mesh.release(e.pointerId);
-  if (tug && (tug.left === e.pointerId || tug.right === e.pointerId)) finishTug();
   const drag = drags.get(e.pointerId);
   drags.delete(e.pointerId);
   if (drag) {
     sounds.setStretch(currentStretch());
     // In clay mode nothing springs back, so no boing.
     if (!mesh.clay) sounds.boing(drag.stretch);
-    maybeCaption(drag.maxStretch);
   }
   if (!mesh.isDragging) canvas.classList.remove('dragging');
 };
@@ -504,8 +413,6 @@ cameraFallback.addEventListener('change', () => {
   cameraFallback.value = '';
 });
 
-setupRecorder({ canvas, sounds, showCaption });
-
 const cropper = setupCropper(sounds);
 
 // ✂️ Recortar in the editor: crop the uncropped photo again. The mesh starts over.
@@ -516,32 +423,21 @@ cropButton.addEventListener('click', async () => {
   const crop = await cropper(source, before);
   if (!crop || sameCrop(crop, before) || photoFraming.source !== source) return;
   setImage(applyCrop(source, crop), { beauty: beautyOn, framing: { source, crop } });
-  showCaption(pick(CROP_CAPTIONS));
 });
 
 setupCamera((shot, challenge, lit, framing) => {
   setImage(shot, { beauty: !!lit, lit, framing });
   showEditor();
-  showCaption(pick(PHOTO_CAPTIONS));
   // Desafio de pose: show the photo for a moment, then play the matching effect on the face.
   if (challenge) {
     window.setTimeout(async () => {
-      if (await waitForFace(shot, 1500)) void playPreset(challenge.effect, challenge.caption);
+      if (await waitForFace(shot, 1500)) void playPreset(challenge.effect);
     }, 900);
   }
 }, sounds, cropper);
 
 radiusInput.addEventListener('input', updateBrushSize);
 clayInput.addEventListener('change', () => (mesh.clay = clayInput.checked));
-jellyInput.addEventListener('change', () => {
-  mesh.jelly = jellyInput.checked;
-  if (mesh.jelly) {
-    showCaption(pick(EFFECT_CAPTIONS.jelly));
-    mesh.chaos(3); // give it a little wobble so you can see the difference
-    sounds.unlock();
-    sounds.boing(0.3);
-  }
-});
 
 // --- Silly effect buttons ---
 
@@ -552,7 +448,7 @@ const SOUND_STAGGER = 150;
 
 /**
  * What a preset aims at: every face found, else the whole photo (`undefined`),
- * or the cartoon's features for 👀/👃/🐹. Null if there's nothing to aim at (it says so).
+ * or the cartoon's features for 👀/👃/🐹. Null if there's nothing to aim at.
  */
 async function targetsFor(kind: EffectKind): Promise<(EffectTarget | undefined)[] | null> {
   if (photoFaces.length) return photoFaces;
@@ -564,13 +460,11 @@ async function targetsFor(kind: EffectKind): Promise<(EffectTarget | undefined)[
   const same = await waitForFace(image, 1500);
   effectBusyUntil = 0;
   if (!same) return null;
-  if (photoFaces.length) return photoFaces;
-  showCaption(pick(NO_FACE_CAPTIONS));
-  return null;
+  return photoFaces.length ? photoFaces : null;
 }
 
-/** Play a preset on every face (or the whole photo) with its sound and a caption (a random one unless given). */
-async function playPreset(kind: EffectKind, text?: string): Promise<void> {
+/** Play a preset on every face (or the whole photo) with its sound. */
+async function playPreset(kind: EffectKind): Promise<void> {
   sounds.unlock();
   // Ignore button-mashing while a preset is still playing.
   if (performance.now() / 1000 < effectBusyUntil) return;
@@ -583,8 +477,6 @@ async function playPreset(kind: EffectKind, text?: string): Promise<void> {
   for (let i = 0; i < Math.min(3, targets.length); i++) {
     window.setTimeout(() => sounds.effect(kind), i * SOUND_STAGGER);
   }
-  const captions = targets.length >= 2 ? GROUP_EFFECT_CAPTIONS[kind] : EFFECT_CAPTIONS[kind];
-  showCaption(text ?? pick(captions));
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>('[data-effect]')) {
@@ -612,7 +504,6 @@ function playMix(): void {
     window.setTimeout(() => sounds.effect(kind), i * SOUND_STAGGER);
   });
   effectBusyUntil = now + longest;
-  showCaption(pick(EVERYONE_CAPTIONS));
 }
 $('mix').addEventListener('click', playMix);
 
@@ -665,7 +556,6 @@ function onMotion(e: DeviceMotionEvent): void {
   const k = Math.min(strength, 40) * 0.04;
   mesh.shake((-a.x / strength) * k, (a.y / strength) * k);
   sounds.boing(Math.min(0.5, strength / 60));
-  if (now - lastCaptionAt > 4000 && strength > 20) showCaption(pick(EFFECT_CAPTIONS.shake));
 }
 $('reset').addEventListener('click', () => {
   effectBusyUntil = 0;
@@ -708,7 +598,6 @@ $('whatsapp').addEventListener('click', () => {
     }
     downloadBlob(blob, file.name);
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
-    showCaption(pick(SHARE_FALLBACK_CAPTIONS));
   }, 'image/png');
 });
 

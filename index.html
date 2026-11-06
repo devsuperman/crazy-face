@@ -21,12 +21,8 @@
           ✨ Luz e beleza
         </label>
         <label class="toggle">
-          <input id="clay" type="checkbox" />
+          <input id="clay" type="checkbox" checked />
           Modo massinha
-        </label>
-        <label class="toggle">
-          <input id="jelly" type="checkbox" />
-          Modo gelatina
         </label>
         <label id="friday-toggle" class="toggle" hidden>
           <input id="friday" type="checkbox" checked />
@@ -35,7 +31,6 @@
         <button id="reset" class="button" type="button">Resetar</button>
         <button id="save" class="button" type="button">Salvar PNG</button>
         <button id="whatsapp" class="button whatsapp" type="button" aria-label="Enviar a foto pelo WhatsApp">💬 WhatsApp</button>
-        <button id="record" class="button" type="button">🎬 Gravar</button>
         <button id="mute" class="button icon" type="button" aria-label="Desligar sons" title="Desligar sons">🔊</button>
       </div>
     </header>
@@ -52,10 +47,8 @@
         <button class="button chip" type="button" data-effect="cheeks">🐹 Bochechas</button>
         <button id="mix" class="button chip accent" type="button">🎭 Um efeito pra cada</button>
       </div>
-      <p id="caption" class="caption" aria-live="polite" hidden></p>
       <div id="bubble" class="bubble" hidden></div>
       <p id="hint" class="hint">Arraste a cara para esticar. Toque em 📸 Nova foto para trocar.</p>
-      <div id="rec-badge" class="rec-badge" aria-live="polite" hidden></div>
     </main>
 
     <section id="start" class="start" aria-labelledby="start-title">
@@ -143,18 +136,6 @@
       <div class="crop-actions">
         <button id="crop-cancel" class="button big" type="button">Cancelar</button>
         <button id="crop-done" class="button primary big" type="button">✔ Pronto</button>
-      </div>
-    </div>
-
-    <div id="clip" class="clip" role="dialog" aria-modal="true" aria-label="Vídeo gravado" hidden>
-      <div class="clip-box">
-        <p class="clip-title">Vídeo pronto! 🎬</p>
-        <video id="clip-video" playsinline loop controls></video>
-        <div class="clip-actions">
-          <button id="clip-share" class="button primary" type="button">📤 Compartilhar</button>
-          <button id="clip-download" class="button" type="button">⬇️ Baixar</button>
-          <button id="clip-close" class="button" type="button">Fechar</button>
-        </div>
       </div>
     </div>
 

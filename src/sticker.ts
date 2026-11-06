@@ -1,7 +1,6 @@
 /**
  * 🎉 Sextou: on Fridays a sticker sits on the photo. It's drawn by the renderer
- * on the canvas (not as an HTML overlay), so it shows up in Salvar PNG, 💬 WhatsApp
- * and 🎬 clips. Drag it to move it; pinch (or the mouse wheel, Shift to turn) to
+ * on the canvas (not as an HTML overlay), so it shows up in Salvar PNG and 💬 WhatsApp. Drag it to move it; pinch (or the mouse wheel, Shift to turn) to
  * resize and rotate; tap it for a little party.
  *
  * Everything here is in world units, like the mesh: the photo is 1 wide and
