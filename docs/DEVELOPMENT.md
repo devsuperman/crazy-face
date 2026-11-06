@@ -57,7 +57,7 @@ The build must pass before committing. Every push to `main` builds and deploys t
 ## Project rules
 
 - **All user-facing text is Brazilian Portuguese (PT-BR):** buttons, hints, alerts and `aria-label`s. Jokes should feel Brazilian, not translated word for word. Code, comments, commits and the docs stay in English.
-- UI text lives only in `index.html` (static markup) and `src/jokes.ts` (hints, "ouch" lines, pose challenges and share texts; use `pick()`).
+- UI text lives only in `index.html` (static markup) and `src/jokes.ts` (hints, "ouch" lines and share texts; use `pick()`).
 - New sounds are methods on `Sounds` in `src/sound.ts`.
 - Photos never leave the device: no uploads, no servers, no CDN for the ML model.
 - No frameworks or UI libraries.
@@ -73,7 +73,7 @@ The build must pass before committing. Every push to `main` builds and deploys t
 | `src/renderer.ts` | `Renderer`: WebGL2 drawing of the mesh, lenses and sticker |
 | `src/faces.ts` | Face detection (MediaPipe BlazeFace, lazy-loaded, multi-scale windows) |
 | `src/beauty.ts` | ✨ Luz e beleza: tone measurement and the one-pass photo filter |
-| `src/camera.ts` | 📸 Camera overlay, pose challenge, review, light, fallback |
+| `src/camera.ts` | 📸 Camera overlay, review, light, fallback |
 | `src/crop.ts` | ✂️ Recortar dialog and `applyCrop` |
 | `src/sticker.ts` | 🎉 Sextou sticker: drawing and gestures |
 | `src/image.ts` | Loading and normalizing images, the cartoon face |
@@ -124,7 +124,7 @@ These aren't mesh moves. They go to `mesh.lenses` (`src/lens.ts`): magnifying bu
 1. A **quick** pass (only the biggest windows, about 1 s on desktop, fine for selfies) sets `photoFaces` right away.
 2. A **full** pass runs in the background and replaces it if it finds at least as many faces (small faces in group photos).
 
-The effect buttons (`playPreset`, via `targetsFor`) play on **every** face in `photoFaces` (up to `MAX_FACES` = 6), falling back to the whole image. 🎭 Um efeito pra cada (`playMix`) gives each face a different kind. The pose-challenge effect waits up to 1.5 s for the quick pass (`waitForFace`). The cartoon face skips detection.
+The effect buttons (`playPreset`, via `targetsFor`) play on **every** face in `photoFaces` (up to `MAX_FACES` = 6), falling back to the whole image. 🎭 Um efeito pra cada (`playMix`) gives each face a different kind. The cartoon face skips detection.
 
 ### ✨ Luz e beleza
 
@@ -145,14 +145,14 @@ Cropping happens **before** `setImage()`, so the mesh, faces and ✨ only see th
 
 `setupCamera(onPhoto, sounds, cropper)` in `src/camera.ts` opens a full-screen `getUserMedia` overlay with:
 
-- a pose challenge (from `src/jokes.ts`), countdown, flash and camera flip;
+- a countdown, flash and camera flip;
 - a mirrored selfie (the photo keeps the mirror so it matches the preview);
 - the "Ficou boa?" review with the ✨ chip and ✂️ Recortar;
 - 💡 light: a warm glowing screen around a smaller preview on the front camera (the whole screen lit for the last countdown second), the torch on the back camera when it has one; it turns on by itself in a dark room;
 - a preview brightened with a CSS filter to match the photo, plus continuous exposure / white balance and +1 EV in the dark where `getCapabilities()` offers them;
 - a fallback to `<input capture>` when there's no camera API.
 
-The shot uses `ImageCapture.takePhoto()` (full sensor resolution) where available, else the current video frame. The stream stops when the photo is used, on close or when the tab is hidden (a photo in review is kept). `onPhoto(photo, challenge, lit, framing)` gets the cropped photo, the pose challenge (so `main.ts` can play its effect), the light state and the framing.
+The shot uses `ImageCapture.takePhoto()` (full sensor resolution) where available, else the current video frame. The stream stops when the photo is used, on close or when the tab is hidden (a photo in review is kept). `onPhoto(photo, lit, framing)` gets the cropped photo, the light state and the framing. The editor opens on the photo as it is, with no effect playing.
 
 ### 🎉 Sextou sticker
 

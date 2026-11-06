@@ -494,71 +494,8 @@ body {
   gap: 12px;
 }
 
-.camera.reviewing > .camera-bar,
-.camera.reviewing > .challenge-bar {
+.camera.reviewing > .camera-bar {
   display: none;
-}
-
-/* 😜 Desafio de pose */
-.challenge-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
-  pointer-events: none;
-}
-
-.challenge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  max-width: 520px;
-  padding: 10px 16px 12px;
-  border-radius: 16px;
-  background: rgba(255, 79, 139, 0.92);
-  color: #fff;
-  text-align: center;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-  pointer-events: auto;
-  animation: pop-in 0.35s ease;
-}
-
-.challenge-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.85;
-}
-
-.challenge-text {
-  font-size: 1.25rem;
-  font-weight: 800;
-}
-
-.challenge-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.challenge .button.chip {
-  border-color: rgba(255, 255, 255, 0.5);
-  color: #fff;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.challenge-bar > .button.chip {
-  pointer-events: auto;
-}
-
-/* While counting down, hide the buttons so nobody changes the pose mid-count. */
-.camera.counting .challenge-actions,
-.camera.counting .challenge-bar > .button.chip {
-  visibility: hidden;
 }
 
 @keyframes pop-in {
