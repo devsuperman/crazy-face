@@ -584,23 +584,27 @@ function downloadBlob(blob: Blob, name: string): void {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-$('save').addEventListener('click', () => {
-  canvas.toBlob((blob) => {
-    if (blob) downloadBlob(blob, 'crazy-face.png');
-  }, 'image/png');
+/** The photo as it looks now: a JPEG at the photo's resolution, cropped, on white. */
+function exportPhoto(): Promise<Blob | null> {
+  return renderer.exportJpeg(mesh, sticker.visible ? sticker.pose(performance.now() / 1000) : null);
+}
+
+$('save').addEventListener('click', async () => {
+  const blob = await exportPhoto();
+  if (blob) downloadBlob(blob, 'crazy-face.jpg');
 });
 
 /**
- * 💬 WhatsApp. On phones the Web Share sheet sends the PNG itself (WhatsApp is listed
+ * 💬 WhatsApp. On phones the Web Share sheet sends the JPEG itself (WhatsApp is listed
  * there). Web pages can't attach a file to WhatsApp directly, so elsewhere we download
- * the PNG and open WhatsApp (wa.me) with the text, and the user attaches the photo.
+ * the JPEG and open WhatsApp (wa.me) with the text, and the user attaches the photo.
  */
 $('whatsapp').addEventListener('click', () => {
   sounds.unlock();
   const text = pick(t().share);
-  canvas.toBlob(async (blob) => {
+  void exportPhoto().then(async (blob) => {
     if (!blob) return;
-    const file = new File([blob], 'crazy-face.png', { type: 'image/png' });
+    const file = new File([blob], 'crazy-face.jpg', { type: 'image/jpeg' });
     if (navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({ files: [file], text });
@@ -612,7 +616,7 @@ $('whatsapp').addEventListener('click', () => {
     }
     downloadBlob(blob, file.name);
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
-  }, 'image/png');
+  });
 });
 
 // Drag & drop and paste

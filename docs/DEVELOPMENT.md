@@ -103,7 +103,7 @@ Everything geometric is in world units: the image is 1 unit wide and `aspect` (h
 
 `WarpMesh` in `src/warp.ts` is a grid of points (64 columns, rows to match the aspect) with a rest and a current position each. It's integrated at a fixed 1/120 s step with a damped spring back to rest, which gives the wobble. `grab` / `move` / `release` pull nearby points along with the pointer, with a smooth falloff radius.
 
-`Renderer` draws the photo as one textured triangle grid and re-uploads the vertex buffer from `mesh.positions` every frame. `preserveDrawingBuffer: true` is required so **Salvar PNG** can capture the canvas (DOM overlays like the "ouch" bubble aren't captured).
+`Renderer` draws the photo as one textured triangle grid and re-uploads the vertex buffer from `mesh.positions` every frame. **Salvar foto** and 💬 use `exportJpeg(mesh, sticker)`: it redraws offscreen (multisampled framebuffer, then `readPixels`) at the photo texture's own pixels per world unit (long side ≤ 4096), cropped to the warped mesh and sticker plus a 2% margin, on white (JPEG has no transparency), and encodes a JPEG at quality 0.9. That's sharper than the screen and several times smaller than a PNG. It doesn't read the on-screen canvas, so the context has no `preserveDrawingBuffer`; DOM overlays like the "ouch" bubble aren't in it.
 
 ### 🧱 Modo massinha
 
@@ -158,11 +158,11 @@ The shot uses `ImageCapture.takePhoto()` (full sensor resolution) where availabl
 
 ### 🎉 Sextou sticker
 
-`src/sticker.ts`: `isFriday()` checks the device's local day (`?sextou=1` / `?sextou=0` force it). `drawSticker(text)` draws the label on a 2D canvas. `Sticker` holds its pose in world units and handles the gestures: drag, two-finger pinch to resize and rotate, mouse wheel, tap. The renderer draws it as a second textured quad after the mesh (`renderer.setSticker`, `draw(mesh, layout, pose)`), so it's in **Salvar PNG** and 💬 shares but isn't warped. `setImage()` calls `placeSticker()` (new text, bottom-right corner). Pointer handlers give the sticker first pick (`sticker.wants`), and a tap wiggles it and plays `sounds.party()`.
+`src/sticker.ts`: `isFriday()` checks the device's local day (`?sextou=1` / `?sextou=0` force it). `drawSticker(text)` draws the label on a 2D canvas. `Sticker` holds its pose in world units and handles the gestures: drag, two-finger pinch to resize and rotate, mouse wheel, tap. The renderer draws it as a second textured quad after the mesh (`renderer.setSticker`, `draw(mesh, layout, pose)`), so it's in **Salvar foto** and 💬 shares but isn't warped. `setImage()` calls `placeSticker()` (new text, bottom-right corner). Pointer handlers give the sticker first pick (`sticker.wants`), and a tap wiggles it and plays `sounds.party()`.
 
 ### 💬 WhatsApp
 
-Builds the same PNG as **Salvar PNG** plus a joke line from `src/locales/`. Where Web Share with files is available (most phones) it opens the share sheet. Web pages can't attach files to WhatsApp directly, so elsewhere it downloads the PNG and opens `wa.me` with the text.
+Builds the same JPEG as **Salvar foto** plus a joke line from `src/locales/`. Where Web Share with files is available (most phones) it opens the share sheet. Web pages can't attach files to WhatsApp directly, so elsewhere it downloads the JPEG and opens `wa.me` with the text.
 
 ### Images and sounds
 

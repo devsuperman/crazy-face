@@ -18,7 +18,7 @@ export const en: Messages = {
     clay: 'Clay mode',
     friday: '🎉 Friday',
     reset: 'Reset',
-    save: 'Save PNG',
+    save: 'Save photo',
     whatsappAria: 'Send the photo on WhatsApp',
     effects: 'Crazy effects',
     balloon: '🎈 Balloon',

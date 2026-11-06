@@ -21,7 +21,7 @@ export const pt = {
     clay: 'Modo massinha',
     friday: '🎉 Sextou',
     reset: 'Resetar',
-    save: 'Salvar PNG',
+    save: 'Salvar foto',
     whatsappAria: 'Enviar a foto pelo WhatsApp',
     effects: 'Efeitos malucos',
     balloon: '🎈 Balão',
