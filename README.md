@@ -56,7 +56,7 @@ On by default: the face keeps the shape you give it. **Reset** (Resetar) puts it
 
 ### 🎉 Friday (Sextou)
 
-On Fridays only, a party sticker shows up on the photo ("TGIF!" in English, "SEXTOU!" in Portuguese). Drag it, pinch to resize and rotate it, or tap it for a little party. It goes into the saved picture too.
+On Fridays only, a party sticker shows up on the photo ("Happy Friday!" in English, "SEXTOU!" in Portuguese). Drag it, pinch to resize and rotate it, or tap it for a little party. It goes into the saved picture too.
 
 ### 🔊 Sounds and jokes
 

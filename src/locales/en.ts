@@ -96,10 +96,10 @@ export const en: Messages = {
     "Don't ask what happened to this face. 😂",
   ],
 
-  fridayStickers: ['TGIF! 🎉', 'FRIYAY! 🥳', "IT'S FRIDAY! 🍻", 'WEEKEND MODE 😎'],
+  fridayStickers: ['Happy Friday! 🎉', 'Happy Friday! 🥳', 'Happy Friday! 🍻', 'Happy Friday! 😎'],
 
   fridayHints: [
-    "TGIF! 🎉 Drag the sticker, pinch to spin it, and tap it.",
-    "It's Friday! 🥳 Move the sticker around or tap it to party.",
+    "Happy Friday! 🎉 Drag the sticker, pinch to spin it, and tap it.",
+    "Happy Friday! 🥳 Move the sticker around or tap it to party.",
   ],
 };
