@@ -33,11 +33,10 @@ body {
 
 .toolbar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 16px;
-  padding: 10px 16px;
+  gap: 12px;
+  padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
 }
@@ -65,6 +64,7 @@ body {
 }
 
 .lang-switch .button.chip {
+  pointer-events: auto;
   padding: 3px 9px;
   border: 0;
   background: transparent;
@@ -83,14 +83,6 @@ body {
   top: calc(12px + env(safe-area-inset-top));
   right: 16px;
   background: var(--panel);
-}
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  font-size: 0.9rem;
 }
 
 .button {
@@ -202,21 +194,117 @@ body {
   line-height: 1;
 }
 
+/* --- Bottom dock: effects strip, main actions and the ⚙️ sheet, in thumb reach --- */
+
+.dock {
+  position: relative;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+}
+
+/* One row that scrolls sideways on phones and sits centred when it fits. */
 .effects {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px 4px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 12px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.effects::-webkit-scrollbar {
+  display: none;
+}
+
+.effects > :first-child {
+  margin-left: auto;
+}
+
+.effects > :last-child {
+  margin-right: auto;
+}
+
+.effects .button.chip {
+  flex: none;
+  min-height: 40px;
+  white-space: nowrap;
+  scroll-snap-align: start;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1.25fr;
+  gap: 8px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 6px 12px calc(10px + env(safe-area-inset-bottom));
+}
+
+.button.action {
+  min-height: 48px;
+  padding: 6px 4px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.button.action[aria-expanded='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ⚙️ Ajustes: floats over the bottom of the photo, so opening it doesn't move the photo. */
+.settings {
   position: absolute;
-  top: 12px;
-  left: 0;
-  right: 0;
+  bottom: calc(100% + 8px);
+  left: 8px;
+  right: 8px;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 16px;
-  pointer-events: none;
+  align-items: center;
+  gap: 12px 16px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  font-size: 0.9rem;
+  animation: sheet-up 0.18s ease-out;
+}
+
+.settings .toggle,
+.settings .slider {
+  min-height: 40px;
+}
+
+.settings .slider {
+  flex: 1 1 180px;
+}
+
+.settings .slider input {
+  flex: 1;
+}
+
+@keyframes sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings {
+    animation: none;
+  }
 }
 
 .button.chip {
-  pointer-events: auto;
   padding: 6px 12px;
   border-radius: 999px;
   background: rgba(31, 28, 38, 0.85);
@@ -554,32 +642,17 @@ body {
   font-weight: 600;
 }
 
-/* Phones: keep the toolbar compact so the photo gets the room. */
+/* Phones: small type so the four actions fit one row. */
 @media (max-width: 520px) {
-  .toolbar {
-    padding: 8px 12px;
-    gap: 6px;
-  }
   .toolbar h1 {
     font-size: 1rem;
   }
-  .controls {
-    gap: 6px 8px;
-    font-size: 0.8rem;
-  }
-  .controls .button {
-    padding: 6px 9px;
-  }
-  .slider input {
-    width: 70px;
-  }
-  .effects {
-    gap: 5px;
-    padding: 0 8px;
+  .button.action {
+    font-size: 0.78rem;
   }
   .effects .button.chip {
-    padding: 5px 9px;
-    font-size: 0.78rem;
+    padding: 5px 11px;
+    font-size: 0.8rem;
   }
 }
 

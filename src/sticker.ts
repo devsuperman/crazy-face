@@ -118,17 +118,39 @@ export class Sticker {
   /** Pose and touches when the current gesture (re)started. */
   private base = { x: 0, y: 0, w: 0, angle: 0, touches: [] as Point[] };
   private gesture = { startedAt: 0, moved: 0, pinched: false };
+  /** The user has moved, resized or turned it, so it stays where they put it. */
+  private handled = false;
 
-  /** Put it in the bottom-right corner of a new photo (captions show at the top), slightly tilted. */
+  /** Put it at the top centre of a new photo, slightly tilted. */
   place(photoAspect: number, artRatio: number, now: number): void {
     this.photoAspect = photoAspect;
     this.ratio = artRatio;
     this.w = Math.min(0.42, (photoAspect * 0.3) / artRatio);
-    this.x = 1 - this.w / 2 - 0.03;
-    this.y = photoAspect - (this.w * artRatio) / 2 - 0.05;
-    this.angle = -0.12;
+    this.x = 0.5;
+    this.y = (this.w * artRatio) / 2 + 0.04;
+    this.angle = -0.08;
+    this.handled = false;
     this.touches.clear();
     this.pop(now);
+  }
+
+  /**
+   * Faces were found: if the sticker (not yet moved by the user) covers one, slide it
+   * along the top to the spot (centre, right or left) that covers the faces least.
+   */
+  avoid(faces: { x: number; y: number; r: number }[]): void {
+    if (this.handled || !faces.length) return;
+    const halfW = this.w / 2;
+    const halfH = (this.w * this.ratio) / 2;
+    const cover = (x: number) =>
+      faces.reduce((sum, f) => {
+        // How far the face circle reaches into the sticker's box.
+        const dx = Math.max(0, Math.abs(f.x - x) - halfW);
+        const dy = Math.max(0, Math.abs(f.y - this.y) - halfH);
+        return sum + Math.max(0, f.r - Math.hypot(dx, dy));
+      }, 0);
+    const spots = [0.5, 1 - halfW - 0.03, halfW + 0.03];
+    this.x = spots.reduce((best, x) => (cover(x) < cover(best) - 1e-3 ? x : best));
   }
 
   /** New art (another language) in the same place and width. */
@@ -190,6 +212,7 @@ export class Sticker {
   move(id: number, x: number, y: number): void {
     const p = this.touches.get(id);
     if (!p) return;
+    this.handled = true;
     this.gesture.moved = Math.max(this.gesture.moved, Math.hypot(x - this.base.touches[0].x, y - this.base.touches[0].y));
     p.x = x;
     p.y = y;
@@ -223,6 +246,7 @@ export class Sticker {
 
   /** Mouse wheel: resize, or turn with Shift. */
   wheel(deltaY: number, turn: boolean): void {
+    this.handled = true;
     if (turn) this.angle += deltaY * 0.003;
     else this.w = clamp(this.w * Math.exp(-deltaY * 0.0015), MIN_W, MAX_W);
   }

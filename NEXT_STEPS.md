@@ -1,6 +1,6 @@
 # Next steps
 
-A handoff note so work can continue in a new chat. Last updated: 2026-11-06 (🎉 Sextou: Friday sticker; before that, a cleanup removed captions, 🎬 Gravar, 🪢 Cabo de guerra and Modo gelatina, and made Modo massinha on by default).
+A handoff note so work can continue in a new chat. Last updated: 2026-11-06 (mobile-first bottom dock with ⚙️ Ajustes, stronger ✨, Sextou sticker at the top, WhatsApp invite with the site link; before that, 🎉 Sextou: Friday sticker; before that, a cleanup removed captions, 🎬 Gravar, 🪢 Cabo de guerra and Modo gelatina, and made Modo massinha on by default).
 
 ## Where things stand
 
@@ -56,20 +56,20 @@ The live mirror was removed: mesh effects can't follow a moving face. The app is
 4. **Next idea:** lens strength could follow a drag (pinch an eye to make it bigger) instead of only being a timed preset.
 
 ### 3. ✨ Luz e beleza (dark photos)
-Done: `src/beauty.ts` fixes the light (levels, gamma, white balance, colour denoise) and smooths skin on detected faces; ✨ toggle in the toolbar and in the camera review; 💡 selfie screen light / torch; brightened camera preview. To check on phones:
-- Real selfies in a dim room: is the skin smoothing natural (strength 0.65 in the shader), and is the noise acceptable after brightening (gamma is capped at 0.5)?
+Done: `src/beauty.ts` fixes the light (levels, gamma, white balance, colour denoise) and smooths skin on detected faces; ✨ toggle in ⚙️ Ajustes and in the camera review; 💡 selfie screen light / torch; brightened camera preview. To check on phones:
+- Real selfies in a dim room: is the skin smoothing natural (made stronger: 0.9 mix of two bilateral passes, plus a warm glow; check it doesn't look plastic), and is the noise acceptable after brightening (gamma is capped at 0.5)?
 - Does the 💡 glowing screen actually light the face enough, and does the camera's auto-exposure adapt within the last countdown second?
 - `exposureCompensation` and `torch` on Android Chrome; iOS has neither (only the screen light).
 - Time of `enhancePhoto` on a 2048 px photo on a mid-range phone (it runs when the review opens and again when faces are found).
 - Idea: an intensity choice (Leve / Médio / Turbo) instead of on/off.
 
 ### 4. ✂️ Recortar (crop and rotate)
-Done: optional ✂️ in the toolbar and in the camera's "Ficou boa?" review. Free box or Livre / 1:1 / 3:4 / 4:3 / 9:16, ↺/↻ quarter turns, "Foto inteira". The crop is applied before `setImage()`; the uncropped photo is kept, so cropping again can grow back (warps reset). To check on phones:
+Done: optional ✂️ in ⚙️ Ajustes and in the camera's "Ficou boa?" review. Free box or Livre / 1:1 / 3:4 / 4:3 / 9:16, ↺/↻ quarter turns, "Foto inteira". The crop is applied before `setImage()`; the uncropped photo is kept, so cropping again can grow back (warps reset). To check on phones:
 - Dragging the corners with a thumb (44 px targets) and the dialog on small screens and with the notch.
 - Ideas: fine straightening (±15°), pinch to zoom the box, and a starting box around the detected faces.
 
 ### 5. 🎉 Sextou (Friday sticker)
-Done: on Fridays (device time) a "SEXTOU!" sticker sits in the photo's bottom-right corner. Drag to move, pinch (or mouse wheel, Shift to turn) to resize and rotate, tap for a wiggle and a party sound; 🎉 Sextou in the toolbar turns it off. It's drawn on the canvas, so it's in saved photos and WhatsApp shares. Test any day with `?sextou=1`. To check on phones:
+Done: on Fridays (device time) a "SEXTOU!" sticker sits at the top of the photo, sliding to the side when it would cover a face. Drag to move, pinch (or mouse wheel, Shift to turn) to resize and rotate, tap for a wiggle and a party sound; 🎉 Sextou in ⚙️ Ajustes turns it off. It's drawn on the canvas, so it's in saved photos and WhatsApp shares. Test any day with `?sextou=1`. To check on phones:
 - The pinch with real fingers, and that a tap on the sticker never starts a face drag.
 - Ideas: other days or dates (only Friday for now, by choice), and remembering where the sticker was put.
 

@@ -15,13 +15,19 @@
           <button class="button chip" type="button" data-lang="en" lang="en" aria-pressed="false">EN</button>
         </div>
       </div>
-      <div class="controls">
-        <button id="new-photo" class="button primary" type="button" data-i18n="newPhoto">📸 Nova foto</button>
+      <button id="mute" class="button icon" type="button" aria-label="Desligar sons" title="Desligar sons">🔊</button>
+    </header>
+
+    <main id="stage" class="stage">
+      <canvas id="canvas"></canvas>
+      <div id="brush" class="brush" hidden></div>
+      <div id="bubble" class="bubble" hidden></div>
+      <p id="hint" class="hint">Arraste a cara para esticar. Toque em 📸 Nova foto para trocar.</p>
+    </main>
+
+    <footer class="dock">
+      <div id="settings" class="settings" role="group" aria-label="Ajustes" data-i18n-aria="settingsAria" hidden>
         <button id="crop-open" class="button" type="button" aria-label="Recortar ou girar a foto" title="Recortar ou girar" data-i18n="crop" data-i18n-aria="cropAria" data-i18n-title="cropTitle">✂️ Recortar</button>
-        <label class="slider">
-          <span data-i18n="brush">Pincel</span>
-          <input id="radius" type="range" min="0.05" max="0.45" step="0.01" value="0.18" />
-        </label>
         <label class="toggle">
           <input id="beauty" type="checkbox" />
           <span data-i18n="beauty">✨ Luz e beleza</span>
@@ -34,16 +40,12 @@
           <input id="friday" type="checkbox" checked />
           <span data-i18n="friday">🎉 Sextou</span>
         </label>
+        <label class="slider">
+          <span data-i18n="brush">Pincel</span>
+          <input id="radius" type="range" min="0.05" max="0.45" step="0.01" value="0.18" />
+        </label>
         <button id="reset" class="button" type="button" data-i18n="reset">Resetar</button>
-        <button id="save" class="button" type="button" data-i18n="save">Salvar foto</button>
-        <button id="whatsapp" class="button whatsapp" type="button" aria-label="Enviar a foto pelo WhatsApp" data-i18n-aria="whatsappAria">💬 WhatsApp</button>
-        <button id="mute" class="button icon" type="button" aria-label="Desligar sons" title="Desligar sons">🔊</button>
       </div>
-    </header>
-
-    <main id="stage" class="stage">
-      <canvas id="canvas"></canvas>
-      <div id="brush" class="brush" hidden></div>
       <div id="effects-bar" class="effects" role="toolbar" aria-label="Efeitos malucos" data-i18n-aria="effects">
         <button class="button chip" type="button" data-effect="balloon" data-i18n="balloon">🎈 Balão</button>
         <button class="button chip" type="button" data-effect="fish" data-i18n="fish">🐟 Cara de peixe</button>
@@ -53,9 +55,13 @@
         <button class="button chip" type="button" data-effect="cheeks" data-i18n="cheeks">🐹 Bochechas</button>
         <button id="mix" class="button chip accent" type="button" data-i18n="mix">🎭 Um efeito pra cada</button>
       </div>
-      <div id="bubble" class="bubble" hidden></div>
-      <p id="hint" class="hint">Arraste a cara para esticar. Toque em 📸 Nova foto para trocar.</p>
-    </main>
+      <nav class="actions" aria-label="Ações" data-i18n-aria="actions">
+        <button id="new-photo" class="button action" type="button" data-i18n="newPhoto">📸 Nova foto</button>
+        <button id="settings-open" class="button action" type="button" aria-expanded="false" aria-controls="settings" data-i18n="settings">⚙️ Ajustes</button>
+        <button id="save" class="button action" type="button" data-i18n="save">💾 Salvar</button>
+        <button id="whatsapp" class="button action whatsapp" type="button" aria-label="Enviar a foto pelo WhatsApp" data-i18n-aria="whatsappAria">💬 WhatsApp</button>
+      </nav>
+    </footer>
 
     <section id="start" class="start" aria-labelledby="start-title">
       <div class="lang-switch start-lang" role="group" aria-label="Idioma" data-i18n-aria="language">

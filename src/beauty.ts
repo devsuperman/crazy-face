@@ -184,6 +184,7 @@ void main() {
   }
 
   float light = 1.0;
+  float skinAmount = 0.0;
   if (face > 0.0) {
     float keep = 1.0;
     for (int i = 0; i < MAX_FACES * 3; i++) {
@@ -191,15 +192,19 @@ void main() {
       vec3 k = uKeep[i];
       keep = min(keep, smoothstep(0.55, 1.0, length(p - k.xy) / k.z));
     }
-    // Blur scale follows the face size: ~2% of its radius per tap.
-    float stepPx = max(1.0, faceR * 0.022 / uTexel.x);
-    vec3 smooth_ = bilateral(vUv, stepPx, 0.07);
-    float amount = 0.65 * face * keep * skin(tone(c0));
-    c = mix(c, smooth_, amount);
-    light += 0.1 * face;
+    // Blur scale follows the face size: ~3% of its radius per tap, plus a wider pass
+    // at twice the reach for blotches and shadows under the eyes.
+    float stepPx = max(1.0, faceR * 0.03 / uTexel.x);
+    vec3 smooth_ = mix(bilateral(vUv, stepPx, 0.1), bilateral(vUv, stepPx * 2.0, 0.08), 0.4);
+    skinAmount = face * keep * skin(tone(c0));
+    c = mix(c, smooth_, 0.9 * skinAmount);
+    light += 0.16 * face;
   }
 
-  outColor = vec4(clamp(tone(c) * light, 0.0, 1.0), 1.0);
+  vec3 col = tone(c) * light;
+  // A soft warm glow on the skin, like a ring light.
+  col = mix(col, col * vec3(1.04, 1.01, 0.96) + 0.03, skinAmount);
+  outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }`;
 
 interface Pipeline {
