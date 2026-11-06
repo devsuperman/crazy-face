@@ -13,7 +13,7 @@ Take a selfie or pick a photo, then squish, stretch and pull the faces around un
 1. **Get a photo.** On the start screen, tap **📸 Take photo** (Tirar foto) to use the camera or **🖼️ Choose photo** (Escolher foto) to pick one from your gallery. You can also drop or paste an image, or just play with the cartoon face.
 2. **Stretch it.** Drag any part of the face to pull it. Use several fingers at once on a phone.
 3. **Go crazy.** Tap the effect buttons, shake your phone, and make some noise.
-4. **Share it.** Tap **Save PNG** (Salvar PNG) to download the picture or **💬 WhatsApp** to send it with a joke.
+4. **Share it.** Tap **Save photo** (Salvar foto) to download the picture (a sharp JPEG at your photo's full resolution, cropped to the stretched face, on white) or **💬 WhatsApp** to send it with a joke.
 
 Tap **📸 New photo** (Nova foto) any time to start over with another photo (and **↩ Back to the previous photo** (Voltar para a foto de antes) if you change your mind).
 

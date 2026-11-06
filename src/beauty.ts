@@ -2,7 +2,7 @@
  * ✨ Luz e beleza: brightens dark photos and smooths the skin on faces.
  *
  * It runs once per photo (not every frame) in a small offscreen WebGL2 context,
- * and returns a new canvas, so the renderer, face detection, Salvar PNG and clips
+ * and returns a new canvas, so the renderer, face detection, Salvar foto and clips
  * just see a nicer photo. Everything stays on the device.
  *
  * - Light: levels from the photo's histogram, a gamma that moves the median

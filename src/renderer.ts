@@ -103,12 +103,13 @@ export class Renderer {
   private readonly uLensPull: WebGLUniformLocation;
   private indexCount = 0;
   private readonly sticker: StickerGl;
+  /** Width of the photo texture in pixels: the saved photo keeps this sharpness. */
+  private imageWidth = 1;
 
   constructor(readonly canvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl2', {
       antialias: true,
       premultipliedAlpha: false,
-      preserveDrawingBuffer: true, // lets us export the canvas as PNG
     });
     if (!gl) throw new Error(t().text.noWebgl);
     this.gl = gl;
@@ -154,6 +155,7 @@ export class Renderer {
   /** Upload a new texture (with mipmaps, so a zoomed-out photo stays smooth). */
   setImage(image: TexImageSource): void {
     const gl = this.gl;
+    this.imageWidth = sourceWidth(image);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -186,17 +188,102 @@ export class Renderer {
   /** Draw the warped photo, then the 🎉 sticker on top when there is one. */
   draw(mesh: WarpMesh, layout: Layout, sticker?: StickerPose | null): void {
     const gl = this.gl;
-    const cw = this.canvas.clientWidth;
-    const ch = this.canvas.clientHeight;
-
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    this.paint(mesh, layout, this.canvas.clientWidth, this.canvas.clientHeight, false, sticker);
+  }
+
+  /**
+   * Salvar foto / 💬: draw the warped photo (and sticker) offscreen at the photo's own
+   * resolution, cropped to what's drawn, on white, and encode it as a JPEG.
+   */
+  exportJpeg(mesh: WarpMesh, sticker?: StickerPose | null, quality = 0.9): Promise<Blob | null> {
+    const gl = this.gl;
+    const box = drawnBounds(mesh.positions, sticker);
+    const bw = box.maxX - box.minX;
+    const bh = box.maxY - box.minY;
+    const margin = 0.02 * Math.max(bw, bh);
+    const limit = Math.min(
+      EXPORT_MAX_SIDE,
+      gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) as number,
+      ...(gl.getParameter(gl.MAX_VIEWPORT_DIMS) as Int32Array),
+    );
+    // Pixels per world unit: the photo's own, unless the result would be too big.
+    const scale = Math.min(this.imageWidth, limit / (Math.max(bw, bh) + 2 * margin));
+    const w = Math.max(1, Math.round((bw + 2 * margin) * scale));
+    const h = Math.max(1, Math.round((bh + 2 * margin) * scale));
+    const layout: Layout = {
+      scale,
+      offsetX: (margin - box.minX) * scale,
+      offsetY: (margin - box.minY) * scale,
+    };
+
+    // Draw into a multisampled buffer (smooth edges), then resolve it to a plain one to read.
+    const samples = Math.min(4, gl.getParameter(gl.MAX_SAMPLES) as number);
+    const msaa = gl.createRenderbuffer()!;
+    gl.bindRenderbuffer(gl.RENDERBUFFER, msaa);
+    gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl.RGBA8, w, h);
+    const drawFb = gl.createFramebuffer()!;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, drawFb);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, msaa);
+
+    const plain = gl.createRenderbuffer()!;
+    gl.bindRenderbuffer(gl.RENDERBUFFER, plain);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.RGBA8, w, h);
+    const readFb = gl.createFramebuffer()!;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, readFb);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, plain);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, drawFb);
+    gl.viewport(0, 0, w, h);
+    gl.clearColor(1, 1, 1, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    this.paint(mesh, layout, w, h, true, sticker);
+
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, drawFb);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, readFb);
+    gl.blitFramebuffer(0, 0, w, h, 0, 0, w, h, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, readFb);
+    const pixels = new Uint8ClampedArray(w * h * 4);
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.deleteFramebuffer(drawFb);
+    gl.deleteFramebuffer(readFb);
+    gl.deleteRenderbuffer(msaa);
+    gl.deleteRenderbuffer(plain);
+
+    const out = document.createElement('canvas');
+    out.width = w;
+    out.height = h;
+    out.getContext('2d')!.putImageData(new ImageData(pixels, w, h), 0, 0);
+    return new Promise((resolve) => out.toBlob(resolve, 'image/jpeg', quality));
+  }
+
+  /**
+   * Draw the mesh and sticker into the bound framebuffer. `w`/`h` is the size of the
+   * layout's pixel space. `onWhite` (export): rows come out top-down for readPixels, and
+   * the mesh blends over the opaque background so the result stays opaque.
+   */
+  private paint(
+    mesh: WarpMesh,
+    layout: Layout,
+    w: number,
+    h: number,
+    onWhite: boolean,
+    sticker?: StickerPose | null,
+  ): void {
+    const gl = this.gl;
+    // World units -> layout pixels -> clip space (y flipped on screen).
+    const flip = onWhite ? 1 : -1;
+    const scale: [number, number] = [(2 * layout.scale) / w, (flip * 2 * layout.scale) / h];
+    const offset: [number, number] = [(2 * layout.offsetX) / w - 1, -flip * (1 - (2 * layout.offsetY) / h)];
 
     gl.useProgram(this.program);
-    // World units -> CSS pixels -> clip space (y flipped).
-    gl.uniform2f(this.uScale, (2 * layout.scale) / cw, (-2 * layout.scale) / ch);
-    gl.uniform2f(this.uOffset, (2 * layout.offsetX) / cw - 1, 1 - (2 * layout.offsetY) / ch);
+    gl.uniform2f(this.uScale, ...scale);
+    gl.uniform2f(this.uOffset, ...offset);
     const lenses = mesh.lenses;
     gl.uniform1f(this.uAspect, mesh.aspect);
     gl.uniform1i(this.uLensCount, lenses.count);
@@ -205,36 +292,76 @@ export class Renderer {
       gl.uniform2fv(this.uLensPull, lenses.pull);
     }
 
+    if (onWhite) this.blendOver();
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, mesh.positions);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.drawElements(gl.TRIANGLES, this.indexCount, gl.UNSIGNED_INT, 0);
     gl.bindVertexArray(null);
+    gl.disable(gl.BLEND);
 
-    if (sticker && sticker.w > 0) this.drawSticker(sticker, layout);
+    if (sticker && sticker.w > 0) this.drawSticker(sticker, scale, offset);
   }
 
-  private drawSticker(pose: StickerPose, layout: Layout): void {
+  /** Blend over what's drawn; alpha adds up so the sticker stays solid on the canvas. */
+  private blendOver(): void {
+    const gl = this.gl;
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  }
+
+  private drawSticker(pose: StickerPose, scale: [number, number], offset: [number, number]): void {
     const gl = this.gl;
     const st = this.sticker;
-    const cw = this.canvas.clientWidth;
-    const ch = this.canvas.clientHeight;
     gl.useProgram(st.program);
-    gl.uniform2f(st.uScale, (2 * layout.scale) / cw, (-2 * layout.scale) / ch);
-    gl.uniform2f(st.uOffset, (2 * layout.offsetX) / cw - 1, 1 - (2 * layout.offsetY) / ch);
+    gl.uniform2f(st.uScale, ...scale);
+    gl.uniform2f(st.uOffset, ...offset);
     gl.uniform2f(st.uCenter, pose.x, pose.y);
     gl.uniform2f(st.uSize, pose.w, pose.h);
     gl.uniform1f(st.uAngle, pose.angle);
-    // Blend over the photo; alpha adds up so the saved PNG keeps the sticker solid.
-    gl.enable(gl.BLEND);
-    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    this.blendOver();
     gl.bindVertexArray(st.vao);
     gl.bindTexture(gl.TEXTURE_2D, st.texture);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
   }
+}
+
+/** Longest side of a saved photo, in pixels. */
+const EXPORT_MAX_SIDE = 4096;
+
+/** The box (world units) around the warped photo and the sticker. */
+function drawnBounds(positions: Float32Array, sticker?: StickerPose | null) {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  const add = (x: number, y: number) => {
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  };
+  for (let i = 0; i < positions.length; i += 2) add(positions[i], positions[i + 1]);
+  if (sticker && sticker.w > 0) {
+    const c = Math.cos(sticker.angle);
+    const s = Math.sin(sticker.angle);
+    for (const [cx, cy] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]) {
+      const px = cx * sticker.w;
+      const py = cy * sticker.h;
+      add(sticker.x + px * c - py * s, sticker.y + px * s + py * c);
+    }
+  }
+  return { minX, minY, maxX, maxY };
+}
+
+function sourceWidth(image: TexImageSource): number {
+  if (image instanceof HTMLVideoElement) return image.videoWidth;
+  if (image instanceof HTMLImageElement) return image.naturalWidth;
+  if (typeof VideoFrame !== 'undefined' && image instanceof VideoFrame) return image.displayWidth;
+  return (image as { width: number }).width;
 }
 
 function createStickerProgram(gl: WebGL2RenderingContext): StickerGl {

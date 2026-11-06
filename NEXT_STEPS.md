@@ -69,7 +69,7 @@ Done: optional ✂️ in the toolbar and in the camera's "Ficou boa?" review. Fr
 - Ideas: fine straightening (±15°), pinch to zoom the box, and a starting box around the detected faces.
 
 ### 5. 🎉 Sextou (Friday sticker)
-Done: on Fridays (device time) a "SEXTOU!" sticker sits in the photo's bottom-right corner. Drag to move, pinch (or mouse wheel, Shift to turn) to resize and rotate, tap for a wiggle and a party sound; 🎉 Sextou in the toolbar turns it off. It's drawn on the canvas, so it's in saved PNGs and WhatsApp shares. Test any day with `?sextou=1`. To check on phones:
+Done: on Fridays (device time) a "SEXTOU!" sticker sits in the photo's bottom-right corner. Drag to move, pinch (or mouse wheel, Shift to turn) to resize and rotate, tap for a wiggle and a party sound; 🎉 Sextou in the toolbar turns it off. It's drawn on the canvas, so it's in saved photos and WhatsApp shares. Test any day with `?sextou=1`. To check on phones:
 - The pinch with real fingers, and that a tap on the sticker never starts a face drag.
 - Ideas: other days or dates (only Friday for now, by choice), and remembering where the sticker was put.
 
