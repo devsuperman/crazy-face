@@ -30,7 +30,7 @@ Tap **📸 New photo** (Nova foto) any time to start over with another photo (an
 
 ## Features
 
-- **Made for phones.** The photo gets the screen; everything you tap sits at the bottom, in thumb reach: a row of effects you can swipe sideways, and **📸 New photo**, **⚙️ Settings** (Ajustes), **💾 Save** and **💬 WhatsApp**. Settings holds the less used controls: crop, light & beauty, clay mode, the Friday sticker, brush size and reset.
+- **Made for phones.** The photo gets the screen; everything you tap sits at the bottom, in thumb reach: a row of effects you can swipe sideways, and **📸 New photo**, **⚙️ Settings** (Ajustes), **💾 Save** and **💬 WhatsApp**. **↺ Reset** sits on the top-right corner of the photo, always one tap away. Settings holds the less used controls: crop, light & beauty, clay mode, the Friday sticker and brush size.
 
 ### 📸 Camera
 
