@@ -425,15 +425,9 @@ cropButton.addEventListener('click', async () => {
   setImage(applyCrop(source, crop), { beauty: beautyOn, framing: { source, crop } });
 });
 
-setupCamera((shot, challenge, lit, framing) => {
+setupCamera((shot, lit, framing) => {
   setImage(shot, { beauty: !!lit, lit, framing });
   showEditor();
-  // Desafio de pose: show the photo for a moment, then play the matching effect on the face.
-  if (challenge) {
-    window.setTimeout(async () => {
-      if (await waitForFace(shot, 1500)) void playPreset(challenge.effect);
-    }, 900);
-  }
 }, sounds, cropper);
 
 radiusInput.addEventListener('input', updateBrushSize);

@@ -22,7 +22,6 @@ Tap **📸 Nova foto** any time to start over with another photo (and **↩ Volt
 ### 📸 Camera
 
 - Full-screen camera with a 3-2-1 countdown, beeps, a flash and a shutter sound.
-- **😜 Desafio de pose:** before the countdown you get a silly pose to make, like *"Cara de quem viu o boleto!"*. Right after the photo, a matching effect plays on your face. Tap **🔀 Outro** for another one, or turn it off.
 - **🔄** switches between the front and back cameras.
 - **💡 Light:** on the front camera the screen glows around the preview to light up your face (it turns on by itself in a dark room); on the back camera it turns on the flashlight, if the phone has one.
 - **Ficou boa?** Check the photo before using it: **✔ Usar esta** or **🔁 Tirar outra**.
