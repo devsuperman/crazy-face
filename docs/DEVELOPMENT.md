@@ -70,7 +70,7 @@ The build must pass before committing. Every push to `main` builds and deploys t
 
 | File | What it does |
 |---|---|
-| `index.html` | Static markup: start screen, toolbar, stage, camera and crop dialogs |
+| `index.html` | Static markup: start screen, top bar, stage, bottom dock (effects, actions, ⚙️ sheet), camera and crop dialogs |
 | `src/main.ts` | Composition root: wiring, pointer handling, layout, main loop |
 | `src/warp.ts` | `WarpMesh`: the elastic grid physics and the timed effects |
 | `src/lens.ts` | 👀 / 👃 / 🐹 lenses: landmarks, timing, packed shader uniforms |
@@ -96,7 +96,8 @@ Everything geometric is in world units: the image is 1 unit wide and `aspect` (h
 ### Data flow
 
 - `src/main.ts` owns the single `WarpMesh` and `Layout`, wires the DOM controls, handles pointer events (multi-touch through a `drags` map keyed by `pointerId`) and runs the `requestAnimationFrame` loop: `mesh.update(dt, now)`, then `renderer.draw(mesh, layout)`.
-- **Two screens.** The app opens on the start screen (`#start`). When a photo arrives, `showEditor()` hides it and un-inerts the toolbar and stage; **📸 Nova foto** calls `showStart()`. The cartoon face is loaded behind the start screen so a mesh always exists.
+- **Two screens.** The app opens on the start screen (`#start`). When a photo arrives, `showEditor()` hides it and un-inerts the toolbar, stage and dock; **📸 Nova foto** calls `showStart()`. The cartoon face is loaded behind the start screen so a mesh always exists.
+- **Mobile-first layout.** A slim top bar (name, 🌐 PT | EN, 🔊), the stage, then a bottom dock (`.dock`) in thumb reach: the effects strip (one row that scrolls sideways and centres when it fits) and four actions (📸 Nova foto, ⚙️ Ajustes, 💾 Salvar, 💬 WhatsApp), with `env(safe-area-inset-*)` padding. ⚙️ Ajustes (`#settings`, `setSettings()` in `main.ts`) floats over the bottom of the photo, so the layout doesn't move; it holds ✂️, ✨, Modo massinha, 🎉, Pincel and Resetar, and closes on ⚙️ again, a touch on the photo, Escape, or going back to the start screen.
 - `setImage()` is the single entry point for a new photo: it uploads the texture, calls `newMesh()` (which **creates a new `WarpMesh`**, so the reference changes) and starts the face search. Modules that need the mesh get it through a getter (`getMesh: () => mesh`), never by holding a reference.
 - Feature modules use a setup function with injected dependencies instead of importing `main.ts`, e.g. `setupCamera(onPhoto, sounds, cropper)` and `setupCropper(sounds)`.
 - Effects work on still photos only. There's no live video texture, because mesh effects can't follow moving faces.
@@ -137,7 +138,7 @@ The effect buttons (`playPreset`, via `targetsFor`) play on **every** face in `p
 `src/beauty.ts`:
 
 - `measureTone(image)` reads a 96 px histogram: levels, gamma towards a 0.46 median, a partial gray-world white balance and a denoise amount.
-- `enhancePhoto(image, tone, faces?)` runs one pass in its own offscreen WebGL2 context and returns a new canvas: light fix and colour denoise everywhere, plus a bilateral skin smoothing (YCbCr skin mask, eyes and mouth kept sharp) and a soft light inside each face.
+- `enhancePhoto(image, tone, faces?)` runs one pass in its own offscreen WebGL2 context and returns a new canvas: light fix and colour denoise everywhere, plus a strong skin smoothing (two bilateral passes, at ~3% and ~6% of the face radius, mixed at 0.9 by a YCbCr skin mask, eyes and mouth kept sharp), a soft light inside each face and a warm glow on the skin.
 
 `main.ts` keeps the original `photo`. The filter is on for camera photos (unless turned off in the review) and for dark gallery photos (`isDark`). Faces are detected on the brightened copy. `showLook()` swaps only the texture (the mesh and its warps stay) when the toggle changes or faces arrive.
 
@@ -162,11 +163,11 @@ The shot uses `ImageCapture.takePhoto()` (full sensor resolution) where availabl
 
 ### 🎉 Sextou sticker
 
-`src/sticker.ts`: `isFriday()` checks the device's local day (`?sextou=1` / `?sextou=0` force it). `drawSticker(text)` draws the label on a 2D canvas. `Sticker` holds its pose in world units and handles the gestures: drag, two-finger pinch to resize and rotate, mouse wheel, tap. The renderer draws it as a second textured quad after the mesh (`renderer.setSticker`, `draw(mesh, layout, pose)`), so it's in **Salvar foto** and 💬 shares but isn't warped. `setImage()` calls `placeSticker()` (new text, bottom-right corner). Pointer handlers give the sticker first pick (`sticker.wants`), and a tap wiggles it and plays `sounds.party()`.
+`src/sticker.ts`: `isFriday()` checks the device's local day (`?sextou=1` / `?sextou=0` force it). `drawSticker(text)` draws the label on a 2D canvas. `Sticker` holds its pose in world units and handles the gestures: drag, two-finger pinch to resize and rotate, mouse wheel, tap. The renderer draws it as a second textured quad after the mesh (`renderer.setSticker`, `draw(mesh, layout, pose)`), so it's in **Salvar foto** and 💬 shares but isn't warped. `setImage()` calls `placeSticker()` (new text, top centre). When faces arrive, `sticker.avoid(faces)` slides it along the top (centre, right or left) to the spot that covers them least, unless the user has already moved it. Pointer handlers give the sticker first pick (`sticker.wants`), and a tap wiggles it and plays `sounds.party()`.
 
 ### 💬 WhatsApp
 
-Builds the same JPEG as **Salvar foto** plus a joke line from `src/locales/`. Where Web Share with files is available (most phones) it opens the share sheet. Web pages can't attach files to WhatsApp directly, so elsewhere it downloads the JPEG and opens `wa.me` with the text.
+Builds the same JPEG as **Salvar foto** plus an invite line from `src/locales/` (`share`) followed by the site link (`siteLink()`: the page address with `?lang=` so friends get the same language). The link is part of the text because some share targets drop a separate `url` when a file is attached. Where Web Share with files is available (most phones) it opens the share sheet. Web pages can't attach files to WhatsApp directly, so elsewhere it downloads the JPEG and opens `wa.me` with the text.
 
 ### Images and sounds
 

@@ -21,7 +21,10 @@ export const pt = {
     clay: 'Modo massinha',
     friday: '🎉 Sextou',
     reset: 'Resetar',
-    save: 'Salvar foto',
+    save: '💾 Salvar',
+    settings: '⚙️ Ajustes',
+    settingsAria: 'Ajustes',
+    actions: 'Ações',
     whatsappAria: 'Enviar a foto pelo WhatsApp',
     effects: 'Efeitos malucos',
     balloon: '🎈 Balão',
@@ -83,7 +86,7 @@ export const pt = {
     'Pode esticar! Não vale para foto de RG.',
     'Arraste a cara. Chacoalhe o celular para tremer mais.',
     'Puxa, amassa, repete. Estrague a cara de alguém (com carinho).',
-    'Foto torta ou com muita sobra? ✂️ Recortar resolve.',
+    'Foto torta ou com muita sobra? ✂️ Recortar, em ⚙️ Ajustes, resolve.',
   ],
 
   /** Quando a foto tem mais de um rosto. `{n}` vira o número de rostos. */
@@ -96,12 +99,12 @@ export const pt = {
   /** Balão de fala quando você puxa demais. */
   ouch: ['AI!', 'EI!', 'CALMA!', 'MEU ROSTO!', 'MEU NARIZ!', 'SOCORRO!', 'GROSSO!', 'PARA!'],
 
-  /** Texto que vai junto com a foto no WhatsApp. */
+  /** Texto que vai junto com a foto no WhatsApp: um convite (o link do site vem logo depois). */
   share: [
-    'Olha o que eu fiz com essa cara! 🤪',
-    'Ficou melhor que a original, né? 😂',
-    'Manda pro grupo da família! 🤪',
-    'Não me pergunte o que aconteceu com essa cara. 😂',
+    'Olha o que eu fiz com essa cara! 🤪 Agora é sua vez, estrague a sua aqui:',
+    'Ficou melhor que a original, né? 😂 Duvido você fazer uma pior:',
+    'Manda pro grupo da família! 🤪 E faz a sua também, é de graça:',
+    'Não me pergunte o que aconteceu com essa cara. 😂 Vem deformar a sua:',
   ],
 
   /** 🎉 Sextou: o adesivo de sexta-feira (o texto vai desenhado no adesivo). */

@@ -9,7 +9,7 @@ import { FULL_CROP, applyCrop, sameCrop, setupCropper, type Framing } from './cr
 import { enhancePhoto, isDark, measureTone, type Tone } from './beauty';
 import { Sticker, drawSticker, isFriday } from './sticker';
 import { pick } from './jokes';
-import { applyDom, onLocaleChange, setupLanguagePicker, t } from './i18n';
+import { applyDom, getLocale, onLocaleChange, setupLanguagePicker, t } from './i18n';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -163,6 +163,7 @@ async function useFaces(
   const more = found.length > photoFaces.length;
   photoFaces = found;
   if (found.length) showLook();
+  sticker.avoid(found);
   if (more && found.length >= 2) {
     hint.textContent = pick(t().groupHints).replace('{n}', String(found.length));
   }
@@ -195,7 +196,7 @@ function stickerArt(): number {
   return art.height / art.width;
 }
 
-/** A new photo: a fresh sticker (new text) in its corner. */
+/** A new photo: a fresh sticker (new text) at the top. */
 function placeSticker(): void {
   if (!friday) return;
   sticker.place(mesh.aspect, stickerArt(), performance.now() / 1000);
@@ -228,9 +229,10 @@ function fridayParty(): void {
 
 const startScreen = $<HTMLElement>('start');
 const startBack = $<HTMLButtonElement>('start-back');
-const editor = [document.querySelector<HTMLElement>('.toolbar')!, stage];
+const editor = [document.querySelector<HTMLElement>('.toolbar')!, stage, document.querySelector<HTMLElement>('.dock')!];
 
 function showStart(): void {
+  closeSettings();
   startScreen.hidden = false;
   for (const el of editor) el.inert = true;
   $<HTMLButtonElement>('camera-open').focus();
@@ -247,6 +249,32 @@ function showEditor(): void {
     fridayHintShown = true;
   }
 }
+
+// --- ⚙️ Ajustes: the less used controls, in a sheet that floats over the bottom of the photo ---
+
+const settings = $<HTMLDivElement>('settings');
+const settingsButton = $<HTMLButtonElement>('settings-open');
+
+function setSettings(open: boolean): void {
+  if (settings.hidden !== open) return;
+  settings.hidden = !open;
+  settingsButton.setAttribute('aria-expanded', String(open));
+}
+const closeSettings = () => setSettings(false);
+
+settingsButton.addEventListener('click', () => {
+  sounds.unlock();
+  sounds.pop();
+  setSettings(settings.hidden);
+});
+// Touching the photo, or Escape, closes it (the photo keeps the touch).
+stage.addEventListener('pointerdown', closeSettings);
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !settings.hidden) {
+    closeSettings();
+    settingsButton.focus();
+  }
+});
 
 $('new-photo').addEventListener('click', () => {
   sounds.unlock();
@@ -594,6 +622,11 @@ $('save').addEventListener('click', async () => {
   if (blob) downloadBlob(blob, 'crazy-face.jpg');
 });
 
+/** The app's address, in the current language, for the invite that goes with a share. */
+function siteLink(): string {
+  return `${location.origin}${location.pathname}?lang=${getLocale()}`;
+}
+
 /**
  * 💬 WhatsApp. On phones the Web Share sheet sends the JPEG itself (WhatsApp is listed
  * there). Web pages can't attach a file to WhatsApp directly, so elsewhere we download
@@ -601,7 +634,7 @@ $('save').addEventListener('click', async () => {
  */
 $('whatsapp').addEventListener('click', () => {
   sounds.unlock();
-  const text = pick(t().share);
+  const text = `${pick(t().share)}\n${siteLink()}`;
   void exportPhoto().then(async (blob) => {
     if (!blob) return;
     const file = new File([blob], 'crazy-face.jpg', { type: 'image/jpeg' });

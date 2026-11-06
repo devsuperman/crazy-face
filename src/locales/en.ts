@@ -18,7 +18,10 @@ export const en: Messages = {
     clay: 'Clay mode',
     friday: '🎉 Friday',
     reset: 'Reset',
-    save: 'Save photo',
+    save: '💾 Save',
+    settings: '⚙️ Settings',
+    settingsAria: 'Settings',
+    actions: 'Actions',
     whatsappAria: 'Send the photo on WhatsApp',
     effects: 'Crazy effects',
     balloon: '🎈 Balloon',
@@ -78,7 +81,7 @@ export const en: Messages = {
     'Go ahead, stretch! Just not on your passport photo.',
     'Drag the face. Shake your phone to make it wobble.',
     "Pull, squish, repeat. Ruin someone's face (lovingly).",
-    'Crooked photo or too much background? ✂️ Crop fixes it.',
+    'Crooked photo or too much background? ✂️ Crop (in ⚙️ Settings) fixes it.',
   ],
 
   groupHints: [
@@ -90,10 +93,10 @@ export const en: Messages = {
   ouch: ['OUCH!', 'HEY!', 'EASY!', 'MY FACE!', 'MY NOSE!', 'HELP!', 'RUDE!', 'STOP!'],
 
   share: [
-    'Look what I did to this face! 🤪',
-    'Better than the original, right? 😂',
-    'Send it to the family group chat! 🤪',
-    "Don't ask what happened to this face. 😂",
+    'Look what I did to this face! 🤪 Your turn, go wreck yours:',
+    'Better than the original, right? 😂 Bet you can make a worse one:',
+    'Send it to the family group chat! 🤪 Then make your own, it’s free:',
+    "Don't ask what happened to this face. 😂 Come squish yours:",
   ],
 
   fridayStickers: ['Happy Friday! 🎉', 'Happy Friday! 🥳', 'Happy Friday! 🍻', 'Happy Friday! 😎'],
