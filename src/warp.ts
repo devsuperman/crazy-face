@@ -24,8 +24,6 @@ export interface Grab {
 
 const STIFFNESS = 140; // spring strength (higher = snappier)
 const DAMPING = 7; // velocity damping (lower = wobblier)
-const JELLY_STIFFNESS = 90;
-const JELLY_DAMPING = 1.2; // barely damped: wobbles for ages
 const STEP = 1 / 120; // fixed physics timestep in seconds
 
 /** Mesh presets move the grid; lens presets (👀 eyes, 👃 nose, 🐹 cheeks) are drawn by the shader. */
@@ -90,8 +88,6 @@ export class WarpMesh {
 
   /** In clay mode the face keeps its shape after you let go. */
   clay = false;
-  /** In jelly mode the spring is much less damped, so it wobbles for longer. */
-  jelly = false;
 
   constructor(aspect: number, cols = 64) {
     this.aspect = aspect;
@@ -331,10 +327,9 @@ export class WarpMesh {
     const springOn = !this.clay || now < this.springBackUntil;
 
     if (springOn) {
-      const stiffness = this.jelly ? JELLY_STIFFNESS : STIFFNESS;
-      const decay = Math.exp(-(this.jelly ? JELLY_DAMPING : DAMPING) * STEP);
+      const decay = Math.exp(-DAMPING * STEP);
       for (let i = 0; i < p.length; i++) {
-        v[i] = (v[i] + (rest[i] - p[i]) * stiffness * STEP) * decay;
+        v[i] = (v[i] + (rest[i] - p[i]) * STIFFNESS * STEP) * decay;
         p[i] += v[i] * STEP;
       }
     } else {
