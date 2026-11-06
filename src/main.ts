@@ -7,7 +7,8 @@ import { Sounds } from './sound';
 import { setupCamera } from './camera';
 import { FULL_CROP, applyCrop, sameCrop, setupCropper, type Framing } from './crop';
 import { enhancePhoto, isDark, measureTone, type Tone } from './beauty';
-import { GROUP_SUGGEST_HINTS, HINTS, OUCH_LINES, SHARE_TEXTS, pick } from './jokes';
+import { pick } from './jokes';
+import { applyDom, onLocaleChange, setupLanguagePicker, t } from './i18n';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -25,7 +26,8 @@ const hint = $<HTMLParagraphElement>('hint');
 const cropButton = $<HTMLButtonElement>('crop-open');
 
 const sounds = new Sounds();
-hint.textContent = pick(HINTS);
+applyDom();
+hint.textContent = pick(t().hints);
 
 let renderer: Renderer;
 try {
@@ -75,7 +77,7 @@ function setImage(
   lensFace = undefined;
   renderer.setImage(beautyOn ? lightOnly() : image);
   newMesh(image.height / image.width);
-  hint.textContent = pick(HINTS);
+  hint.textContent = pick(t().hints);
   // Faces are easier to find in the brightened photo.
   facesReady = findFaces ? searchFaces(image, beautyOn ? lightOnly() : image) : Promise.resolve();
 }
@@ -160,7 +162,7 @@ async function useFaces(
   photoFaces = found;
   if (found.length) showLook();
   if (more && found.length >= 2) {
-    hint.textContent = pick(GROUP_SUGGEST_HINTS).replace('{n}', String(found.length));
+    hint.textContent = pick(t().groupHints).replace('{n}', String(found.length));
   }
   return true;
 }
@@ -250,7 +252,7 @@ const OUCH_AT = 0.4;
 let bubbleTimer = 0;
 function showBubble(e: PointerEvent): void {
   const rect = stage.getBoundingClientRect();
-  bubble.textContent = pick(OUCH_LINES);
+  bubble.textContent = pick(t().ouch);
   bubble.style.left = `${e.clientX - rect.left}px`;
   bubble.style.top = `${e.clientY - rect.top - 24}px`;
   bubble.hidden = false;
@@ -326,7 +328,7 @@ async function useFile(file: File | undefined | null): Promise<void> {
     setImage(await loadImageFile(file));
     showEditor();
   } catch {
-    alert('Ops! Não consegui abrir essa imagem.');
+    alert(t().text.imageError);
   }
 }
 
@@ -439,11 +441,19 @@ $('mix').addEventListener('click', playMix);
 
 function updateMuteButton(): void {
   muteButton.textContent = sounds.muted ? '🔇' : '🔊';
-  const label = sounds.muted ? 'Ligar sons' : 'Desligar sons';
+  const label = sounds.muted ? t().text.soundOn : t().text.soundOff;
   muteButton.title = label;
   muteButton.setAttribute('aria-label', label);
 }
 updateMuteButton();
+onLocaleChange(() => {
+  updateMuteButton();
+  hint.textContent = pick(t().hints);
+});
+setupLanguagePicker(() => {
+  sounds.unlock();
+  sounds.pop();
+});
 muteButton.addEventListener('click', () => {
   sounds.setMuted(!sounds.muted);
   sounds.unlock();
@@ -511,7 +521,7 @@ $('save').addEventListener('click', () => {
  */
 $('whatsapp').addEventListener('click', () => {
   sounds.unlock();
-  const text = pick(SHARE_TEXTS);
+  const text = pick(t().share);
   canvas.toBlob(async (blob) => {
     if (!blob) return;
     const file = new File([blob], 'crazy-face.png', { type: 'image/png' });

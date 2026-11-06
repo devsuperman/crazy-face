@@ -2,7 +2,7 @@
 
 Take or upload a photo and squish, stretch and pull the face around. It starts in clay mode, so the face keeps its new shape.
 
-The app is in Brazilian Portuguese (PT-BR). All the user-facing text lives in `index.html` and `src/jokes.ts`.
+The app is in Brazilian Portuguese (PT-BR) and English, with a PT | EN picker; it follows the browser's language at first (English for any other language), and `?lang=pt` or `?lang=en` forces one. All the user-facing text lives in `src/locales/` (`pt.ts` is the source, `en.ts` must have the same keys).
 
 **Live demo: https://devsuperman.github.io/crazy-face/**
 
@@ -46,7 +46,7 @@ Faces are **found automatically** right after a photo arrives (`src/faces.ts`, M
 
 - **Effect buttons:** 🎈 Balloon, 🐟 Fish face, 🫠 Melt (`src/warp.ts`), 👀 Big eyes, 👃 Big nose and 🐹 Puffy cheeks (`src/lens.ts`). They aim at every face in the photo, found automatically (`src/faces.ts`); without a face the mesh ones warp the whole photo.
 - **Cartoon sounds:** a rubbery creak while you drag and a boing when you let go. All are made on the fly with the Web Audio API, so there are no audio files (`src/sound.ts`). Use 🔊 to mute.
-- An **"AI!"** bubble when you pull too far, and a random joke hint on each visit (`src/jokes.ts`, where it's easy to add more).
+- An **"AI!"** bubble when you pull too far, and a random joke hint on each visit (`src/locales/`, where it's easy to add more).
 - **Shake your phone** to make the face jiggle (iOS asks for permission on the first tap).
 
 ## Develop

@@ -4,12 +4,12 @@ A handoff note so work can continue in a new chat. Last updated: 2026-11-06 (cle
 
 ## Where things stand
 
-Everything is on `main` (live on GitHub Pages): PT-BR UI, a start screen (take or pick a photo first, then the editor), camera with 😜 pose challenges and a "Ficou boa?" review, Modo massinha on by default, and automatic face detection: every effect button hits every face in the photo, and 🎭 gives each face a different effect. (Modo turma, with hand-marked circles, 🎡 roulette, 🔀 head swap and 🏆 awards, was removed: faces are only found automatically now. Later, the pop-up captions, 🎬 Gravar, 🪢 Cabo de guerra and Modo gelatina were removed too.)
+Everything is on `main` (live on GitHub Pages): PT-BR and English UI (🌐 picker, see `src/i18n.ts`), a start screen (take or pick a photo first, then the editor), camera with 😜 pose challenges and a "Ficou boa?" review, Modo massinha on by default, and automatic face detection: every effect button hits every face in the photo, and 🎭 gives each face a different effect. (Modo turma, with hand-marked circles, 🎡 roulette, 🔀 head swap and 🏆 awards, was removed: faces are only found automatically now. Later, the pop-up captions, 🎬 Gravar, 🪢 Cabo de guerra and Modo gelatina were removed too.)
 
 ## Ground rules for this project
 
-- **All user-facing text is in Brazilian Portuguese (PT-BR):** buttons, hints, captions, alerts and `aria-label`s. Jokes should feel Brazilian, not translated word for word. Code, comments, commits and the README stay in English.
-- All silly text lives in `src/jokes.ts`. There are no pop-up captions anymore.
+- **User-facing text is in PT-BR (the source) and English:** every string goes in both `src/locales/pt.ts` and `src/locales/en.ts` (the build fails if one is missing). Jokes are written for each language, not translated word for word. Code, comments, commits and the README stay in English.
+- All text lives in `src/locales/` (read with `t()` from `src/i18n.ts`); `index.html` marks its strings with `data-i18n*` keys. There are no pop-up captions anymore.
 - Sounds are made with the Web Audio API in `src/sound.ts`, with no audio files. Add new sounds as methods there.
 - Photos never leave the device. Keep it that way: no uploads, no servers.
 - No frameworks: plain TypeScript + Vite + WebGL2.
@@ -27,7 +27,9 @@ Everything is on `main` (live on GitHub Pages): PT-BR UI, a start screen (take o
 | `src/crop.ts` | ✂️ Recortar: crop dialog (free or fixed ratio, quarter turns), `applyCrop` |
 | `src/image.ts` | Loading images, `fitToCanvas` (with mirroring), the default cartoon face |
 | `src/sound.ts` | All sounds |
-| `src/jokes.ts` | Hints, "ouch" lines, pose challenges and share texts (PT-BR) |
+| `src/i18n.ts` | Languages: `t()`, `applyDom()` for `data-i18n*` markup, detection (`?lang`, saved choice, browser), the 🌐 PT \| EN picker |
+| `src/locales/pt.ts`, `en.ts` | All user-facing text: UI labels, alerts, hints, "ouch" lines, pose challenges and share texts |
+| `src/jokes.ts` | `pick()` and the `PoseChallenge` type |
 
 World units: the image is 1 unit wide and `aspect` units tall. `Layout` maps world units to screen pixels.
 
@@ -91,4 +93,4 @@ Browser testing with Playwright (Chromium is already installed in cloud sessions
 
 ## Starter prompt for a new chat
 
-> Read `NEXT_STEPS.md` on `main` of `devsuperman/crazy-face`. Continue with the pending tasks, keeping all user-facing text in PT-BR.
+> Read `NEXT_STEPS.md` on `main` of `devsuperman/crazy-face`. Continue with the pending tasks, keeping all user-facing text in both PT-BR and English.

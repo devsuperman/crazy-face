@@ -8,25 +8,31 @@
   </head>
   <body>
     <header class="toolbar">
-      <h1>Crazy Face</h1>
+      <div class="brand">
+        <h1>Crazy Face</h1>
+        <div class="lang-switch" role="group" aria-label="Idioma" data-i18n-aria="language">
+          <button class="button chip" type="button" data-lang="pt" lang="pt-BR" aria-pressed="true">PT</button>
+          <button class="button chip" type="button" data-lang="en" lang="en" aria-pressed="false">EN</button>
+        </div>
+      </div>
       <div class="controls">
-        <button id="new-photo" class="button primary" type="button">📸 Nova foto</button>
-        <button id="crop-open" class="button" type="button" aria-label="Recortar ou girar a foto" title="Recortar ou girar">✂️ Recortar</button>
+        <button id="new-photo" class="button primary" type="button" data-i18n="newPhoto">📸 Nova foto</button>
+        <button id="crop-open" class="button" type="button" aria-label="Recortar ou girar a foto" title="Recortar ou girar" data-i18n="crop" data-i18n-aria="cropAria" data-i18n-title="cropTitle">✂️ Recortar</button>
         <label class="slider">
-          Pincel
+          <span data-i18n="brush">Pincel</span>
           <input id="radius" type="range" min="0.05" max="0.45" step="0.01" value="0.18" />
         </label>
         <label class="toggle">
           <input id="beauty" type="checkbox" />
-          ✨ Luz e beleza
+          <span data-i18n="beauty">✨ Luz e beleza</span>
         </label>
         <label class="toggle">
           <input id="clay" type="checkbox" checked />
-          Modo massinha
+          <span data-i18n="clay">Modo massinha</span>
         </label>
-        <button id="reset" class="button" type="button">Resetar</button>
-        <button id="save" class="button" type="button">Salvar PNG</button>
-        <button id="whatsapp" class="button whatsapp" type="button" aria-label="Enviar a foto pelo WhatsApp">💬 WhatsApp</button>
+        <button id="reset" class="button" type="button" data-i18n="reset">Resetar</button>
+        <button id="save" class="button" type="button" data-i18n="save">Salvar PNG</button>
+        <button id="whatsapp" class="button whatsapp" type="button" aria-label="Enviar a foto pelo WhatsApp" data-i18n-aria="whatsappAria">💬 WhatsApp</button>
         <button id="mute" class="button icon" type="button" aria-label="Desligar sons" title="Desligar sons">🔊</button>
       </div>
     </header>
@@ -34,76 +40,80 @@
     <main id="stage" class="stage">
       <canvas id="canvas"></canvas>
       <div id="brush" class="brush" hidden></div>
-      <div id="effects-bar" class="effects" role="toolbar" aria-label="Efeitos malucos">
-        <button class="button chip" type="button" data-effect="balloon">🎈 Balão</button>
-        <button class="button chip" type="button" data-effect="fish">🐟 Cara de peixe</button>
-        <button class="button chip" type="button" data-effect="melt">🫠 Derreter</button>
-        <button class="button chip" type="button" data-effect="eyes">👀 Olhão</button>
-        <button class="button chip" type="button" data-effect="nose">👃 Narigão</button>
-        <button class="button chip" type="button" data-effect="cheeks">🐹 Bochechas</button>
-        <button id="mix" class="button chip accent" type="button">🎭 Um efeito pra cada</button>
+      <div id="effects-bar" class="effects" role="toolbar" aria-label="Efeitos malucos" data-i18n-aria="effects">
+        <button class="button chip" type="button" data-effect="balloon" data-i18n="balloon">🎈 Balão</button>
+        <button class="button chip" type="button" data-effect="fish" data-i18n="fish">🐟 Cara de peixe</button>
+        <button class="button chip" type="button" data-effect="melt" data-i18n="melt">🫠 Derreter</button>
+        <button class="button chip" type="button" data-effect="eyes" data-i18n="eyes">👀 Olhão</button>
+        <button class="button chip" type="button" data-effect="nose" data-i18n="nose">👃 Narigão</button>
+        <button class="button chip" type="button" data-effect="cheeks" data-i18n="cheeks">🐹 Bochechas</button>
+        <button id="mix" class="button chip accent" type="button" data-i18n="mix">🎭 Um efeito pra cada</button>
       </div>
       <div id="bubble" class="bubble" hidden></div>
       <p id="hint" class="hint">Arraste a cara para esticar. Toque em 📸 Nova foto para trocar.</p>
     </main>
 
     <section id="start" class="start" aria-labelledby="start-title">
+      <div class="lang-switch start-lang" role="group" aria-label="Idioma" data-i18n-aria="language">
+        <button class="button chip" type="button" data-lang="pt" lang="pt-BR" aria-pressed="true">PT</button>
+        <button class="button chip" type="button" data-lang="en" lang="en" aria-pressed="false">EN</button>
+      </div>
       <div class="start-box">
         <p class="start-emoji" aria-hidden="true">🤪</p>
-        <h2 id="start-title" class="start-title">Bora estragar uma cara?</h2>
-        <p class="start-text">Tire uma foto ou escolha uma da galeria. Depois é só esticar, amassar e puxar.</p>
+        <h2 id="start-title" class="start-title" data-i18n="startTitle">Bora estragar uma cara?</h2>
+        <p class="start-text" data-i18n="startText">Tire uma foto ou escolha uma da galeria. Depois é só esticar, amassar e puxar.</p>
         <div class="start-actions">
-          <button id="camera-open" class="button primary big" type="button">📸 Tirar foto</button>
+          <button id="camera-open" class="button primary big" type="button" data-i18n="takePhoto">📸 Tirar foto</button>
           <label class="button big">
             <input id="file" type="file" accept="image/*" hidden />
-            🖼️ Escolher foto
+            <span data-i18n="pickPhoto">🖼️ Escolher foto</span>
           </label>
           <input id="camera-fallback" type="file" accept="image/*" capture="user" hidden />
         </div>
-        <button id="start-back" class="link" type="button" hidden>↩ Voltar para a foto de antes</button>
-        <button id="start-sample" class="link" type="button">ou brinque com a cara de exemplo 🙂</button>
-        <p class="start-note">🔒 A foto fica só no seu aparelho. Também dá pra soltar ou colar uma imagem aqui.</p>
+        <button id="start-back" class="link" type="button" data-i18n="startBack" hidden>↩ Voltar para a foto de antes</button>
+        <button id="start-sample" class="link" type="button" data-i18n="startSample">ou brinque com a cara de exemplo 🙂</button>
+        <p class="start-note" data-i18n="startNote">🔒 A foto fica só no seu aparelho. Também dá pra soltar ou colar uma imagem aqui.</p>
       </div>
     </section>
 
-    <div id="drop" class="drop" hidden>Solte sua foto aqui</div>
+    <div id="drop" class="drop" data-i18n="drop" hidden>Solte sua foto aqui</div>
 
-    <div id="camera" class="camera" role="dialog" aria-modal="true" aria-label="Câmera" hidden>
+    <div id="camera" class="camera" role="dialog" aria-modal="true" aria-label="Câmera" data-i18n-aria="camera" hidden>
       <video id="camera-video" playsinline muted></video>
       <div id="camera-light" class="screen-light" hidden></div>
       <div class="challenge-bar">
         <div id="camera-challenge" class="challenge" aria-live="polite">
-          <span class="challenge-label">😜 Desafio de pose</span>
+          <span class="challenge-label" data-i18n="challengeLabel">😜 Desafio de pose</span>
           <span id="camera-challenge-text" class="challenge-text"></span>
           <div class="challenge-actions">
-            <button id="camera-challenge-next" class="button chip" type="button">🔀 Outro</button>
-            <button id="camera-challenge-off" class="button chip" type="button">Sem desafio</button>
+            <button id="camera-challenge-next" class="button chip" type="button" data-i18n="challengeNext">🔀 Outro</button>
+            <button id="camera-challenge-off" class="button chip" type="button" data-i18n="challengeOff">Sem desafio</button>
           </div>
         </div>
-        <button id="camera-challenge-on" class="button chip" type="button" hidden>😜 Quero um desafio</button>
+        <button id="camera-challenge-on" class="button chip" type="button" data-i18n="challengeOn" hidden>😜 Quero um desafio</button>
       </div>
       <div id="camera-countdown" class="countdown" aria-live="assertive" hidden></div>
       <div id="camera-flash" class="flash" hidden></div>
       <div id="camera-review" class="camera-review" hidden>
-        <p class="review-title">Ficou boa? 😎</p>
+        <p class="review-title" data-i18n="reviewTitle">Ficou boa? 😎</p>
         <button id="camera-beauty" class="button chip review-beauty" type="button" aria-pressed="true">✨ Com luz e beleza</button>
-        <button id="camera-crop" class="button chip review-crop" type="button" aria-label="Recortar ou girar a foto">✂️ Recortar</button>
+        <button id="camera-crop" class="button chip review-crop" type="button" aria-label="Recortar ou girar a foto" data-i18n="crop" data-i18n-aria="cropAria">✂️ Recortar</button>
         <div id="camera-review-photo" class="review-photo"></div>
         <div class="camera-bar">
-          <button id="camera-retake" class="button big" type="button">🔁 Tirar outra</button>
-          <button id="camera-use" class="button primary big" type="button">✔ Usar esta</button>
+          <button id="camera-retake" class="button big" type="button" data-i18n="retake">🔁 Tirar outra</button>
+          <button id="camera-use" class="button primary big" type="button" data-i18n="usePhoto">✔ Usar esta</button>
         </div>
       </div>
       <div class="camera-bar">
-        <button id="camera-close" class="button icon round" type="button" aria-label="Fechar câmera" title="Fechar">✖</button>
-        <button id="camera-shutter" class="shutter" type="button" aria-label="Tirar foto (contagem de 3 segundos)"></button>
-        <button id="camera-flip" class="button icon round" type="button" aria-label="Trocar câmera" title="Trocar câmera">🔄</button>
+        <button id="camera-close" class="button icon round" type="button" aria-label="Fechar câmera" title="Fechar" data-i18n-aria="cameraClose" data-i18n-title="close">✖</button>
+        <button id="camera-shutter" class="shutter" type="button" aria-label="Tirar foto (contagem de 3 segundos)" data-i18n-aria="shutter"></button>
+        <button id="camera-flip" class="button icon round" type="button" aria-label="Trocar câmera" title="Trocar câmera" data-i18n-aria="flip" data-i18n-title="flip">🔄</button>
         <button id="camera-lamp" class="button icon round" type="button" aria-label="Ligar luz" title="Ligar luz" aria-pressed="false" hidden>💡</button>
       </div>
     </div>
 
     <div id="crop" class="crop" role="dialog" aria-modal="true" aria-labelledby="crop-title" hidden>
-      <p id="crop-title" class="crop-title">✂️ Recortar</p>
+      <p id="crop-title" class="crop-title" data-i18n="crop">✂️ Recortar</p>
       <div id="crop-area" class="crop-area">
         <div id="crop-frame" class="crop-frame">
           <canvas id="crop-canvas"></canvas>
@@ -116,22 +126,22 @@
         </div>
       </div>
       <div class="crop-tools">
-        <div class="crop-ratios" role="group" aria-label="Formato do recorte">
-          <button class="button chip" type="button" data-ratio="free" aria-pressed="true">Livre</button>
+        <div class="crop-ratios" role="group" aria-label="Formato do recorte" data-i18n-aria="cropRatios">
+          <button class="button chip" type="button" data-ratio="free" aria-pressed="true" data-i18n="ratioFree">Livre</button>
           <button class="button chip" type="button" data-ratio="1:1" aria-pressed="false">⬜ 1:1</button>
           <button class="button chip" type="button" data-ratio="3:4" aria-pressed="false">3:4</button>
           <button class="button chip" type="button" data-ratio="4:3" aria-pressed="false">4:3</button>
           <button class="button chip" type="button" data-ratio="9:16" aria-pressed="false">📱 9:16</button>
         </div>
         <div class="crop-turns">
-          <button id="crop-left" class="button icon" type="button" aria-label="Girar para a esquerda" title="Girar para a esquerda">↺</button>
-          <button id="crop-right" class="button icon" type="button" aria-label="Girar para a direita" title="Girar para a direita">↻</button>
-          <button id="crop-reset" class="button" type="button">Foto inteira</button>
+          <button id="crop-left" class="button icon" type="button" aria-label="Girar para a esquerda" title="Girar para a esquerda" data-i18n-aria="rotateLeft" data-i18n-title="rotateLeft">↺</button>
+          <button id="crop-right" class="button icon" type="button" aria-label="Girar para a direita" title="Girar para a direita" data-i18n-aria="rotateRight" data-i18n-title="rotateRight">↻</button>
+          <button id="crop-reset" class="button" type="button" data-i18n="cropReset">Foto inteira</button>
         </div>
       </div>
       <div class="crop-actions">
-        <button id="crop-cancel" class="button big" type="button">Cancelar</button>
-        <button id="crop-done" class="button primary big" type="button">✔ Pronto</button>
+        <button id="crop-cancel" class="button big" type="button" data-i18n="cancel">Cancelar</button>
+        <button id="crop-done" class="button primary big" type="button" data-i18n="done">✔ Pronto</button>
       </div>
     </div>
 

@@ -7,7 +7,8 @@
 import { enhancePhoto, measureTone } from './beauty';
 import { FULL_CROP, applyCrop, type Crop, type Cropper, type Framing } from './crop';
 import { fitToCanvas } from './image';
-import { POSE_CHALLENGES, pick, type PoseChallenge } from './jokes';
+import { pick, type PoseChallenge } from './jokes';
+import { onLocaleChange, t } from './i18n';
 import type { Sounds } from './sound';
 
 type Facing = 'user' | 'environment';
@@ -80,8 +81,9 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
   let exposureBoosted = false;
 
   function newChallenge(): void {
-    let next = pick(POSE_CHALLENGES);
-    while (POSE_CHALLENGES.length > 1 && next === challenge) next = pick(POSE_CHALLENGES);
+    const challenges = t().challenges;
+    let next = pick(challenges);
+    while (challenges.length > 1 && next === challenge) next = pick(challenges);
     challenge = next;
     challengeText.textContent = next.prompt;
     // Replay the pop-in animation.
@@ -115,7 +117,7 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
 
   function setLamp(on: boolean): void {
     lampOn = on;
-    const label = on ? 'Desligar luz' : 'Ligar luz';
+    const label = on ? t().text.lightOff : t().text.lightOn;
     lamp.setAttribute('aria-pressed', String(on));
     lamp.setAttribute('aria-label', label);
     lamp.title = label;
@@ -184,7 +186,7 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
     const on = wantsBeauty && !!shown.lit;
     reviewPhoto.replaceChildren(on ? shown.lit! : shown.photo);
     beautyButton.setAttribute('aria-pressed', String(on));
-    beautyButton.textContent = on ? '✨ Com luz e beleza' : '✨ Sem filtro';
+    beautyButton.textContent = on ? t().text.beautyOn : t().text.beautyOff;
   }
 
   function hideReview(): void {
@@ -368,6 +370,13 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
     void start();
   });
 
+  // A new language: redraw the text set from here (a pose prompt on screen gets a new one).
+  onLocaleChange(() => {
+    setLamp(lampOn);
+    showReviewPhoto();
+    if (challenge && !counting) newChallenge();
+  });
+
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !overlay.hidden) close();
   });
@@ -442,20 +451,20 @@ async function fullResolutionPhoto(track: MediaStreamTrack, mirror: boolean): Pr
   }
 }
 
-/** A friendly PT-BR message for a getUserMedia failure. */
+/** A friendly message for a getUserMedia failure, in the current language. */
 export function cameraError(err: unknown): string {
   const name = (err as { name?: string })?.name;
-  const tail = ' Você ainda pode usar o botão "Escolher foto".';
+  const text = t().text;
   switch (name) {
     case 'NotAllowedError':
     case 'SecurityError':
-      return 'Não consegui acessar a câmera. Libere a permissão nas configurações do navegador.' + tail;
+      return text.cameraDenied;
     case 'NotFoundError':
     case 'OverconstrainedError':
-      return 'Não encontrei nenhuma câmera neste aparelho.' + tail;
+      return text.cameraMissing;
     case 'NotReadableError':
-      return 'A câmera está sendo usada por outro app. Feche o outro app e tente de novo.';
+      return text.cameraBusy;
     default:
-      return 'Ops! A câmera não quis funcionar.' + tail;
+      return text.cameraFailed;
   }
 }
