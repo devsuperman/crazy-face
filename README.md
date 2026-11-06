@@ -1,63 +1,78 @@
-# Crazy Face
+# Crazy Face 🤪
 
-Take or upload a photo and squish, stretch and pull the face around. It starts in clay mode, so the face keeps its new shape.
+Take a selfie or pick a photo, then squish, stretch and pull the faces around until nobody recognizes anyone. Made for laughing with friends and sending the result straight to the WhatsApp group.
 
-The app is in Brazilian Portuguese (PT-BR) and English, with a PT | EN picker; it follows the browser's language at first (English for any other language), and `?lang=pt` or `?lang=en` forces one. All the user-facing text lives in `src/locales/` (`pt.ts` is the source, `en.ts` must have the same keys).
+**Play now: https://devsuperman.github.io/crazy-face/**
 
-**Live demo: https://devsuperman.github.io/crazy-face/**
+- Works in the browser, on phones and computers. Nothing to install.
+- **Your photos never leave your device.** There are no uploads and no servers: everything, face detection included, runs on your phone or computer.
+- In Brazilian Portuguese or English: it follows your browser's language, and the **PT | EN** switch (top of the screen) changes it any time.
 
-Runs fully in the browser (WebGL2). Photos never leave your device.
+## How to play
 
-## How it works
+1. **Get a photo.** On the start screen, tap **📸 Tirar foto** to use the camera or **🖼️ Escolher foto** to pick one from your gallery. You can also drop or paste an image, or just play with the cartoon face.
+2. **Stretch it.** Drag any part of the face to pull it. Use several fingers at once on a phone.
+3. **Go crazy.** Tap the effect buttons, shake your phone, and make some noise.
+4. **Share it.** Tap **Salvar PNG** to download the picture or **💬 WhatsApp** to send it with a joke.
 
-- The image is drawn as a 64×N grid of triangles (`src/renderer.ts`).
-- Dragging pulls nearby grid points along with the pointer, with a smooth falloff (`src/warp.ts`).
-- A damped spring pulls every point back to its original spot, which gives the wobble.
-- **Modo massinha** (clay mode, on by default) turns the spring off so the shape stays, also after the effect buttons; **Resetar** springs it back. Turn it off to have the face wobble back on its own.
+Tap **📸 Nova foto** any time to start over with another photo (and **↩ Voltar para a foto de antes** if you change your mind).
 
-## Start screen
+## Features
 
-The app opens on a start screen: **📸 Tirar foto**, **🖼️ Escolher foto**, or play with the built-in cartoon face. You can also drop or paste an image. Once there's a photo, the editor opens; **📸 Nova foto** takes you back.
+### 📸 Camera
 
-## Take a photo
+- Full-screen camera with a 3-2-1 countdown, beeps, a flash and a shutter sound.
+- **🔄** switches between the front and back cameras.
+- **💡 Light:** on the front camera the screen glows around the preview to light up your face (it turns on by itself in a dark room); on the back camera it turns on the flashlight, if the phone has one.
+- **Ficou boa?** Check the photo before using it: **✔ Usar esta** or **🔁 Tirar outra**.
 
-- **📸 Tirar foto** opens the camera full screen, with a 3-2-1 countdown, beeps, a flash and a shutter sound (`src/camera.ts`).
-- The selfie camera is mirrored, and the photo keeps that mirror so it looks like the preview. 🔄 switches cameras when there is more than one.
-- After the shot, **Ficou boa?** shows the photo: **✔ Usar esta** or **🔁 Tirar outra**.
-- Where the browser supports it (e.g. Android Chrome), the photo is a full-resolution still (`ImageCapture.takePhoto()`), sharper than a video frame.
-- The camera turns off as soon as the photo is used, the overlay closes, or the tab goes to the background.
-- If the browser has no camera support, the button opens the phone's own camera app instead.
-- **😜 Desafio de pose:** before the countdown the camera shows a random pose prompt, like "Cara de quem viu o boleto!". Right after the photo, the prompt's matching effect plays. 🔀 picks another one, or turn it off.
-- Browsers only allow the camera on HTTPS pages or `localhost`. To test on a phone on your Wi-Fi, run `npm run dev:phone` and open the `https://` network address it prints (accept the self-signed certificate warning).
+### ✨ Luz e beleza
 
-## 💬 WhatsApp
+Dark or dull photos get a light fix and a soft skin smoothing, with the eyes and mouth kept sharp. It's on for camera photos and for dark gallery photos, and you can turn it off at any time.
 
-Sends the current picture (the same PNG as **Salvar PNG**) with a joke line. On phones it opens the share sheet (Web Share with files), where WhatsApp is listed. Web pages can't attach a file to WhatsApp directly, so where file sharing isn't available (most desktops) it downloads the PNG and opens WhatsApp (`wa.me`) with the text, and you attach the photo there.
+### ✂️ Recortar
 
-## Group photos
+Crop and rotate the photo before playing: free, 1:1, 3:4, 4:3 or 9:16, plus quarter turns.
 
-Faces are **found automatically** right after a photo arrives (`src/faces.ts`, MediaPipe's BlazeFace detector run on overlapping windows of a few sizes so small faces in group shots are found too). It runs in the browser; the library and model are bundled with the app and only downloaded when first needed (opening the camera or the gallery). There's nothing to mark by hand.
+### 🤹 Effects
 
-- Every effect button hits **every face** in the photo at once (up to 6).
-- **🎭 Um efeito pra cada:** every face gets a different effect at the same time.
-- Effects can be aimed at a face and several can play at once (`playEffect(kind, now, target)` in `src/warp.ts`).
+| Button | What it does |
+|---|---|
+| 🎈 Balão | Inflates the face like a balloon |
+| 🐟 Cara de peixe | Fish face |
+| 🫠 Derreter | Melts the face down |
+| 👀 Olhão | Giant eyes |
+| 👃 Narigão | Giant nose |
+| 🐹 Bochechas | Hamster cheeks |
+| 🎭 Um efeito pra cada | Every face gets a different effect |
 
-## Silly stuff
+### 👨‍👩‍👧‍👦 Group photos
 
-- **Effect buttons:** 🎈 Balloon, 🐟 Fish face, 🫠 Melt (`src/warp.ts`), 👀 Big eyes, 👃 Big nose and 🐹 Puffy cheeks (`src/lens.ts`). They aim at every face in the photo, found automatically (`src/faces.ts`); without a face the mesh ones warp the whole photo.
-- **Cartoon sounds:** a rubbery creak while you drag and a boing when you let go. All are made on the fly with the Web Audio API, so there are no audio files (`src/sound.ts`). Use 🔊 to mute.
-- An **"AI!"** bubble when you pull too far, and a random joke hint on each visit (`src/locales/`, where it's easy to add more).
-- **Shake your phone** to make the face jiggle (iOS asks for permission on the first tap).
+Faces are found automatically, even small ones in group shots. Every effect hits **every face** in the photo at once (up to 6). There's nothing to mark by hand.
 
-## Develop
+### 🧱 Modo massinha
 
-```bash
-npm install
-npm run dev
-```
+Clay mode, on by default: the face keeps the shape you give it. **Resetar** puts it back. Turn clay mode off and the face wobbles back on its own like jelly.
 
-## Build
+### 🎉 Sextou
 
-```bash
-npm run build   # output in dist/
-```
+On Fridays only, a party sticker shows up on the photo. Drag it, pinch to resize and rotate it, or tap it for a little party. It goes into the saved picture too.
+
+### 🔊 Sounds and jokes
+
+- Cartoon sounds: a rubbery creak while you stretch and a *boing* when you let go. Tap 🔊 to mute.
+- Pull too far and the face complains with an **"AI!"**.
+- **Shake your phone** to make the face jiggle (on iPhone, allow motion access on the first tap).
+
+### 💬 Sharing
+
+**💬 WhatsApp** sends the picture with a random joke. On phones it opens the share menu, where WhatsApp is listed. On most computers it downloads the picture and opens WhatsApp with the text, so you attach the photo there.
+
+## Tips
+
+- The camera needs a secure page (`https://`), which the live site already is. If the browser asks, allow camera access.
+- If your browser has no camera support, **📸 Tirar foto** opens your phone's own camera app instead.
+
+## For developers
+
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the tech stack, how the features work, and how to run and build the project.

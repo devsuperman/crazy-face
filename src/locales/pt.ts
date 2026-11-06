@@ -4,26 +4,6 @@
  * translated word for word.
  */
 
-import type { PoseChallenge } from '../jokes';
-
-/** Desafio de pose na câmera: a pose pedida e o efeito que toca logo depois da foto. */
-const POSE_CHALLENGES: PoseChallenge[] = [
-  { prompt: 'Todo mundo com cara de quem viu o boleto! 💸', effect: 'melt' },
-  { prompt: 'Cara de surpresa no amigo secreto! 🎁', effect: 'balloon' },
-  { prompt: 'Pose de capa de disco de pagode! 🎤', effect: 'fish' },
-  { prompt: 'Biquinho de selfie no espelho da academia! 💪', effect: 'fish' },
-  { prompt: 'Cara de quem acordou atrasado pra prova! ⏰', effect: 'balloon' },
-  { prompt: 'Cara de quem mordeu uma pimenta escondida! 🌶️', effect: 'balloon' },
-  { prompt: 'Cara de quem ouviu "a gente precisa conversar"! 😬', effect: 'melt' },
-  { prompt: 'Cara de tio dançando no casamento! 🕺', effect: 'melt' },
-  { prompt: 'Cara de quem viu o ex no rolê! 👀', effect: 'fish' },
-  { prompt: 'Cara de quem chegou no churrasco e só tinha salada! 🥗', effect: 'melt' },
-  { prompt: 'Cara de quem viu o preço da gasolina! ⛽', effect: 'eyes' },
-  { prompt: 'Cara de quem sentiu cheiro de bolo saindo do forno! 🎂', effect: 'nose' },
-  { prompt: 'Cara de fofoqueiro na janela! 🪟', effect: 'eyes' },
-  { prompt: 'Enche as bochechas de ar! 🐹', effect: 'cheeks' },
-];
-
 export const pt = {
   meta: {
     description: 'Tire ou envie uma foto e estique, amasse e puxe a cara à vontade.',
@@ -39,6 +19,7 @@ export const pt = {
     brush: 'Pincel',
     beauty: '✨ Luz e beleza',
     clay: 'Modo massinha',
+    friday: '🎉 Sextou',
     reset: 'Resetar',
     save: 'Salvar PNG',
     whatsappAria: 'Enviar a foto pelo WhatsApp',
@@ -59,10 +40,6 @@ export const pt = {
     startNote: '🔒 A foto fica só no seu aparelho. Também dá pra soltar ou colar uma imagem aqui.',
     drop: 'Solte sua foto aqui',
     camera: 'Câmera',
-    challengeLabel: '😜 Desafio de pose',
-    challengeNext: '🔀 Outro',
-    challengeOff: 'Sem desafio',
-    challengeOn: '😜 Quero um desafio',
     reviewTitle: 'Ficou boa? 😎',
     retake: '🔁 Tirar outra',
     usePhoto: '✔ Usar esta',
@@ -127,7 +104,14 @@ export const pt = {
     'Não me pergunte o que aconteceu com essa cara. 😂',
   ],
 
-  challenges: POSE_CHALLENGES,
+  /** 🎉 Sextou: o adesivo de sexta-feira (o texto vai desenhado no adesivo). */
+  fridayStickers: ['SEXTOU! 🎉', 'SEXTOOOU! 🥳', 'É SEXTA! 🍻', 'SEXTOU 😎'],
+
+  /** A dica da primeira foto numa sexta. */
+  fridayHints: [
+    'Sextou! 🎉 Arraste o adesivo, faça pinça para girar e toque nele.',
+    'É sexta! 🥳 Mude o adesivo de lugar ou toque nele pra festa.',
+  ],
 };
 
 export type Messages = typeof pt;

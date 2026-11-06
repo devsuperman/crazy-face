@@ -7,6 +7,7 @@ import { Sounds } from './sound';
 import { setupCamera } from './camera';
 import { FULL_CROP, applyCrop, sameCrop, setupCropper, type Framing } from './crop';
 import { enhancePhoto, isDark, measureTone, type Tone } from './beauty';
+import { Sticker, drawSticker, isFriday } from './sticker';
 import { pick } from './jokes';
 import { applyDom, onLocaleChange, setupLanguagePicker, t } from './i18n';
 
@@ -78,6 +79,7 @@ function setImage(
   renderer.setImage(beautyOn ? lightOnly() : image);
   newMesh(image.height / image.width);
   hint.textContent = pick(t().hints);
+  placeSticker();
   // Faces are easier to find in the brightened photo.
   facesReady = findFaces ? searchFaces(image, beautyOn ? lightOnly() : image) : Promise.resolve();
 }
@@ -177,6 +179,51 @@ async function waitForFace(image: HTMLCanvasElement, ms: number): Promise<boolea
 $('camera-open').addEventListener('click', preloadFaceDetector);
 fileInput.addEventListener('click', preloadFaceDetector);
 
+// --- 🎉 Sextou: a sticker on the photo on Fridays ---
+
+const sticker = new Sticker();
+const fridayToggle = $<HTMLLabelElement>('friday-toggle');
+const fridayInput = $<HTMLInputElement>('friday');
+const friday = isFriday();
+fridayToggle.hidden = !friday;
+let fridayHintShown = false;
+
+/** Draw a sticker text in the current language and put it on the WebGL canvas; returns its height / width. */
+function stickerArt(): number {
+  const art = drawSticker(pick(t().fridayStickers));
+  renderer.setSticker(art);
+  return art.height / art.width;
+}
+
+/** A new photo: a fresh sticker (new text) in its corner. */
+function placeSticker(): void {
+  if (!friday) return;
+  sticker.place(mesh.aspect, stickerArt(), performance.now() / 1000);
+  sticker.visible = fridayInput.checked;
+}
+
+// A new language: the sticker gets a new text where it is.
+onLocaleChange(() => {
+  if (friday) sticker.relabel(stickerArt());
+});
+
+fridayInput.addEventListener('change', () => {
+  sounds.unlock();
+  sticker.visible = fridayInput.checked;
+  if (sticker.visible) {
+    sticker.pop(performance.now() / 1000);
+    sounds.party();
+  } else {
+    sounds.pop();
+  }
+});
+
+/** Tap on the sticker: a little party. */
+function fridayParty(): void {
+  sticker.wiggle(performance.now() / 1000);
+  sounds.party();
+}
+
 // --- Two screens: the start screen (take or pick a photo), then the editor ---
 
 const startScreen = $<HTMLElement>('start');
@@ -194,6 +241,11 @@ function showEditor(): void {
   for (const el of editor) el.inert = false;
   // From now on there is a photo to go back to.
   startBack.hidden = false;
+  if (sticker.visible) {
+    sticker.pop(performance.now() / 1000);
+    if (!fridayHintShown) hint.textContent = pick(t().fridayHints);
+    fridayHintShown = true;
+  }
 }
 
 $('new-photo').addEventListener('click', () => {
@@ -229,7 +281,7 @@ function updateLayout(): void {
   updateBrushSize();
 }
 
-function toWorld(e: PointerEvent): [number, number] {
+function toWorld(e: MouseEvent): [number, number] {
   const rect = canvas.getBoundingClientRect();
   return [
     (e.clientX - rect.left - layout.offsetX) / layout.scale,
@@ -281,18 +333,31 @@ canvas.addEventListener('pointerdown', (e) => {
   void enableShake();
   canvas.setPointerCapture(e.pointerId);
   const [x, y] = toWorld(e);
+  // 🎉 The sticker is on top, so it gets first pick (and a second finger for a pinch).
+  if (sticker.wants(x, y)) {
+    sticker.grab(e.pointerId, x, y, performance.now() / 1000);
+    canvas.classList.add('dragging');
+    brush.hidden = true;
+    return;
+  }
   mesh.grab(e.pointerId, x, y, brushRadius());
   drags.set(e.pointerId, { startX: x, startY: y, stretch: 0, ouched: false });
   canvas.classList.add('dragging');
 });
 
 canvas.addEventListener('pointermove', (e) => {
+  const [x, y] = toWorld(e);
+  if (sticker.owns(e.pointerId)) {
+    sticker.move(e.pointerId, x, y);
+    return;
+  }
   if (e.pointerType === 'mouse') {
-    brush.hidden = false;
+    const onSticker = !mesh.isDragging && sticker.hit(x, y);
+    canvas.classList.toggle('on-sticker', onSticker);
+    brush.hidden = onSticker;
     brush.style.left = `${e.offsetX}px`;
     brush.style.top = `${e.offsetY}px`;
   }
-  const [x, y] = toWorld(e);
   mesh.move(e.pointerId, x, y);
 
   const drag = drags.get(e.pointerId);
@@ -306,6 +371,12 @@ canvas.addEventListener('pointermove', (e) => {
 });
 
 const endPointer = (e: PointerEvent) => {
+  if (sticker.owns(e.pointerId)) {
+    // A tap is a press that moved less than ~8 px.
+    if (sticker.release(e.pointerId, performance.now() / 1000, 8 / layout.scale)) fridayParty();
+    if (!mesh.isDragging) canvas.classList.remove('dragging');
+    return;
+  }
   mesh.release(e.pointerId);
   const drag = drags.get(e.pointerId);
   drags.delete(e.pointerId);
@@ -319,6 +390,17 @@ const endPointer = (e: PointerEvent) => {
 canvas.addEventListener('pointerup', endPointer);
 canvas.addEventListener('pointercancel', endPointer);
 canvas.addEventListener('pointerleave', () => (brush.hidden = true));
+// 🎉 Mouse wheel on the sticker: resize it (Shift: turn it).
+canvas.addEventListener(
+  'wheel',
+  (e) => {
+    const [x, y] = toWorld(e);
+    if (!sticker.hit(x, y)) return;
+    e.preventDefault();
+    sticker.wheel(e.deltaY || e.deltaX, e.shiftKey);
+  },
+  { passive: false },
+);
 
 // --- Controls ---
 
@@ -355,15 +437,9 @@ cropButton.addEventListener('click', async () => {
   setImage(applyCrop(source, crop), { beauty: beautyOn, framing: { source, crop } });
 });
 
-setupCamera((shot, challenge, lit, framing) => {
+setupCamera((shot, lit, framing) => {
   setImage(shot, { beauty: !!lit, lit, framing });
   showEditor();
-  // Desafio de pose: show the photo for a moment, then play the matching effect on the face.
-  if (challenge) {
-    window.setTimeout(async () => {
-      if (await waitForFace(shot, 1500)) void playPreset(challenge.effect);
-    }, 900);
-  }
 }, sounds, cropper);
 
 radiusInput.addEventListener('input', updateBrushSize);
@@ -566,7 +642,7 @@ function frame(ms: number): void {
   const now = ms / 1000;
   mesh.update(now - last, now);
   last = now;
-  renderer.draw(mesh, layout);
+  renderer.draw(mesh, layout, sticker.visible ? sticker.pose(now) : null);
   requestAnimationFrame(frame);
 }
 

@@ -7,7 +7,6 @@
 import { enhancePhoto, measureTone } from './beauty';
 import { FULL_CROP, applyCrop, type Crop, type Cropper, type Framing } from './crop';
 import { fitToCanvas } from './image';
-import { pick, type PoseChallenge } from './jokes';
 import { onLocaleChange, t } from './i18n';
 import type { Sounds } from './sound';
 
@@ -18,13 +17,11 @@ const COUNTDOWN_FROM = 3;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 /**
- * `challenge` is the pose prompt that was on screen, or null if the user turned it off.
  * `lit` is the photo with ✨ Luz e beleza's light fix, or null if the user turned it off.
  * Both are already cropped; `framing` is the shot before ✂️ Recortar and its crop.
  */
 export type OnPhoto = (
   photo: HTMLCanvasElement,
-  challenge: PoseChallenge | null,
   lit: HTMLCanvasElement | null,
   framing: Framing,
 ) => void;
@@ -40,9 +37,6 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
   const shutter = $<HTMLButtonElement>('camera-shutter');
   const flip = $<HTMLButtonElement>('camera-flip');
   const fallback = $<HTMLInputElement>('camera-fallback');
-  const challengeBox = $<HTMLDivElement>('camera-challenge');
-  const challengeText = $<HTMLSpanElement>('camera-challenge-text');
-  const challengeOn = $<HTMLButtonElement>('camera-challenge-on');
   const reviewBox = $<HTMLDivElement>('camera-review');
   const reviewPhoto = $<HTMLDivElement>('camera-review-photo');
   const useButton = $<HTMLButtonElement>('camera-use');
@@ -56,16 +50,12 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
   let session = 0;
   let countdownTimer = 0;
   let counting = false;
-  /** The pose prompt on screen; null when the user chose "Sem desafio" (remembered until reload). */
-  let challenge: PoseChallenge | null = null;
-  let wantsChallenge = true;
   /**
    * The photo waiting for "Usar esta" / "Tirar outra" and its brightened copy, both
    * uncropped, then how ✂️ Recortar crops them and the cropped copies.
    */
   let review: {
     photo: HTMLCanvasElement;
-    posed: PoseChallenge | null;
     lit: HTMLCanvasElement | null;
     crop: Crop;
     shown: { photo: HTMLCanvasElement; lit: HTMLCanvasElement | null };
@@ -79,26 +69,6 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
   let torch = false;
   let meterTimer = 0;
   let exposureBoosted = false;
-
-  function newChallenge(): void {
-    const challenges = t().challenges;
-    let next = pick(challenges);
-    while (challenges.length > 1 && next === challenge) next = pick(challenges);
-    challenge = next;
-    challengeText.textContent = next.prompt;
-    // Replay the pop-in animation.
-    challengeBox.style.animation = 'none';
-    void challengeBox.offsetWidth;
-    challengeBox.style.animation = '';
-  }
-
-  function showChallenge(on: boolean): void {
-    wantsChallenge = on;
-    challengeBox.hidden = !on;
-    challengeOn.hidden = on;
-    if (on) newChallenge();
-    else challenge = null;
-  }
 
   const supported = () => !!navigator.mediaDevices?.getUserMedia;
 
@@ -163,14 +133,13 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
     clearTimeout(countdownTimer);
     screenLight.hidden = true;
     counting = false;
-    overlay.classList.remove('counting');
     countdown.hidden = true;
     shutter.disabled = false;
   }
 
-  function showReview(photo: HTMLCanvasElement, posed: PoseChallenge | null): void {
+  function showReview(photo: HTMLCanvasElement): void {
     const lit = enhancePhoto(photo, measureTone(photo));
-    review = { photo, posed, lit, crop: FULL_CROP, shown: { photo, lit } };
+    review = { photo, lit, crop: FULL_CROP, shown: { photo, lit } };
     beautyButton.hidden = !lit;
     showReviewPhoto();
     reviewBox.hidden = false;
@@ -249,7 +218,6 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
       return;
     }
     overlay.hidden = false;
-    showChallenge(wantsChallenge);
     shutter.focus();
     void start();
   }
@@ -285,7 +253,6 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
     const mirror = facing === 'user';
     // Grab the preview frame now, in case the full-resolution still isn't available.
     const frame = fitToCanvas(video, w, h, mirror);
-    const posed = challenge;
     sounds.shutter();
     flash.hidden = false;
     flash.style.animation = 'none';
@@ -295,7 +262,7 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
     const still = await fullResolutionPhoto(track, mirror);
     screenLight.hidden = true;
     if (mine !== session) return;
-    showReview(still ?? frame, posed);
+    showReview(still ?? frame);
   }
 
   $('camera-open').addEventListener('click', open);
@@ -303,9 +270,9 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
 
   useButton.addEventListener('click', () => {
     if (!review) return;
-    const { photo, posed, crop, shown } = review;
+    const { photo, crop, shown } = review;
     close();
-    onPhoto(shown.photo, posed, wantsBeauty ? shown.lit : null, { source: photo, crop });
+    onPhoto(shown.photo, wantsBeauty ? shown.lit : null, { source: photo, crop });
   });
 
   // ✂️ Recortar: crop the photo and its brightened copy the same way.
@@ -349,19 +316,8 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
   shutter.addEventListener('click', () => {
     if (counting || !stream) return;
     counting = true;
-    overlay.classList.add('counting');
     shutter.disabled = true;
     tick(COUNTDOWN_FROM);
-  });
-
-  $('camera-challenge-next').addEventListener('click', () => {
-    sounds.pop();
-    newChallenge();
-  });
-  $('camera-challenge-off').addEventListener('click', () => showChallenge(false));
-  challengeOn.addEventListener('click', () => {
-    sounds.pop();
-    showChallenge(true);
   });
 
   flip.addEventListener('click', () => {
@@ -370,11 +326,10 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
     void start();
   });
 
-  // A new language: redraw the text set from here (a pose prompt on screen gets a new one).
+  // A new language: redraw the text set from here.
   onLocaleChange(() => {
     setLamp(lampOn);
     showReviewPhoto();
-    if (challenge && !counting) newChallenge();
   });
 
   window.addEventListener('keydown', (e) => {
