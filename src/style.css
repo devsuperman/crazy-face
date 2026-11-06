@@ -48,6 +48,43 @@ body {
   letter-spacing: 0.02em;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* --- 🌐 Language picker (PT | EN), in the toolbar and on the start screen --- */
+
+.lang-switch {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.lang-switch .button.chip {
+  padding: 3px 9px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.lang-switch .button.chip[aria-pressed='true'] {
+  background: var(--accent);
+  color: #fff;
+}
+
+.start-lang {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 16px;
+  background: var(--panel);
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;

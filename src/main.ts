@@ -8,7 +8,8 @@ import { setupCamera } from './camera';
 import { FULL_CROP, applyCrop, sameCrop, setupCropper, type Framing } from './crop';
 import { enhancePhoto, isDark, measureTone, type Tone } from './beauty';
 import { Sticker, drawSticker, isFriday } from './sticker';
-import { FRIDAY_HINTS, FRIDAY_STICKERS, GROUP_SUGGEST_HINTS, HINTS, OUCH_LINES, SHARE_TEXTS, pick } from './jokes';
+import { pick } from './jokes';
+import { applyDom, onLocaleChange, setupLanguagePicker, t } from './i18n';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -26,7 +27,8 @@ const hint = $<HTMLParagraphElement>('hint');
 const cropButton = $<HTMLButtonElement>('crop-open');
 
 const sounds = new Sounds();
-hint.textContent = pick(HINTS);
+applyDom();
+hint.textContent = pick(t().hints);
 
 let renderer: Renderer;
 try {
@@ -76,7 +78,7 @@ function setImage(
   lensFace = undefined;
   renderer.setImage(beautyOn ? lightOnly() : image);
   newMesh(image.height / image.width);
-  hint.textContent = pick(HINTS);
+  hint.textContent = pick(t().hints);
   placeSticker();
   // Faces are easier to find in the brightened photo.
   facesReady = findFaces ? searchFaces(image, beautyOn ? lightOnly() : image) : Promise.resolve();
@@ -162,7 +164,7 @@ async function useFaces(
   photoFaces = found;
   if (found.length) showLook();
   if (more && found.length >= 2) {
-    hint.textContent = pick(GROUP_SUGGEST_HINTS).replace('{n}', String(found.length));
+    hint.textContent = pick(t().groupHints).replace('{n}', String(found.length));
   }
   return true;
 }
@@ -186,14 +188,24 @@ const friday = isFriday();
 fridayToggle.hidden = !friday;
 let fridayHintShown = false;
 
+/** Draw a sticker text in the current language and put it on the WebGL canvas; returns its height / width. */
+function stickerArt(): number {
+  const art = drawSticker(pick(t().fridayStickers));
+  renderer.setSticker(art);
+  return art.height / art.width;
+}
+
 /** A new photo: a fresh sticker (new text) in its corner. */
 function placeSticker(): void {
   if (!friday) return;
-  const art = drawSticker(pick(FRIDAY_STICKERS));
-  renderer.setSticker(art);
-  sticker.place(mesh.aspect, art.height / art.width, performance.now() / 1000);
+  sticker.place(mesh.aspect, stickerArt(), performance.now() / 1000);
   sticker.visible = fridayInput.checked;
 }
+
+// A new language: the sticker gets a new text where it is.
+onLocaleChange(() => {
+  if (friday) sticker.relabel(stickerArt());
+});
 
 fridayInput.addEventListener('change', () => {
   sounds.unlock();
@@ -231,7 +243,7 @@ function showEditor(): void {
   startBack.hidden = false;
   if (sticker.visible) {
     sticker.pop(performance.now() / 1000);
-    if (!fridayHintShown) hint.textContent = pick(FRIDAY_HINTS);
+    if (!fridayHintShown) hint.textContent = pick(t().fridayHints);
     fridayHintShown = true;
   }
 }
@@ -292,7 +304,7 @@ const OUCH_AT = 0.4;
 let bubbleTimer = 0;
 function showBubble(e: PointerEvent): void {
   const rect = stage.getBoundingClientRect();
-  bubble.textContent = pick(OUCH_LINES);
+  bubble.textContent = pick(t().ouch);
   bubble.style.left = `${e.clientX - rect.left}px`;
   bubble.style.top = `${e.clientY - rect.top - 24}px`;
   bubble.hidden = false;
@@ -398,7 +410,7 @@ async function useFile(file: File | undefined | null): Promise<void> {
     setImage(await loadImageFile(file));
     showEditor();
   } catch {
-    alert('Ops! Não consegui abrir essa imagem.');
+    alert(t().text.imageError);
   }
 }
 
@@ -505,11 +517,19 @@ $('mix').addEventListener('click', playMix);
 
 function updateMuteButton(): void {
   muteButton.textContent = sounds.muted ? '🔇' : '🔊';
-  const label = sounds.muted ? 'Ligar sons' : 'Desligar sons';
+  const label = sounds.muted ? t().text.soundOn : t().text.soundOff;
   muteButton.title = label;
   muteButton.setAttribute('aria-label', label);
 }
 updateMuteButton();
+onLocaleChange(() => {
+  updateMuteButton();
+  hint.textContent = pick(t().hints);
+});
+setupLanguagePicker(() => {
+  sounds.unlock();
+  sounds.pop();
+});
 muteButton.addEventListener('click', () => {
   sounds.setMuted(!sounds.muted);
   sounds.unlock();
@@ -577,7 +597,7 @@ $('save').addEventListener('click', () => {
  */
 $('whatsapp').addEventListener('click', () => {
   sounds.unlock();
-  const text = pick(SHARE_TEXTS);
+  const text = pick(t().share);
   canvas.toBlob(async (blob) => {
     if (!blob) return;
     const file = new File([blob], 'crazy-face.png', { type: 'image/png' });

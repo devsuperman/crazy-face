@@ -1,3 +1,4 @@
+import { t } from './i18n';
 import { MAX_LENSES } from './lens';
 import type { StickerPose } from './sticker';
 import type { WarpMesh } from './warp';
@@ -109,7 +110,7 @@ export class Renderer {
       premultipliedAlpha: false,
       preserveDrawingBuffer: true, // lets us export the canvas as PNG
     });
-    if (!gl) throw new Error('Seu navegador não suporta WebGL2. Tente um navegador mais recente.');
+    if (!gl) throw new Error(t().text.noWebgl);
     this.gl = gl;
 
     this.program = createProgram(gl, VERTEX, FRAGMENT);

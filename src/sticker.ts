@@ -131,6 +131,11 @@ export class Sticker {
     this.pop(now);
   }
 
+  /** New art (another language) in the same place and width. */
+  relabel(artRatio: number): void {
+    this.ratio = artRatio;
+  }
+
   /** Bounce in. */
   pop(now: number): void {
     this.poppedAt = now;

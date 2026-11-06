@@ -56,8 +56,8 @@ The build must pass before committing. Every push to `main` builds and deploys t
 
 ## Project rules
 
-- **All user-facing text is Brazilian Portuguese (PT-BR):** buttons, hints, alerts and `aria-label`s. Jokes should feel Brazilian, not translated word for word. Code, comments, commits and the docs stay in English.
-- UI text lives only in `index.html` (static markup) and `src/jokes.ts` (hints, "ouch" lines and share texts; use `pick()`).
+- **The app speaks Brazilian Portuguese (the source language) and English.** Every user-facing string (buttons, hints, alerts, `aria-label`s, `title`s) goes in both `src/locales/pt.ts` and `src/locales/en.ts`; `en` is typed against `pt`, so a missing key fails the build. Jokes are written for each language, not translated word for word. Code, comments, commits and the docs stay in English.
+- Read text with `t()` from `src/i18n.ts` when it is shown (`pick(t().hints)`). Static markup in `index.html` keeps the PT-BR text and names its key with `data-i18n`, `data-i18n-aria` or `data-i18n-title`; `applyDom()` fills them. Text set from code that stays on screen is redrawn in an `onLocaleChange()` listener.
 - New sounds are methods on `Sounds` in `src/sound.ts`.
 - Photos never leave the device: no uploads, no servers, no CDN for the ML model.
 - No frameworks or UI libraries.
@@ -78,7 +78,9 @@ The build must pass before committing. Every push to `main` builds and deploys t
 | `src/sticker.ts` | 🎉 Sextou sticker: drawing and gestures |
 | `src/image.ts` | Loading and normalizing images, the cartoon face |
 | `src/sound.ts` | All sounds (Web Audio) |
-| `src/jokes.ts` | All the silly PT-BR text |
+| `src/i18n.ts` | Languages: `t()`, `applyDom()`, detection (`?lang=pt\|en`, saved choice, browser language, English fallback), the PT \| EN picker |
+| `src/locales/pt.ts`, `en.ts` | All user-facing text, PT-BR and English |
+| `src/jokes.ts` | `pick()` |
 | `src/style.css` | Styles |
 
 ## Architecture
@@ -160,7 +162,7 @@ The shot uses `ImageCapture.takePhoto()` (full sensor resolution) where availabl
 
 ### 💬 WhatsApp
 
-Builds the same PNG as **Salvar PNG** plus a joke line from `src/jokes.ts`. Where Web Share with files is available (most phones) it opens the share sheet. Web pages can't attach files to WhatsApp directly, so elsewhere it downloads the PNG and opens `wa.me` with the text.
+Builds the same PNG as **Salvar PNG** plus a joke line from `src/locales/`. Where Web Share with files is available (most phones) it opens the share sheet. Web pages can't attach files to WhatsApp directly, so elsewhere it downloads the PNG and opens `wa.me` with the text.
 
 ### Images and sounds
 
