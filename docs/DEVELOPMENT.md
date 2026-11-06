@@ -54,6 +54,10 @@ npx vite preview --port 4173   # serve the build locally
 
 The build must pass before committing. Every push to `main` builds and deploys to GitHub Pages (`.github/workflows/deploy.yml`). `vite.config.ts` uses `base: './'` so the build works under `/crazy-face/`.
 
+### README screenshots
+
+The images in `docs/screenshots/` are shown in `README.md`. They use the cartoon face (no real people) and the English UI: headless Chromium (Playwright, `--use-gl=swiftshader --enable-unsafe-swiftshader`) at a 390×780 viewport and `deviceScaleFactor: 2`, opening `?lang=en&sextou=0` on `vite preview`, then tapping the sample face and dragging or tapping an effect. The 👀/👃/🐹 lenses don't render under SwiftShader, so the shots use mesh effects. Retake them when the UI changes noticeably.
+
 ## Project rules
 
 - **The app speaks Brazilian Portuguese (the source language) and English.** Every user-facing string (buttons, hints, alerts, `aria-label`s, `title`s) goes in both `src/locales/pt.ts` and `src/locales/en.ts`; `en` is typed against `pt`, so a missing key fails the build. Jokes are written for each language, not translated word for word. Code, comments, commits and the docs stay in English.

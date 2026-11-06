@@ -4,6 +4,10 @@ Take a selfie or pick a photo, then squish, stretch and pull the faces around un
 
 **Play now: https://devsuperman.github.io/crazy-face/**
 
+| Start | Stretch it | 🐟 Fish face | 🫠 Melt |
+|---|---|---|---|
+| <img src="docs/screenshots/start.png" alt="Start screen with Take photo and Choose photo buttons" width="200"> | <img src="docs/screenshots/stretch.png" alt="Cartoon face pulled into pointy ears and a long chin" width="200"> | <img src="docs/screenshots/fish.png" alt="Cartoon face puckered into a fish face" width="200"> | <img src="docs/screenshots/melt.png" alt="Cartoon face melting down the screen" width="200"> |
+
 - Works in the browser, on phones and computers. Nothing to install.
 - **Your photos never leave your device.** There are no uploads and no servers: everything, face detection included, runs on your phone or computer.
 - In Brazilian Portuguese or English: it follows your browser's language, and the **PT | EN** switch (top of the screen) changes it any time. Below, buttons are named in English, with the Portuguese label in parentheses.
