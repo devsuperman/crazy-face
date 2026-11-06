@@ -161,3 +161,19 @@ export const TUG_START = ['Cabo de guerra! Puxa! 🪢', 'Quem puxa mais forte? �
 export const TUG_LEFT_WINS = ['Vitória do lado esquerdo! 🏆⬅️', 'O lado esquerdo levou a cara! ⬅️', 'Esquerda campeã! 💪⬅️'];
 export const TUG_RIGHT_WINS = ['Vitória do lado direito! ➡️🏆', 'O lado direito levou a cara! ➡️', 'Direita campeã! ➡️💪'];
 export const TUG_DRAW = ['Empate! A cara ficou no meio. 🤝', 'Empatou! Ninguém leva a cara. 🤝'];
+
+/** 🎉 Sextou: o adesivo de sexta-feira (o texto vai desenhado no adesivo). */
+export const FRIDAY_STICKERS = ['SEXTOU! 🎉', 'SEXTOOOU! 🥳', 'É SEXTA! 🍻', 'SEXTOU 😎'];
+/** Ao tocar no adesivo. */
+export const FRIDAY_CAPTIONS = [
+  'Sextou! Hoje pode exagerar na careta. 🎉',
+  'Sexta-feira: o rosto já entrou no modo fim de semana. 🥳',
+  'Sextou com S de sorriso torto! 😜',
+  'Bora, que amanhã é sábado! 🍻',
+  'Sexta é sexta, né? Estica sem dó! 🎉',
+];
+/** A dica da primeira foto numa sexta. */
+export const FRIDAY_HINTS = [
+  'Sextou! 🎉 Arraste o adesivo, faça pinça para girar e toque nele.',
+  'É sexta! 🥳 Mude o adesivo de lugar ou toque nele pra festa.',
+];
