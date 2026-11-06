@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Crazy Face is a browser-only toy: take or upload a photo, then squish, stretch and pull the face around (WebGL2). It is plain TypeScript + Vite with no framework, no backend and no tests. `NEXT_STEPS.md` has the roadmap of pending features and known issues.
+Crazy Face is a browser-only toy: take or upload a photo, then squish, stretch and pull the face around (WebGL2). It is plain TypeScript + Vite with no framework, no backend and no tests. `NEXT_STEPS.md` has the roadmap of pending features and known issues. Docs are split: `README.md` is for players (what the app is and its features, no code details); `docs/DEVELOPMENT.md` is for developers (stack, how features work, running and building). Update both when a feature changes.
 
 ## Commands
 
@@ -26,7 +26,7 @@ Pushes to `main` deploy to GitHub Pages (`.github/workflows/deploy.yml`). `vite.
 
 ## Project rules
 
-- **All user-facing text is Brazilian Portuguese (PT-BR):** buttons, hints, captions, alerts and `aria-label`s. Jokes should feel Brazilian, not translated word for word. Code, comments, commits and the README stay in English.
+- **All user-facing text is Brazilian Portuguese (PT-BR):** buttons, hints, captions, alerts and `aria-label`s. Jokes should feel Brazilian, not translated word for word. Code, comments, commits and the docs stay in English.
 - UI text lives only in `index.html` (static markup) and `src/jokes.ts` (hints, "ouch" lines, pose challenges and share texts; use `pick()`). There are no pop-up captions: they were removed on purpose.
 - Sounds are generated with the Web Audio API in `src/sound.ts` (no audio files). Add new sounds as methods on `Sounds`.
 - Photos never leave the device: no uploads, no servers. ML runs locally (face detection in `src/faces.ts`), and its library, wasm and model are bundled with the app, not loaded from a CDN.
