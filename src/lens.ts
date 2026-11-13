@@ -5,6 +5,8 @@
  * remap, per pixel, so it stays smooth even on the tiny faces of a group photo (a
  * mesh cell is far too coarse for an eye). Lenses sit in the photo's rest space
  * (world units before any warp), so they ride along with dragging and mesh effects.
+ * A lens is an ellipse that can magnify more along its axis than across it (the 😁
+ * grin stretches the mouth sideways); the round ones have equal radii and strengths.
  */
 
 import type { EffectTarget } from './warp';
@@ -31,9 +33,18 @@ const TIMING = { ramp: 0.4, hold: 1.4, release: 0.5 };
 interface Lens {
   x: number;
   y: number;
-  r: number;
-  /** Magnification at full strength: the centre is sampled at (1 - strength) × its distance. */
-  strength: number;
+  /** Radius along the axis and across it. */
+  rx: number;
+  ry: number;
+  /** Axis direction (a unit vector). */
+  axisX: number;
+  axisY: number;
+  /**
+   * Magnification at full strength, along the axis and across it: the centre is sampled
+   * at (1 - strength) × its distance, so 0.5 doubles the size there. Must stay below 1.
+   */
+  along: number;
+  across: number;
   /** Shift at the centre (world units), so the bulge also droops (the nose goes down). */
   pullX: number;
   pullY: number;
@@ -58,8 +69,9 @@ export function estimateLandmarks(t: EffectTarget): Landmarks {
 
 export class Lenses {
   private list: Lens[] = [];
-  /** Packed uniforms, refreshed by `update()`: x, y, radius, strength and pullX, pullY. */
+  /** Packed uniforms, refreshed by `update()`: x, y, rx, ry; along, across, axisX, axisY; pullX, pullY. */
   readonly shape = new Float32Array(MAX_LENSES * 4);
+  readonly mag = new Float32Array(MAX_LENSES * 4);
   readonly pull = new Float32Array(MAX_LENSES * 2);
   count = 0;
 
@@ -73,8 +85,10 @@ export class Lenses {
     const [a, b] = lm.eyes;
     // Eye distance sets the scale; never let it collapse on a side-on face.
     const ed = Math.max(Math.hypot(b.x - a.x, b.y - a.y), target.r * 0.35);
-    const add = (lens: Omit<Lens, 'start' | 'releaseAt'>) =>
+    const addOval = (lens: Omit<Lens, 'start' | 'releaseAt'>) =>
       this.list.push({ ...lens, start: now, releaseAt: Infinity });
+    const add = ({ r, strength, ...rest }: { x: number; y: number; r: number; strength: number; pullX: number; pullY: number }) =>
+      addOval({ ...rest, rx: r, ry: r, axisX: 1, axisY: 0, along: strength, across: strength });
 
     // "Down" is from between the eyes towards the mouth, so tilted heads work too.
     const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
@@ -104,26 +118,30 @@ export class Lenses {
         });
       }
     } else if (kind === 'smile') {
-      // BlazeFace only gives the mouth centre: the corners sit about 0.45 eye distances
-      // to each side, along the eye line (so a tilted head smiles along its own mouth).
+      // Stretch the mouth sideways along the eye line (so a tilted head grins along its own
+      // mouth), much more than up and down: an ear-to-ear grin with big teeth and a wide jaw.
       const eyeLen = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       const sideX = (b.x - a.x) / eyeLen;
       const sideY = (b.y - a.y) / eyeLen;
       const downX = dx / len;
       const downY = dy / len;
-      // A slightly bigger mouth whose middle dips a little: the bottom of the grin.
-      const rm = ed * 0.55;
-      add({
-        x: lm.mouth.x,
-        y: lm.mouth.y,
-        r: rm,
-        strength: 0.35,
-        pullX: downX * rm * 0.05,
-        pullY: downY * rm * 0.05,
+      // A bit below the mouth point (BlazeFace's is near the upper lip), centred on the teeth.
+      addOval({
+        x: lm.mouth.x + downX * ed * 0.15,
+        y: lm.mouth.y + downY * ed * 0.15,
+        rx: ed * 1.5,
+        ry: ed * 0.8,
+        axisX: sideX,
+        axisY: sideY,
+        along: 0.65, // ~2.9× wider at the centre
+        across: 0.4, // ~1.7× taller
+        pullX: 0,
+        pullY: 0,
       });
-      // Each corner goes up and out, ear to ear. Small lenses, so the jaw line stays put.
-      // (A pull over ~0.65 × r would fold the picture over itself; this one is ~0.54.)
-      const r = ed * 0.48;
+      // BlazeFace has no mouth corners: they sit about 0.45 eye distances to each side.
+      // Lift each one up and out (this happens before the stretch, in the photo's space),
+      // so the stretched mouth curves up. A pull over ~0.65 × r would fold the picture.
+      const r = ed * 0.45;
       for (const side of [-1, 1]) {
         const outX = sideX * side;
         const outY = sideY * side;
@@ -131,9 +149,9 @@ export class Lenses {
           x: lm.mouth.x + outX * ed * 0.45,
           y: lm.mouth.y + outY * ed * 0.45,
           r,
-          strength: 0.15,
-          pullX: (outX * 0.2 - downX * 0.5) * r,
-          pullY: (outY * 0.2 - downY * 0.5) * r,
+          strength: 0.1,
+          pullX: (outX * 0.15 - downX * 0.5) * r,
+          pullY: (outY * 0.15 - downY * 0.5) * r,
         });
       }
     } else {
@@ -169,7 +187,8 @@ export class Lenses {
       const amount = envelope(now - l.start) * releaseCurve(now - l.releaseAt);
       if (amount <= 0) continue;
       const i = this.count++;
-      this.shape.set([l.x, l.y, l.r, l.strength * amount], i * 4);
+      this.shape.set([l.x, l.y, l.rx, l.ry], i * 4);
+      this.mag.set([l.along * amount, l.across * amount, l.axisX, l.axisY], i * 4);
       this.pull.set([l.pullX * amount, l.pullY * amount], i * 2);
     }
   }
