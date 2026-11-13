@@ -56,7 +56,7 @@ The build must pass before committing. Every push to `main` builds and deploys t
 
 ### README screenshots
 
-`docs/screenshots/` holds the images in `README.md`. The three `.webp` photos are real results saved from the app (the author's own face, used with permission), with the transparent margins trimmed. `start.png` and `stretch.png` show the English UI with the cartoon face: headless Chromium (Playwright, `--use-gl=swiftshader --enable-unsafe-swiftshader`) at a 390×780 viewport and `deviceScaleFactor: 2`, opening `?lang=en&sextou=0` on `vite preview`. The 👀/👃/🐹/😁 lenses don't render under SwiftShader, so take shots of those on a real device.
+`docs/screenshots/` holds the images in `README.md`. The three `.webp` photos are real results saved from the app (the author's own face, used with permission), with the transparent margins trimmed. `start.png` and `stretch.png` show the English UI with the cartoon face: headless Chromium (Playwright, `--use-gl=swiftshader --enable-unsafe-swiftshader`) at a 390×780 viewport and `deviceScaleFactor: 2`, opening `?lang=en&sextou=0` on `vite preview`.
 
 ## Project rules
 
@@ -122,7 +122,7 @@ Everything geometric is in world units: the image is 1 unit wide and `aspect` (h
 
 These aren't mesh moves. They go to `mesh.lenses` (`src/lens.ts`): magnifying bulges in the photo's rest space that the fragment shader applies per pixel by remapping texture lookups (uniform arrays, up to `MAX_LENSES` = 24). They aim at the detected face landmarks, or at landmarks guessed from the face circle. The cartoon face uses its known features (`DEFAULT_FACE_TARGET`); on a photo with no face they do nothing.
 
-😁 Sorrisão (`smile`) uses three lenses per face. BlazeFace only gives the mouth centre, so each corner is placed 0.45 eye distances to either side along the eye line. The mouth gets a light bulge whose centre dips a little, and a small lens on each corner pulls it up and outward, which turns the lips into an ear-to-ear grin. Bigger corner lenses bend the jaw line. A lens pull above about 0.65 × its radius folds the picture over itself, so the corners use ~0.54.
+A lens is an ellipse with its own axis and a strength along and across it (`uLens`, `uLensMag`, `uLensPull`); 👀/👃/🐹 are round. 😁 Sorrisão (`smile`) uses three lenses per face: a big oval on the teeth (1.5 × 0.8 eye distances, a bit below BlazeFace's mouth point, along the eye line) that stretches the mouth ~2.9× sideways and ~1.7× up and down, which also widens the jaw, plus a small lens on each mouth corner (BlazeFace has none, so 0.45 eye distances to each side) that lifts it up and out. Lenses apply in list order from the screen, so the corners lift in the photo's space and then get stretched with the rest, which curves the grin up. A pull above about 0.65 × a lens's radius folds the picture over itself; a strength must stay below 1.
 
 ### Face detection
 

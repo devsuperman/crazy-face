@@ -23,7 +23,8 @@ in vec2 vUv;
 uniform sampler2D uTex;
 uniform float uAspect;
 uniform int uLensCount;
-uniform vec4 uLens[MAX_LENSES]; // centre x, y, radius, strength
+uniform vec4 uLens[MAX_LENSES]; // centre x, y, radius along the axis, radius across it
+uniform vec4 uLensMag[MAX_LENSES]; // strength along the axis, across it, axis direction (cos, sin)
 uniform vec2 uLensPull[MAX_LENSES];
 out vec4 outColor;
 void main() {
@@ -31,12 +32,17 @@ void main() {
   for (int i = 0; i < MAX_LENSES; i++) {
     if (i >= uLensCount) break;
     vec4 l = uLens[i];
+    vec4 m = uLensMag[i];
+    vec2 across = vec2(-m.w, m.z);
     vec2 d = p - l.xy;
-    float r2 = dot(d, d) / (l.z * l.z);
+    vec2 q = vec2(dot(d, m.zw), dot(d, across)); // in the lens's own axes
+    vec2 n = q / l.zw;
+    float r2 = dot(n, n);
     if (r2 >= 1.0) continue;
     float f = (1.0 - r2) * (1.0 - r2);
     // Sample closer to the centre: what's there looks bigger. Smooth at the rim.
-    p = l.xy + d * (1.0 - l.w * f) - uLensPull[i] * f;
+    q *= 1.0 - m.xy * f;
+    p = l.xy + m.zw * q.x + across * q.y - uLensPull[i] * f;
   }
   outColor = texture(uTex, p / vec2(1.0, uAspect));
 }`;
@@ -100,6 +106,7 @@ export class Renderer {
   private readonly uAspect: WebGLUniformLocation;
   private readonly uLensCount: WebGLUniformLocation;
   private readonly uLens: WebGLUniformLocation;
+  private readonly uLensMag: WebGLUniformLocation;
   private readonly uLensPull: WebGLUniformLocation;
   private indexCount = 0;
   private readonly sticker: StickerGl;
@@ -120,6 +127,7 @@ export class Renderer {
     this.uAspect = gl.getUniformLocation(this.program, 'uAspect')!;
     this.uLensCount = gl.getUniformLocation(this.program, 'uLensCount')!;
     this.uLens = gl.getUniformLocation(this.program, 'uLens')!;
+    this.uLensMag = gl.getUniformLocation(this.program, 'uLensMag')!;
     this.uLensPull = gl.getUniformLocation(this.program, 'uLensPull')!;
 
     this.vao = gl.createVertexArray()!;
@@ -289,6 +297,7 @@ export class Renderer {
     gl.uniform1i(this.uLensCount, lenses.count);
     if (lenses.count) {
       gl.uniform4fv(this.uLens, lenses.shape);
+      gl.uniform4fv(this.uLensMag, lenses.mag);
       gl.uniform2fv(this.uLensPull, lenses.pull);
     }
 
