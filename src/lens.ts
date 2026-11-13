@@ -1,5 +1,5 @@
 /**
- * Face lenses: 👀 Olhão, 👃 Narigão and 🐹 Bochechas.
+ * Face lenses: 👀 Olhão, 👃 Narigão, 🐹 Bochechas and 😁 Sorrisão.
  *
  * A lens is a magnifying bulge drawn by the fragment shader as a texture-coordinate
  * remap, per pixel, so it stays smooth even on the tiny faces of a group photo (a
@@ -21,10 +21,10 @@ export interface Landmarks {
   mouth: Point;
 }
 
-export type LensKind = 'eyes' | 'nose' | 'cheeks';
+export type LensKind = 'eyes' | 'nose' | 'cheeks' | 'smile';
 
-/** The most lenses drawn at once (6 faces × 2 eyes or cheeks, plus a few noses). Must match the shader. */
-export const MAX_LENSES = 16;
+/** The most lenses drawn at once (6 faces × 3 for a smile, plus a few more). Must match the shader. */
+export const MAX_LENSES = 24;
 
 const TIMING = { ramp: 0.4, hold: 1.4, release: 0.5 };
 
@@ -67,7 +67,7 @@ export class Lenses {
     return TIMING.ramp + TIMING.hold;
   }
 
-  /** Put eye, nose or cheek lenses on a face. */
+  /** Put eye, nose, cheek or smile lenses on a face. */
   play(kind: LensKind, now: number, target: EffectTarget): void {
     const lm = target.landmarks ?? estimateLandmarks(target);
     const [a, b] = lm.eyes;
@@ -101,6 +101,39 @@ export class Lenses {
           // Puff out sideways and droop a little, like a hamster with full cheeks.
           pullX: outX * r * 0.22 + (dx / len) * r * 0.08,
           pullY: outY * r * 0.22 + (dy / len) * r * 0.08,
+        });
+      }
+    } else if (kind === 'smile') {
+      // BlazeFace only gives the mouth centre: the corners sit about 0.45 eye distances
+      // to each side, along the eye line (so a tilted head smiles along its own mouth).
+      const eyeLen = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      const sideX = (b.x - a.x) / eyeLen;
+      const sideY = (b.y - a.y) / eyeLen;
+      const downX = dx / len;
+      const downY = dy / len;
+      // A slightly bigger mouth whose middle dips a little: the bottom of the grin.
+      const rm = ed * 0.55;
+      add({
+        x: lm.mouth.x,
+        y: lm.mouth.y,
+        r: rm,
+        strength: 0.35,
+        pullX: downX * rm * 0.05,
+        pullY: downY * rm * 0.05,
+      });
+      // Each corner goes up and out, ear to ear. Small lenses, so the jaw line stays put.
+      // (A pull over ~0.65 × r would fold the picture over itself; this one is ~0.54.)
+      const r = ed * 0.48;
+      for (const side of [-1, 1]) {
+        const outX = sideX * side;
+        const outY = sideY * side;
+        add({
+          x: lm.mouth.x + outX * ed * 0.45,
+          y: lm.mouth.y + outY * ed * 0.45,
+          r,
+          strength: 0.15,
+          pullX: (outX * 0.2 - downX * 0.5) * r,
+          pullY: (outY * 0.2 - downY * 0.5) * r,
         });
       }
     } else {

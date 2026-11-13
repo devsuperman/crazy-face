@@ -26,11 +26,12 @@ const STIFFNESS = 140; // spring strength (higher = snappier)
 const DAMPING = 7; // velocity damping (lower = wobblier)
 const STEP = 1 / 120; // fixed physics timestep in seconds
 
-/** Mesh presets move the grid; lens presets (👀 eyes, 👃 nose, 🐹 cheeks) are drawn by the shader. */
+/** Mesh presets move the grid; lens presets (👀 eyes, 👃 nose, 🐹 cheeks, 😁 smile) are drawn by the shader. */
 export type MeshEffectKind = 'balloon' | 'fish' | 'melt';
 export type EffectKind = MeshEffectKind | LensKind;
 
-const isLens = (kind: EffectKind): kind is LensKind => kind === 'eyes' || kind === 'nose' || kind === 'cheeks';
+const LENS_KINDS: readonly EffectKind[] = ['eyes', 'nose', 'cheeks', 'smile'];
+export const isLens = (kind: EffectKind): kind is LensKind => LENS_KINDS.includes(kind);
 
 /** How long each preset takes to reach full strength, and how long it holds there. */
 const EFFECT_TIMING: Record<MeshEffectKind, { ramp: number; hold: number }> = {

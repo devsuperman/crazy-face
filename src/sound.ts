@@ -203,6 +203,13 @@ export class Sounds {
         this.tone({ from: 140, to: 320, duration: 0.35, gain: 0.2, vibrato: [14, 0.08] });
         this.tone({ type: 'sawtooth', from: 300, to: 90, duration: 0.18, gain: 0.05, delay: 0.38 });
         break;
+      case 'smile': // a stretchy "boing" up, a giggle (hee-hee-hee) and a "ding!" of a shiny smile
+        this.tone({ from: 200, to: 700, duration: 0.3, gain: 0.16, vibrato: [18, 0.04] });
+        [0, 1, 2].forEach((n) =>
+          this.tone({ type: 'triangle', from: 1050 - n * 70, to: 900 - n * 70, duration: 0.09, gain: 0.14, delay: 0.34 + n * 0.12 }),
+        );
+        this.tone({ type: 'sine', from: 2637, to: 2637, duration: 0.4, gain: 0.08, delay: 0.72 });
+        break;
     }
   }
 

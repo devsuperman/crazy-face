@@ -14,7 +14,7 @@ void main() {
   gl_Position = vec4(aPos * uScale + uOffset, 0.0, 1.0);
 }`;
 
-// Lenses (👀/👃) remap the texture lookup per pixel. They work in the photo's rest
+// Lenses (👀/👃/🐹/😁) remap the texture lookup per pixel. They work in the photo's rest
 // space in world units (u, v × aspect), so they follow the photo when it's warped.
 const FRAGMENT = `#version 300 es
 precision highp float;

@@ -33,6 +33,7 @@ export const pt = {
     eyes: '👀 Olhão',
     nose: '👃 Narigão',
     cheeks: '🐹 Bochechas',
+    smile: '😁 Sorrisão',
     mix: '🎭 Um efeito pra cada',
     startTitle: 'Bora estragar uma cara?',
     startText: 'Tire uma foto ou escolha uma da galeria. Depois é só esticar, amassar e puxar.',
