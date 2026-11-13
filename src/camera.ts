@@ -4,7 +4,7 @@
  * the camera's image into a canvas.
  */
 
-import { enhancePhoto, measureTone } from './beauty';
+import { enhancePhoto, measureTone, scaleTone, type Tone } from './beauty';
 import { FULL_CROP, applyCrop, type Crop, type Cropper, type Framing } from './crop';
 import { fitToCanvas } from './image';
 import { onLocaleChange, t } from './i18n';
@@ -17,19 +17,19 @@ const COUNTDOWN_FROM = 3;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 /**
- * `lit` is the photo with ✨ Luz e beleza's light fix, or null if the user turned it off.
- * Both are already cropped; `framing` is the shot before ✂️ Recortar and its crop.
+ * `photo` is already cropped, without any filter; `light` is the ☀️ Luz strength the
+ * user picked in the review (0..1); `framing` is the shot before ✂️ Recortar and its crop.
  */
-export type OnPhoto = (
-  photo: HTMLCanvasElement,
-  lit: HTMLCanvasElement | null,
-  framing: Framing,
-) => void;
+export type OnPhoto = (photo: HTMLCanvasElement, light: number, framing: Framing) => void;
+
+/** Long side of the review's ☀️ preview, so the slider stays smooth on big photos. */
+const PREVIEW_SIDE = 1280;
 
 /** Preview brightness (median, 0..1) below which the room counts as dark. */
 const DARK_ROOM = 0.3;
 
-export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper): void {
+/** `getLight` is ☀️ Luz's current strength in the editor, where the review's slider starts. */
+export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper, getLight: () => number): void {
   const overlay = $<HTMLDivElement>('camera');
   const video = $<HTMLVideoElement>('camera-video');
   const countdown = $<HTMLDivElement>('camera-countdown');
@@ -40,7 +40,7 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
   const reviewBox = $<HTMLDivElement>('camera-review');
   const reviewPhoto = $<HTMLDivElement>('camera-review-photo');
   const useButton = $<HTMLButtonElement>('camera-use');
-  const beautyButton = $<HTMLButtonElement>('camera-beauty');
+  const lightInput = $<HTMLInputElement>('camera-light-level');
   const lamp = $<HTMLButtonElement>('camera-lamp');
   const screenLight = $<HTMLDivElement>('camera-light');
 
@@ -51,17 +51,16 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
   let countdownTimer = 0;
   let counting = false;
   /**
-   * The photo waiting for "Usar esta" / "Tirar outra" and its brightened copy, both
-   * uncropped, then how ✂️ Recortar crops them and the cropped copies.
+   * The photo waiting for "Usar esta" / "Tirar outra" (uncropped), how ✂️ Recortar
+   * crops it, the cropped photo, a small copy of it for the ☀️ preview and its light fix.
    */
   let review: {
     photo: HTMLCanvasElement;
-    lit: HTMLCanvasElement | null;
     crop: Crop;
-    shown: { photo: HTMLCanvasElement; lit: HTMLCanvasElement | null };
+    shown: HTMLCanvasElement;
+    preview: HTMLCanvasElement;
+    tone: Tone;
   } | null = null;
-  /** ✨ Luz e beleza on the photo (remembered until reload). */
-  let wantsBeauty = true;
   /** 💡: the screen glows (front camera) or the torch is on (back camera). */
   let lampOn = false;
   /** The user pressed 💡 themselves, so we stop turning it on when the room is dark. */
@@ -117,7 +116,8 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
     const track = stream?.getVideoTracks()[0];
     if (!track || !video.videoWidth || review || counting) return;
     const median = previewBrightness(video);
-    const boost = wantsBeauty ? Math.min(2, Math.max(1, Math.pow(0.45 / Math.max(median, 0.05), 0.7))) : 1;
+    const full = Math.min(2, Math.max(1, Math.pow(0.45 / Math.max(median, 0.05), 0.7)));
+    const boost = 1 + (full - 1) * getLight();
     video.style.filter = boost > 1.02 ? `brightness(${boost.toFixed(2)}) saturate(1.1)` : '';
     if (median >= DARK_ROOM) return;
     if (!lampOn && !lampTouched && !lamp.hidden) setLamp(true);
@@ -137,10 +137,16 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
     shutter.disabled = false;
   }
 
+  /** The review's photo after ✂️: keep a small copy and its light fix for the preview. */
+  function reviewOf(photo: HTMLCanvasElement, crop: Crop, shown: HTMLCanvasElement) {
+    const k = Math.min(1, PREVIEW_SIDE / Math.max(shown.width, shown.height));
+    const preview = k < 1 ? fitToCanvas(shown, Math.round(shown.width * k), Math.round(shown.height * k), false) : shown;
+    return { photo, crop, shown, preview, tone: measureTone(shown) };
+  }
+
   function showReview(photo: HTMLCanvasElement): void {
-    const lit = enhancePhoto(photo, measureTone(photo));
-    review = { photo, lit, crop: FULL_CROP, shown: { photo, lit } };
-    beautyButton.hidden = !lit;
+    review = reviewOf(photo, FULL_CROP, photo);
+    lightInput.value = String(getLight());
     showReviewPhoto();
     reviewBox.hidden = false;
     overlay.classList.add('reviewing');
@@ -148,14 +154,12 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
     useButton.focus();
   }
 
-  /** The review shows the photo with or without ✨ Luz e beleza. */
+  /** The review shows the photo with ☀️ Luz at the slider's strength. */
   function showReviewPhoto(): void {
     if (!review) return;
-    const { shown } = review;
-    const on = wantsBeauty && !!shown.lit;
-    reviewPhoto.replaceChildren(on ? shown.lit! : shown.photo);
-    beautyButton.setAttribute('aria-pressed', String(on));
-    beautyButton.textContent = on ? t().text.beautyOn : t().text.beautyOff;
+    const { preview, tone } = review;
+    const light = lightInput.valueAsNumber;
+    reviewPhoto.replaceChildren((light > 0 && enhancePhoto(preview, scaleTone(tone, light))) || preview);
   }
 
   function hideReview(): void {
@@ -272,21 +276,17 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
     if (!review) return;
     const { photo, crop, shown } = review;
     close();
-    onPhoto(shown.photo, wantsBeauty ? shown.lit : null, { source: photo, crop });
+    onPhoto(shown, lightInput.valueAsNumber, { source: photo, crop });
   });
 
-  // ✂️ Recortar: crop the photo and its brightened copy the same way.
+  // ✂️ Recortar: the cropper shows the photo without the light fix.
   $('camera-crop').addEventListener('click', async () => {
     if (!review) return;
     sounds.pop();
     const current = review;
-    const crop = await cropper(wantsBeauty && current.lit ? current.lit : current.photo, current.crop);
+    const crop = await cropper(current.photo, current.crop);
     if (!crop || review !== current) return;
-    current.crop = crop;
-    current.shown = {
-      photo: applyCrop(current.photo, crop),
-      lit: current.lit && applyCrop(current.lit, crop),
-    };
+    review = reviewOf(current.photo, crop, applyCrop(current.photo, crop));
     showReviewPhoto();
     useButton.focus();
   });
@@ -300,11 +300,11 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
     shutter.focus();
   });
 
-  beautyButton.addEventListener('click', () => {
-    wantsBeauty = !wantsBeauty;
-    if (wantsBeauty) sounds.sparkle();
-    else sounds.pop();
-    showReviewPhoto();
+  // The slider redraws at most once a frame while it's dragged.
+  let lightFrame = 0;
+  lightInput.addEventListener('input', () => {
+    cancelAnimationFrame(lightFrame);
+    lightFrame = requestAnimationFrame(showReviewPhoto);
   });
 
   lamp.addEventListener('click', () => {
@@ -329,7 +329,6 @@ export function setupCamera(onPhoto: OnPhoto, sounds: Sounds, cropper: Cropper):
   // A new language: redraw the text set from here.
   onLocaleChange(() => {
     setLamp(lampOn);
-    showReviewPhoto();
   });
 
   window.addEventListener('keydown', (e) => {

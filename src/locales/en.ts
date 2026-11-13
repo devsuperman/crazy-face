@@ -14,7 +14,8 @@ export const en: Messages = {
     cropAria: 'Crop or rotate the photo',
     cropTitle: 'Crop or rotate',
     brush: 'Brush',
-    beauty: '✨ Light & beauty',
+    beauty: '✨ Beauty',
+    light: '☀️ Light',
     clay: 'Clay mode',
     friday: '🎉 Friday',
     reset: '↺ Reset',
@@ -68,8 +69,6 @@ export const en: Messages = {
     soundOff: 'Turn sound off',
     lightOn: 'Turn light on',
     lightOff: 'Turn light off',
-    beautyOn: '✨ With light & beauty',
-    beautyOff: '✨ No filter',
     imageError: "Oops! I couldn't open that image.",
     noWebgl: "Your browser doesn't support WebGL2. Try a newer browser.",
     cameraDenied:

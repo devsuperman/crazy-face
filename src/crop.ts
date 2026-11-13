@@ -1,6 +1,6 @@
 /**
  * ✂️ Recortar: turn the photo in quarter turns and crop it, free or at a fixed ratio.
- * It runs before setImage(), so the mesh, the face search and ✨ Luz e beleza only
+ * It runs before setImage(), so the mesh, the face search and ✨ / ☀️ only
  * ever see the cropped photo.
  */
 

@@ -76,7 +76,7 @@ The build must pass before committing. Every push to `main` builds and deploys t
 | `src/lens.ts` | 👀 / 👃 / 🐹 lenses: landmarks, timing, packed shader uniforms |
 | `src/renderer.ts` | `Renderer`: WebGL2 drawing of the mesh, lenses and sticker |
 | `src/faces.ts` | Face detection (MediaPipe BlazeFace, lazy-loaded, multi-scale windows) |
-| `src/beauty.ts` | ✨ Luz e beleza: tone measurement and the one-pass photo filter |
+| `src/beauty.ts` | ✨ Beleza and ☀️ Luz: tone measurement and the one-pass photo filter |
 | `src/camera.ts` | 📸 Camera overlay, review, light, fallback |
 | `src/crop.ts` | ✂️ Recortar dialog and `applyCrop` |
 | `src/sticker.ts` | 🎉 Sextou sticker: drawing and gestures |
@@ -135,14 +135,15 @@ A lens is an ellipse with its own axis and a strength along and across it (`uLen
 
 The effect buttons (`playPreset`, via `targetsFor`) play on **every** face in `photoFaces` (up to `MAX_FACES` = 6), falling back to the whole image. 🎭 Um efeito pra cada (`playMix`) gives each face a different kind. The cartoon face skips detection.
 
-### ✨ Luz e beleza
+### ✨ Beleza and ☀️ Luz
 
 `src/beauty.ts`:
 
-- `measureTone(image)` reads a 96 px histogram: levels, gamma towards a 0.46 median, a partial gray-world white balance and a denoise amount.
-- `enhancePhoto(image, tone, faces?)` runs one pass in its own offscreen WebGL2 context and returns a new canvas: light fix and colour denoise everywhere, plus a strong skin smoothing (two bilateral passes, at ~3% and ~6% of the face radius, mixed at 0.9 by a YCbCr skin mask, eyes and mouth kept sharp), a soft light inside each face and a warm glow on the skin.
+- `measureTone(image)` reads a 96 px histogram: levels, gamma towards a 0.46 median, a partial gray-world white balance and a denoise amount (the full light fix).
+- `scaleTone(tone, amount)` weakens that fix to `amount` (0..1) of its strength: levels, gains and denoise are interpolated towards "no change", the gamma as `gamma^amount`.
+- `enhancePhoto(image, tone, faces?, maskTone?)` runs one pass in its own offscreen WebGL2 context and returns a new canvas: the light fix and colour denoise everywhere, plus, on `faces`, a strong skin smoothing (two bilateral passes, at ~3% and ~6% of the face radius, mixed at 0.9 by a YCbCr skin mask, eyes and mouth kept sharp), a soft light inside each face and a warm glow on the skin. The skin mask is computed on the colour after `maskTone` (the full fix), so a weak or zero light still finds skin in dark photos.
 
-`main.ts` keeps the original `photo`. The filter is on for camera photos (unless turned off in the review) and for dark gallery photos (`isDark`). Faces are detected on the brightened copy. `showLook()` swaps only the texture (the mesh and its warps stay) when the toggle changes or faces arrive.
+In ⚙️ Ajustes, ✨ Beleza is a checkbox (`#beauty`, on by default) and ☀️ Luz is a range (`#light-level`, 0..1, `DEFAULT_LIGHT` = 0.5). They apply to every photo (camera and gallery) and keep their values for the next photo until reload. `main.ts` keeps the original `photo`; `showLook()` calls `enhancePhoto(photo, scaleTone(tone, light), beauty ? faces : [], tone)` and swaps only the texture (the mesh and its warps stay) when a control changes or faces arrive; the slider redraws at most once a frame. Faces are detected on a fully brightened copy of dark photos (`isDark`), which is never shown.
 
 ### ✂️ Recortar
 
@@ -152,16 +153,16 @@ Cropping happens **before** `setImage()`, so the mesh, faces and ✨ only see th
 
 ### 📸 Camera
 
-`setupCamera(onPhoto, sounds, cropper)` in `src/camera.ts` opens a full-screen `getUserMedia` overlay with:
+`setupCamera(onPhoto, sounds, cropper, getLight)` in `src/camera.ts` opens a full-screen `getUserMedia` overlay with:
 
 - a countdown, flash and camera flip;
 - a mirrored selfie (the photo keeps the mirror so it matches the preview);
-- the "Ficou boa?" review with the ✨ chip and ✂️ Recortar;
+- the "Ficou boa?" review with a ☀️ Luz slider (it starts at the editor's value; the preview is a ≤1280 px copy so dragging stays smooth) and ✂️ Recortar;
 - 💡 light: a warm glowing screen around a smaller preview on the front camera (the whole screen lit for the last countdown second), the torch on the back camera when it has one; it turns on by itself in a dark room;
 - a preview brightened with a CSS filter to match the photo, plus continuous exposure / white balance and +1 EV in the dark where `getCapabilities()` offers them;
 - a fallback to `<input capture>` when there's no camera API.
 
-The shot uses `ImageCapture.takePhoto()` (full sensor resolution) where available, else the current video frame. The stream stops when the photo is used, on close or when the tab is hidden (a photo in review is kept). `onPhoto(photo, lit, framing)` gets the cropped photo, the light state and the framing. The editor opens on the photo as it is, with no effect playing.
+The shot uses `ImageCapture.takePhoto()` (full sensor resolution) where available, else the current video frame. The stream stops when the photo is used, on close or when the tab is hidden (a photo in review is kept). `onPhoto(photo, light, framing)` gets the cropped, unfiltered photo, the ☀️ strength picked in the review (the editor's slider takes it) and the framing. The editor opens on the photo as it is, with no effect playing.
 
 ### 🎉 Sextou sticker
 
