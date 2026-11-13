@@ -1,6 +1,6 @@
 # Next steps
 
-A handoff note so work can continue in a new chat. Last updated: 2026-11-13 (📤 Compartilhar replaces 💬 WhatsApp: any app on phones, copy-and-paste on computers; before that, mobile-first bottom dock with ⚙️ Ajustes, stronger ✨, Sextou sticker at the top, WhatsApp invite with the site link; before that, 🎉 Sextou: Friday sticker; before that, a cleanup removed captions, 🎬 Gravar, 🪢 Cabo de guerra and Modo gelatina, and made Modo massinha on by default).
+A handoff note so work can continue in a new chat. Last updated: 2026-11-13 (📤 Compartilhar com amigos: one button with three clear choices, 💾 Salvar na galeria, 💬 Enviar no WhatsApp and 🔗 Compartilhar o link do Crazy Face; before that, mobile-first bottom dock with ⚙️ Ajustes, stronger ✨, Sextou sticker at the top, WhatsApp invite with the site link; before that, 🎉 Sextou: Friday sticker; before that, a cleanup removed captions, 🎬 Gravar, 🪢 Cabo de guerra and Modo gelatina, and made Modo massinha on by default).
 
 ## Where things stand
 
@@ -41,7 +41,7 @@ Everything has only been tested in headless desktop Chromium (fake camera, CDP t
 - Start screen: fits small screens, and 🖼️ Escolher foto opens the gallery.
 - "Ficou boa?" review: 🔁 Tirar outra restarts the camera quickly, also after switching apps.
 - Full-resolution still (`ImageCapture.takePhoto()`, Android Chrome): the photo is sharper, it's mirrored correctly with the front camera, and it isn't slow. If its framing differs a lot from the preview (4:3 sensor vs 16:9 video), consider cropping it to the preview's aspect.
-- 📤 Compartilhar: the share sheet sends the photo with the text on Android and iOS (some apps drop the text when a file is attached). On desktop Safari and Firefox, check that copying the photo works and pastes into WhatsApp Web (else it falls back to a download).
+- 📤 Compartilhar com amigos: 💬 the share sheet sends the photo with the text on Android and iOS (some apps drop the text when a file is attached); on computers, the photo pastes into WhatsApp Web after `wa.me` opens (and the pop-up isn't blocked after the export's wait). 💾 on iPhone: "Save Image" in the share sheet puts it in Photos; on Android, the download shows in the gallery. 🔗 the link share sheet on both. If the share sheet refuses to open after the export's wait (Safari's user-activation limit), export first and share on a second tap.
 - Group photos: how long the full face detection takes on a mid-range phone (it runs in the background after the quick pass), and whether it causes jank while dragging.
 - Modo massinha by default: whether groups of 4-6 people on one phone expect effects to stay until Resetar.
 - Use `npm run dev:phone` (HTTPS on your Wi-Fi), or the Pages deploy.

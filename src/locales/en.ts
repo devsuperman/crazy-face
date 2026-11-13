@@ -18,12 +18,17 @@ export const en: Messages = {
     clay: 'Clay mode',
     friday: '🎉 Friday',
     reset: '↺ Reset',
-    save: '💾 Save',
     settings: '⚙️ Settings',
     settingsAria: 'Settings',
     actions: 'Actions',
-    shareButton: '📤 Share',
-    shareAria: 'Send the photo to your friends',
+    shareButton: '📤 Share with friends',
+    shareMenu: 'Share with friends',
+    saveTitle: '💾 Save to gallery',
+    saveNote: 'Keeps the photo on your phone or computer',
+    whatsappTitle: '💬 Send to WhatsApp',
+    whatsappNote: 'The photo, with an invite to make their own',
+    inviteTitle: '🔗 Share the Crazy Face link',
+    inviteNote: 'Just the link, no photo, so friends can join the fun',
     effects: 'Crazy effects',
     balloon: '🎈 Balloon',
     fish: '🐟 Fish face',
@@ -71,8 +76,13 @@ export const en: Messages = {
     cameraMissing: 'I couldn\'t find a camera on this device. You can still use the "Choose photo" button.',
     cameraBusy: 'Another app is using the camera. Close it and try again.',
     cameraFailed: 'Oops! The camera refused to work. You can still use the "Choose photo" button.',
-    shareCopied: '📋 Photo copied! Paste it (Ctrl+V) into WhatsApp or any chat.',
-    shareSaved: '💾 Photo downloaded! Now send it to your friends.',
+    photoSaved: '💾 Photo saved! Find it in your gallery or Downloads folder.',
+    whatsappPick: '💬 Pick WhatsApp from the list.',
+    whatsappCopied: '📋 Photo copied! In WhatsApp, pick a chat and paste it (Ctrl+V).',
+    whatsappSaved: '💾 Photo downloaded! In WhatsApp, pick a chat and attach it with 📎.',
+    invitePick: '🔗 Pick where to send the link.',
+    linkCopied: '🔗 Link copied! Paste it in a chat to invite your friends.',
+    linkHere: '🔗 Copy and send the link: {link}',
   },
 
   hints: [
@@ -94,6 +104,12 @@ export const en: Messages = {
   ],
 
   ouch: ['OUCH!', 'HEY!', 'EASY!', 'MY FACE!', 'MY NOSE!', 'HELP!', 'RUDE!', 'STOP!'],
+
+  invite: [
+    'Come wreck some faces with me! 🤪 It’s free, and your photo never leaves your phone:',
+    'Found an app that turns any face into play-dough 😂 Try it:',
+    'Bet you can’t make a crazier face than mine 🤪 Go:',
+  ],
 
   share: [
     'Look what I did to this face! 🤪 Your turn, go wreck yours:',

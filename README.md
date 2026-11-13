@@ -24,13 +24,13 @@ Take a selfie or pick a photo, then squish, stretch and pull the faces around un
 1. **Get a photo.** On the start screen, tap **📸 Take photo** (Tirar foto) to use the camera or **🖼️ Choose photo** (Escolher foto) to pick one from your gallery. You can also drop or paste an image, or just play with the cartoon face.
 2. **Stretch it.** Drag any part of the face to pull it. Use several fingers at once on a phone.
 3. **Go crazy.** Tap the effect buttons, shake your phone, and make some noise.
-4. **Share it.** Tap **💾 Save** (Salvar) to download the picture (a sharp JPEG at your photo's full resolution, cropped to the stretched face, on white) or **📤 Share** (Compartilhar) to send it to your friends with an invite to make their own.
+4. **Share it.** Tap **📤 Share with friends** (Compartilhar com amigos) and pick one of three clear choices: **💾 Save to gallery**, **💬 Send to WhatsApp** or **🔗 Share the Crazy Face link**.
 
 Tap **📸 New photo** (Nova foto) any time to start over with another photo (and **↩ Back to the previous photo** (Voltar para a foto de antes) if you change your mind).
 
 ## Features
 
-- **Made for phones.** The photo gets the screen; everything you tap sits at the bottom, in thumb reach: a row of effects you can swipe sideways, and **📸 New photo**, **⚙️ Settings** (Ajustes), **💾 Save** and **📤 Share**. **↺ Reset** sits on the top-right corner of the photo, always one tap away. Settings holds the less used controls: crop, light & beauty, clay mode, the Friday sticker and brush size.
+- **Made for phones.** The photo gets the screen; everything you tap sits at the bottom, in thumb reach: a row of effects you can swipe sideways, and **📸 New photo**, **⚙️ Settings** (Ajustes) and **📤 Share with friends**. **↺ Reset** sits on the top-right corner of the photo, always one tap away. Settings holds the less used controls: crop, light & beauty, clay mode, the Friday sticker and brush size.
 
 ### 📸 Camera
 
@@ -79,7 +79,11 @@ On Fridays only, a party sticker shows up at the top of the photo (beside the fa
 
 ### 📤 Sharing
 
-**📤 Share** (Compartilhar) sends the picture with a joke that invites your friends to make their own, plus the link to the site. On phones it opens the share menu, so you pick any app: WhatsApp, Instagram, Telegram, Messages and so on. On computers it copies the picture and the invite, so you just paste (Ctrl+V) into WhatsApp Web or any chat; if the browser can't copy images, it downloads the picture instead.
+**📤 Share with friends** (Compartilhar com amigos) opens a small menu with three choices. Each one says under its name exactly what it sends, and a line at the bottom of the screen tells you what happened.
+
+- **💾 Save to gallery** (Salvar na galeria) keeps the picture: a sharp JPEG at your photo's full resolution, cropped to the stretched face, on white. On Android and computers it's downloaded (it shows in the gallery or the Downloads folder). On iPhone the share menu opens, and **Save Image** puts it in Photos.
+- **💬 Send to WhatsApp** (Enviar no WhatsApp) sends the picture with a joke that invites your friends to make their own, plus the link to the site. On phones the share menu opens: pick WhatsApp (or any other app). On computers the picture is copied and WhatsApp opens with the text, so you pick a chat and paste (Ctrl+V). If the browser can't copy images, the picture is downloaded so you can attach it.
+- **🔗 Share the Crazy Face link** (Compartilhar o link do Crazy Face) sends only the link, with an invite and no photo, so friends can come and make their own. On phones the share menu opens; on computers the link is copied.
 
 ## Tips
 

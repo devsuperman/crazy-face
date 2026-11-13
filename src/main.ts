@@ -232,7 +232,7 @@ const startBack = $<HTMLButtonElement>('start-back');
 const editor = [document.querySelector<HTMLElement>('.toolbar')!, stage, document.querySelector<HTMLElement>('.dock')!];
 
 function showStart(): void {
-  closeSettings();
+  closeSheets();
   startScreen.hidden = false;
   for (const el of editor) el.inert = true;
   $<HTMLButtonElement>('camera-open').focus();
@@ -250,29 +250,43 @@ function showEditor(): void {
   }
 }
 
-// --- ⚙️ Ajustes: the less used controls, in a sheet that floats over the bottom of the photo ---
+// --- Sheets that float over the bottom of the photo: ⚙️ Ajustes (the less used controls)
+// and 📤 Compartilhar com amigos (save, WhatsApp, link). One open at a time.
 
-const settings = $<HTMLDivElement>('settings');
-const settingsButton = $<HTMLButtonElement>('settings-open');
-
-function setSettings(open: boolean): void {
-  if (settings.hidden !== open) return;
-  settings.hidden = !open;
-  settingsButton.setAttribute('aria-expanded', String(open));
+interface Sheet {
+  panel: HTMLElement;
+  button: HTMLButtonElement;
 }
-const closeSettings = () => setSettings(false);
+const sheets: Sheet[] = [
+  { panel: $('settings'), button: $('settings-open') },
+  { panel: $('share-menu'), button: $('share-open') },
+];
 
-settingsButton.addEventListener('click', () => {
-  sounds.unlock();
-  sounds.pop();
-  setSettings(settings.hidden);
-});
-// Touching the photo, or Escape, closes it (the photo keeps the touch).
-stage.addEventListener('pointerdown', closeSettings);
+function setSheet(sheet: Sheet, open: boolean): void {
+  if (sheet.panel.hidden !== open) return;
+  sheet.panel.hidden = !open;
+  sheet.button.setAttribute('aria-expanded', String(open));
+}
+function closeSheets(): void {
+  for (const sheet of sheets) setSheet(sheet, false);
+}
+
+for (const sheet of sheets) {
+  sheet.button.addEventListener('click', () => {
+    sounds.unlock();
+    sounds.pop();
+    const open = sheet.panel.hidden;
+    closeSheets();
+    setSheet(sheet, open);
+  });
+}
+// Touching the photo, or Escape, closes them (the photo keeps the touch).
+stage.addEventListener('pointerdown', closeSheets);
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !settings.hidden) {
-    closeSettings();
-    settingsButton.focus();
+  const open = sheets.find((sheet) => !sheet.panel.hidden);
+  if (e.key === 'Escape' && open) {
+    closeSheets();
+    open.button.focus();
   }
 });
 
@@ -617,10 +631,23 @@ function exportPhoto(): Promise<Blob | null> {
   return renderer.exportJpeg(mesh, sticker.visible ? sticker.pose(performance.now() / 1000) : null);
 }
 
-$('save').addEventListener('click', async () => {
-  const blob = await exportPhoto();
-  if (blob) downloadBlob(blob, 'crazy-face.jpg');
-});
+// --- 📤 Compartilhar com amigos: three choices, each doing exactly what its label says ---
+
+const PHOTO_NAME = 'crazy-face.jpg';
+
+/** iPhone and iPad: a download lands in Files, not Photos; the share sheet has "Save Image". */
+const isIOS =
+  /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+/** Whether the share sheet takes files (most phones). Probed with an empty file, since the photo isn't ready yet. */
+function canShareFiles(): boolean {
+  return !!navigator.canShare?.({ files: [new File([], PHOTO_NAME, { type: 'image/jpeg' })] });
+}
+
+const photoFile = (blob: Blob) => new File([blob], PHOTO_NAME, { type: 'image/jpeg' });
+
+/** The user closing the share sheet is not an error. */
+const isAbort = (err: unknown) => (err as { name?: string })?.name === 'AbortError';
 
 /** The app's address, in the current language, for the invite that goes with a share. */
 function siteLink(): string {
@@ -641,53 +668,103 @@ async function toPng(blob: Blob): Promise<Blob> {
 }
 
 /**
- * 📤 Compartilhar: one button for any app. Where Web Share takes files (most phones) the
- * share sheet sends the JPEG plus an invite with the site link to whatever the user picks
- * (WhatsApp, Instagram, Telegram, Messages...). Elsewhere (most computers) the photo and
- * the invite go to the clipboard, ready to paste into any chat; if that fails too, the
- * photo is downloaded. Either way the hint says what happened.
+ * Puts the photo on the clipboard as a PNG. The write has to start inside the click
+ * (Safari), so it gets a promise for the image, not the image.
  */
-$('share').addEventListener('click', () => {
-  sounds.unlock();
-  const text = `${pick(t().share)}\n${siteLink()}`;
+function copyPhoto(jpeg: Promise<Blob | null>): Promise<void> {
+  try {
+    const png = jpeg.then((blob) => (blob ? toPng(blob) : Promise.reject(new Error('no photo'))));
+    return navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+  } catch (err) {
+    return Promise.reject(err);
+  }
+}
+
+function downloadPhoto(blob: Blob): void {
+  downloadBlob(blob, PHOTO_NAME);
+  hint.textContent = t().text.photoSaved;
+}
+
+/**
+ * 💾 Salvar na galeria. A download on Android and computers (it shows in the gallery or in
+ * Downloads); on iPhone the share sheet, whose "Save Image" puts it in Photos.
+ */
+$('save').addEventListener('click', () => {
+  closeSheets();
   const jpeg = exportPhoto();
-  const file = jpeg.then((blob) => blob && new File([blob], 'crazy-face.jpg', { type: 'image/jpeg' }));
-  // Probe with an empty file: canShare checks the type, and the real one isn't ready yet.
-  const probe = new File([], 'crazy-face.jpg', { type: 'image/jpeg' });
-  if (navigator.canShare?.({ files: [probe] })) {
-    void file.then(async (f) => {
-      if (!f) return;
+  if (isIOS && canShareFiles()) {
+    void jpeg.then(async (blob) => {
+      if (!blob) return;
       try {
-        await navigator.share({ files: [f], text });
+        await navigator.share({ files: [photoFile(blob)] });
       } catch (err) {
-        // The user closing the share sheet is not an error.
-        if ((err as { name?: string })?.name !== 'AbortError') fallbackShare(f, text);
+        if (!isAbort(err)) downloadPhoto(blob);
       }
     });
     return;
   }
-  // The clipboard write has to start inside the click (Safari), so it gets promises.
-  let copied: Promise<void>;
-  try {
-    const png = jpeg.then((blob) => (blob ? toPng(blob) : Promise.reject(new Error('no photo'))));
-    copied = navigator.clipboard.write([
-      new ClipboardItem({ 'image/png': png, 'text/plain': new Blob([text], { type: 'text/plain' }) }),
-    ]);
-  } catch (err) {
-    copied = Promise.reject(err);
-  }
-  copied.then(
-    () => (hint.textContent = t().text.shareCopied),
-    () => void file.then((f) => f && fallbackShare(f, text)),
-  );
+  void jpeg.then((blob) => blob && downloadPhoto(blob));
 });
 
-/** Last resort: download the photo and put the invite on the clipboard if we can. */
-function fallbackShare(file: File, text: string): void {
-  downloadBlob(file, file.name);
-  void navigator.clipboard?.writeText(text).catch(() => {});
-  hint.textContent = t().text.shareSaved;
+function openWhatsApp(text: string): void {
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
 }
+
+/**
+ * 💬 Enviar no WhatsApp: the photo plus an invite (`share`) with the site link. Web pages
+ * can't hand a file to WhatsApp directly, so on phones the share sheet opens (the hint says
+ * to pick WhatsApp). On computers the photo goes to the clipboard and WhatsApp opens with
+ * the text, so the user pastes it; if the clipboard can't take images, it's downloaded to
+ * attach instead.
+ */
+$('whatsapp').addEventListener('click', () => {
+  closeSheets();
+  const text = `${pick(t().share)}\n${siteLink()}`;
+  const jpeg = exportPhoto();
+  const fallback = () =>
+    void jpeg.then((blob) => {
+      if (!blob) return;
+      downloadBlob(blob, PHOTO_NAME);
+      hint.textContent = t().text.whatsappSaved;
+      openWhatsApp(text);
+    });
+  if (canShareFiles()) {
+    hint.textContent = t().text.whatsappPick;
+    void jpeg.then(async (blob) => {
+      if (!blob) return;
+      try {
+        await navigator.share({ files: [photoFile(blob)], text });
+      } catch (err) {
+        if (!isAbort(err)) fallback();
+      }
+    });
+    return;
+  }
+  copyPhoto(jpeg).then(() => {
+    hint.textContent = t().text.whatsappCopied;
+    openWhatsApp(text);
+  }, fallback);
+});
+
+/** 🔗 Compartilhar o link do Crazy Face: only the link (no photo), with an invite (`invite`). */
+$('invite').addEventListener('click', () => {
+  closeSheets();
+  const link = siteLink();
+  const text = `${pick(t().invite)}\n${link}`;
+  const copy = () =>
+    navigator.clipboard.writeText(text).then(
+      () => (hint.textContent = t().text.linkCopied),
+      () => (hint.textContent = t().text.linkHere.replace('{link}', link)),
+    );
+  if (navigator.share) {
+    hint.textContent = t().text.invitePick;
+    navigator.share({ text }).catch((err) => {
+      if (!isAbort(err)) void copy();
+    });
+    return;
+  }
+  void copy();
+});
 
 // Drag & drop and paste
 window.addEventListener('dragover', (e) => {
