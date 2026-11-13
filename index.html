@@ -46,6 +46,20 @@
           <input id="radius" type="range" min="0.05" max="0.45" step="0.01" value="0.18" />
         </label>
       </div>
+      <div id="share-menu" class="settings share-menu" role="group" aria-label="Compartilhar com amigos" data-i18n-aria="shareMenu" hidden>
+        <button id="save" class="share-option" type="button">
+          <span class="share-title" data-i18n="saveTitle">💾 Salvar na galeria</span>
+          <span class="share-note" data-i18n="saveNote">Guarda a foto no celular ou no computador</span>
+        </button>
+        <button id="whatsapp" class="share-option" type="button">
+          <span class="share-title" data-i18n="whatsappTitle">💬 Enviar no WhatsApp</span>
+          <span class="share-note" data-i18n="whatsappNote">A foto, com um convite pra galera fazer a dela</span>
+        </button>
+        <button id="invite" class="share-option" type="button">
+          <span class="share-title" data-i18n="inviteTitle">🔗 Compartilhar o link do Crazy Face</span>
+          <span class="share-note" data-i18n="inviteNote">Só o link, sem a foto, pra galera entrar na brincadeira</span>
+        </button>
+      </div>
       <div id="effects-bar" class="effects" role="toolbar" aria-label="Efeitos malucos" data-i18n-aria="effects">
         <button class="button chip" type="button" data-effect="balloon" data-i18n="balloon">🎈 Balão</button>
         <button class="button chip" type="button" data-effect="fish" data-i18n="fish">🐟 Cara de peixe</button>
@@ -59,8 +73,7 @@
       <nav class="actions" aria-label="Ações" data-i18n-aria="actions">
         <button id="new-photo" class="button action" type="button" data-i18n="newPhoto">📸 Nova foto</button>
         <button id="settings-open" class="button action" type="button" aria-expanded="false" aria-controls="settings" data-i18n="settings">⚙️ Ajustes</button>
-        <button id="save" class="button action" type="button" data-i18n="save">💾 Salvar</button>
-        <button id="whatsapp" class="button action whatsapp" type="button" aria-label="Enviar a foto pelo WhatsApp" data-i18n-aria="whatsappAria">💬 WhatsApp</button>
+        <button id="share-open" class="button action share" type="button" aria-expanded="false" aria-controls="share-menu" data-i18n="shareButton">📤 Compartilhar com amigos</button>
       </nav>
     </footer>
 
