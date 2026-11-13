@@ -57,6 +57,7 @@ Crop and rotate the photo before playing: free, 1:1, 3:4, 4:3 or 9:16, plus quar
 | 👀 Big eyes | Olhão | Giant eyes |
 | 👃 Big nose | Narigão | Giant nose |
 | 🐹 Chubby cheeks | Bochechas | Hamster cheeks |
+| 😁 Big smile | Sorrisão | An ear-to-ear grin |
 | 🎭 One effect each | Um efeito pra cada | Every face gets a different effect |
 
 ### 👨‍👩‍👧‍👦 Group photos
