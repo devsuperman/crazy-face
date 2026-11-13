@@ -20,8 +20,8 @@ Everything is on `main` (live on GitHub Pages): PT-BR and English UI (🌐 picke
 |---|---|
 | `src/main.ts` | App wiring: pointer handling, controls, main loop |
 | `src/warp.ts` | Elastic mesh. `playEffect(kind, now, target?)` can aim at a face `{x, y, r}`, and several effects can run at once |
-| `src/renderer.ts` | WebGL2 drawing of the mesh, plus the 👀/👃/🐹 lenses in the fragment shader |
-| `src/lens.ts` | 👀/👃/🐹 lenses: landmarks, timing, packed shader uniforms |
+| `src/renderer.ts` | WebGL2 drawing of the mesh, plus the 👀/👃/🐹/😁 lenses in the fragment shader |
+| `src/lens.ts` | 👀/👃/🐹/😁 lenses: landmarks, timing, packed shader uniforms |
 | `src/camera.ts` | 📸 Camera overlay: countdown, flash, switching cameras, "Ficou boa?" review, full-resolution still, fallback to `<input capture>` |
 | `src/faces.ts` | 🤖 Face detection (MediaPipe BlazeFace, lazy-loaded, multi-scale windows) |
 | `src/crop.ts` | ✂️ Recortar: crop dialog (free or fixed ratio, quarter turns), `applyCrop` |
@@ -53,7 +53,8 @@ The live mirror was removed: mesh effects can't follow a moving face. The app is
 1. ✅ **Effects aim at every face.** Each new photo gets two detection passes (`searchFaces` in `main.ts`): a quick one (`detectFaces(..., {quick: true})`) so the buttons work right away, then a full one in the background that finds small faces in group photos. Every effect button plays on all faces in `photoFaces` (up to 6), or on the whole photo if none is found. The detector preloads when the camera or gallery opens. With 2+ faces, the hint says the effects hit everyone. To check on phones: how long the quick detection takes on a mid-range Android, and whether a selfie face is too big or too close to the edge to be found.
 2. ✅ **New face effects on the still photo: 👀 Olhão and 👃 Narigão.** `faces.ts` now keeps BlazeFace's keypoints (`EffectTarget.landmarks`: eyes, nose tip, mouth); faces without keypoints get them guessed from the circle (`estimateLandmarks` in `lens.ts`), and the cartoon face has fixed ones (`DEFAULT_FACE_TARGET` in `image.ts`). The bulges are drawn in the fragment shader as a per-pixel UV remap (`src/lens.ts`, up to 16 at once), in the photo's rest space, so they follow dragging and stack with the mesh effects. They go through `mesh.playEffect('eyes' | 'nose', ...)` like the other presets and are part of 🎭 Um efeito pra cada. With no face in the photo the buttons do nothing instead of guessing. To check on phones: whether the strength feels right on real selfies, and on side-on faces (eye distance is clamped so the lens never collapses).
 3. ✅ **🐹 Bochechas.** A third lens kind (`cheeks`): two lenses per face, below and slightly outside the eyes, puffing outward. Same flow as 👀/👃 (button, 🎭, cartoon features). To check on phones: placement on real selfies and on turned heads (BlazeFace ear keypoints could help if it looks off).
-4. **Next idea:** lens strength could follow a drag (pinch an eye to make it bigger) instead of only being a timed preset.
+4. ✅ **😁 Sorrisão.** A fourth lens kind (`smile`): per face, a light bulge on the mouth (its middle dips a little) and one lens per corner pulling it up and out, with a "boing", a giggle and a "ding" sound. `MAX_LENSES` went from 16 to 24 so six faces can all smile. To check on phones: corner placement on wide or narrow mouths (BlazeFace has no corner keypoints), and on open-mouth selfies.
+5. **Next idea:** lens strength could follow a drag (pinch an eye to make it bigger) instead of only being a timed preset.
 
 ### 3. ✨ Luz e beleza (dark photos)
 Done: `src/beauty.ts` fixes the light (levels, gamma, white balance, colour denoise) and smooths skin on detected faces; ✨ toggle in ⚙️ Ajustes and in the camera review; 💡 selfie screen light / torch; brightened camera preview. To check on phones:

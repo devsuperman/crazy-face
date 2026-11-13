@@ -30,6 +30,7 @@ export const en: Messages = {
     eyes: '👀 Big eyes',
     nose: '👃 Big nose',
     cheeks: '🐹 Chubby cheeks',
+    smile: '😁 Big smile',
     mix: '🎭 One effect each',
     startTitle: 'Ready to wreck a face?',
     startText: 'Take a photo or pick one from your gallery. Then stretch, squish and pull.',

@@ -56,7 +56,7 @@ The build must pass before committing. Every push to `main` builds and deploys t
 
 ### README screenshots
 
-`docs/screenshots/` holds the images in `README.md`. The three `.webp` photos are real results saved from the app (the author's own face, used with permission), with the transparent margins trimmed. `start.png` and `stretch.png` show the English UI with the cartoon face: headless Chromium (Playwright, `--use-gl=swiftshader --enable-unsafe-swiftshader`) at a 390×780 viewport and `deviceScaleFactor: 2`, opening `?lang=en&sextou=0` on `vite preview`. The 👀/👃/🐹 lenses don't render under SwiftShader, so take shots of those on a real device.
+`docs/screenshots/` holds the images in `README.md`. The three `.webp` photos are real results saved from the app (the author's own face, used with permission), with the transparent margins trimmed. `start.png` and `stretch.png` show the English UI with the cartoon face: headless Chromium (Playwright, `--use-gl=swiftshader --enable-unsafe-swiftshader`) at a 390×780 viewport and `deviceScaleFactor: 2`, opening `?lang=en&sextou=0` on `vite preview`. The 👀/👃/🐹/😁 lenses don't render under SwiftShader, so take shots of those on a real device.
 
 ## Project rules
 
@@ -118,9 +118,11 @@ Everything geometric is in world units: the image is 1 unit wide and `aspect` (h
 
 `playEffect(kind, now, target?)` runs a timed preset (ramp + hold) as a displacement on top of the current positions. Several can run at once, and `target: {x, y, r}` aims one at a face. `chaos`, `poke` and `shake` are impulse helpers (shaking the phone uses `shake`).
 
-### 👀 / 👃 / 🐹 Lenses
+### 👀 / 👃 / 🐹 / 😁 Lenses
 
-These aren't mesh moves. They go to `mesh.lenses` (`src/lens.ts`): magnifying bulges in the photo's rest space that the fragment shader applies per pixel by remapping texture lookups (uniform arrays, up to `MAX_LENSES` = 16). They aim at the detected face landmarks, or at landmarks guessed from the face circle. The cartoon face uses its known features (`DEFAULT_FACE_TARGET`); on a photo with no face they do nothing.
+These aren't mesh moves. They go to `mesh.lenses` (`src/lens.ts`): magnifying bulges in the photo's rest space that the fragment shader applies per pixel by remapping texture lookups (uniform arrays, up to `MAX_LENSES` = 24). They aim at the detected face landmarks, or at landmarks guessed from the face circle. The cartoon face uses its known features (`DEFAULT_FACE_TARGET`); on a photo with no face they do nothing.
+
+😁 Sorrisão (`smile`) uses three lenses per face. BlazeFace only gives the mouth centre, so each corner is placed 0.45 eye distances to either side along the eye line. The mouth gets a light bulge whose centre dips a little, and a small lens on each corner pulls it up and outward, which turns the lips into an ear-to-ear grin. Bigger corner lenses bend the jaw line. A lens pull above about 0.65 × its radius folds the picture over itself, so the corners use ~0.54.
 
 ### Face detection
 
