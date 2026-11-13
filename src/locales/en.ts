@@ -22,7 +22,8 @@ export const en: Messages = {
     settings: '⚙️ Settings',
     settingsAria: 'Settings',
     actions: 'Actions',
-    whatsappAria: 'Send the photo on WhatsApp',
+    shareButton: '📤 Share',
+    shareAria: 'Send the photo to your friends',
     effects: 'Crazy effects',
     balloon: '🎈 Balloon',
     fish: '🐟 Fish face',
@@ -70,6 +71,8 @@ export const en: Messages = {
     cameraMissing: 'I couldn\'t find a camera on this device. You can still use the "Choose photo" button.',
     cameraBusy: 'Another app is using the camera. Close it and try again.',
     cameraFailed: 'Oops! The camera refused to work. You can still use the "Choose photo" button.',
+    shareCopied: '📋 Photo copied! Paste it (Ctrl+V) into WhatsApp or any chat.',
+    shareSaved: '💾 Photo downloaded! Now send it to your friends.',
   },
 
   hints: [

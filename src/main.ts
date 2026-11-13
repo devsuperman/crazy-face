@@ -627,30 +627,67 @@ function siteLink(): string {
   return `${location.origin}${location.pathname}?lang=${getLocale()}`;
 }
 
+/** The JPEG as a PNG, the one image type every browser's clipboard accepts. */
+async function toPng(blob: Blob): Promise<Blob> {
+  const bitmap = await createImageBitmap(blob);
+  const canvas = document.createElement('canvas');
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  canvas.getContext('2d')!.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((png) => (png ? resolve(png) : reject(new Error('PNG failed'))), 'image/png'),
+  );
+}
+
 /**
- * 💬 WhatsApp. On phones the Web Share sheet sends the JPEG itself (WhatsApp is listed
- * there). Web pages can't attach a file to WhatsApp directly, so elsewhere we download
- * the JPEG and open WhatsApp (wa.me) with the text, and the user attaches the photo.
+ * 📤 Compartilhar: one button for any app. Where Web Share takes files (most phones) the
+ * share sheet sends the JPEG plus an invite with the site link to whatever the user picks
+ * (WhatsApp, Instagram, Telegram, Messages...). Elsewhere (most computers) the photo and
+ * the invite go to the clipboard, ready to paste into any chat; if that fails too, the
+ * photo is downloaded. Either way the hint says what happened.
  */
-$('whatsapp').addEventListener('click', () => {
+$('share').addEventListener('click', () => {
   sounds.unlock();
   const text = `${pick(t().share)}\n${siteLink()}`;
-  void exportPhoto().then(async (blob) => {
-    if (!blob) return;
-    const file = new File([blob], 'crazy-face.jpg', { type: 'image/jpeg' });
-    if (navigator.canShare?.({ files: [file] })) {
+  const jpeg = exportPhoto();
+  const file = jpeg.then((blob) => blob && new File([blob], 'crazy-face.jpg', { type: 'image/jpeg' }));
+  // Probe with an empty file: canShare checks the type, and the real one isn't ready yet.
+  const probe = new File([], 'crazy-face.jpg', { type: 'image/jpeg' });
+  if (navigator.canShare?.({ files: [probe] })) {
+    void file.then(async (f) => {
+      if (!f) return;
       try {
-        await navigator.share({ files: [file], text });
-        return;
+        await navigator.share({ files: [f], text });
       } catch (err) {
         // The user closing the share sheet is not an error.
-        if ((err as { name?: string })?.name === 'AbortError') return;
+        if ((err as { name?: string })?.name !== 'AbortError') fallbackShare(f, text);
       }
-    }
-    downloadBlob(blob, file.name);
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
-  });
+    });
+    return;
+  }
+  // The clipboard write has to start inside the click (Safari), so it gets promises.
+  let copied: Promise<void>;
+  try {
+    const png = jpeg.then((blob) => (blob ? toPng(blob) : Promise.reject(new Error('no photo'))));
+    copied = navigator.clipboard.write([
+      new ClipboardItem({ 'image/png': png, 'text/plain': new Blob([text], { type: 'text/plain' }) }),
+    ]);
+  } catch (err) {
+    copied = Promise.reject(err);
+  }
+  copied.then(
+    () => (hint.textContent = t().text.shareCopied),
+    () => void file.then((f) => f && fallbackShare(f, text)),
+  );
 });
+
+/** Last resort: download the photo and put the invite on the clipboard if we can. */
+function fallbackShare(file: File, text: string): void {
+  downloadBlob(file, file.name);
+  void navigator.clipboard?.writeText(text).catch(() => {});
+  hint.textContent = t().text.shareSaved;
+}
 
 // Drag & drop and paste
 window.addEventListener('dragover', (e) => {

@@ -1,6 +1,6 @@
 # Next steps
 
-A handoff note so work can continue in a new chat. Last updated: 2026-11-06 (mobile-first bottom dock with ⚙️ Ajustes, stronger ✨, Sextou sticker at the top, WhatsApp invite with the site link; before that, 🎉 Sextou: Friday sticker; before that, a cleanup removed captions, 🎬 Gravar, 🪢 Cabo de guerra and Modo gelatina, and made Modo massinha on by default).
+A handoff note so work can continue in a new chat. Last updated: 2026-11-13 (📤 Compartilhar replaces 💬 WhatsApp: any app on phones, copy-and-paste on computers; before that, mobile-first bottom dock with ⚙️ Ajustes, stronger ✨, Sextou sticker at the top, WhatsApp invite with the site link; before that, 🎉 Sextou: Friday sticker; before that, a cleanup removed captions, 🎬 Gravar, 🪢 Cabo de guerra and Modo gelatina, and made Modo massinha on by default).
 
 ## Where things stand
 
@@ -41,7 +41,7 @@ Everything has only been tested in headless desktop Chromium (fake camera, CDP t
 - Start screen: fits small screens, and 🖼️ Escolher foto opens the gallery.
 - "Ficou boa?" review: 🔁 Tirar outra restarts the camera quickly, also after switching apps.
 - Full-resolution still (`ImageCapture.takePhoto()`, Android Chrome): the photo is sharper, it's mirrored correctly with the front camera, and it isn't slow. If its framing differs a lot from the preview (4:3 sensor vs 16:9 video), consider cropping it to the preview's aspect.
-- 💬 WhatsApp: the share sheet sends the photo with the text on Android and iOS (some apps drop the text when a file is attached).
+- 📤 Compartilhar: the share sheet sends the photo with the text on Android and iOS (some apps drop the text when a file is attached). On desktop Safari and Firefox, check that copying the photo works and pastes into WhatsApp Web (else it falls back to a download).
 - Group photos: how long the full face detection takes on a mid-range phone (it runs in the background after the quick pass), and whether it causes jank while dragging.
 - Modo massinha by default: whether groups of 4-6 people on one phone expect effects to stay until Resetar.
 - Use `npm run dev:phone` (HTTPS on your Wi-Fi), or the Pages deploy.
@@ -69,7 +69,7 @@ Done: optional ✂️ in ⚙️ Ajustes and in the camera's "Ficou boa?" review.
 - Ideas: fine straightening (±15°), pinch to zoom the box, and a starting box around the detected faces.
 
 ### 5. 🎉 Sextou (Friday sticker)
-Done: on Fridays (device time) a "SEXTOU!" sticker sits at the top of the photo, sliding to the side when it would cover a face. Drag to move, pinch (or mouse wheel, Shift to turn) to resize and rotate, tap for a wiggle and a party sound; 🎉 Sextou in ⚙️ Ajustes turns it off. It's drawn on the canvas, so it's in saved photos and WhatsApp shares. Test any day with `?sextou=1`. To check on phones:
+Done: on Fridays (device time) a "SEXTOU!" sticker sits at the top of the photo, sliding to the side when it would cover a face. Drag to move, pinch (or mouse wheel, Shift to turn) to resize and rotate, tap for a wiggle and a party sound; 🎉 Sextou in ⚙️ Ajustes turns it off. It's drawn on the canvas, so it's in saved photos and shares. Test any day with `?sextou=1`. To check on phones:
 - The pinch with real fingers, and that a tap on the sticker never starts a face drag.
 - Ideas: other days or dates (only Friday for now, by choice), and remembering where the sticker was put.
 

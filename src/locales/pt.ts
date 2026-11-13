@@ -25,7 +25,8 @@ export const pt = {
     settings: '⚙️ Ajustes',
     settingsAria: 'Ajustes',
     actions: 'Ações',
-    whatsappAria: 'Enviar a foto pelo WhatsApp',
+    shareButton: '📤 Compartilhar',
+    shareAria: 'Mandar a foto para os amigos',
     effects: 'Efeitos malucos',
     balloon: '🎈 Balão',
     fish: '🐟 Cara de peixe',
@@ -74,6 +75,8 @@ export const pt = {
     cameraMissing: 'Não encontrei nenhuma câmera neste aparelho. Você ainda pode usar o botão "Escolher foto".',
     cameraBusy: 'A câmera está sendo usada por outro app. Feche o outro app e tente de novo.',
     cameraFailed: 'Ops! A câmera não quis funcionar. Você ainda pode usar o botão "Escolher foto".',
+    shareCopied: '📋 Foto copiada! Cole (Ctrl+V) no WhatsApp ou em qualquer conversa.',
+    shareSaved: '💾 Foto baixada! Agora é só mandar pra galera.',
   },
 
   /** Dica no rodapé, sorteada a cada foto nova. */
@@ -99,7 +102,7 @@ export const pt = {
   /** Balão de fala quando você puxa demais. */
   ouch: ['AI!', 'EI!', 'CALMA!', 'MEU ROSTO!', 'MEU NARIZ!', 'SOCORRO!', 'GROSSO!', 'PARA!'],
 
-  /** Texto que vai junto com a foto no WhatsApp: um convite (o link do site vem logo depois). */
+  /** Texto que vai junto com a foto ao compartilhar: um convite (o link do site vem logo depois). */
   share: [
     'Olha o que eu fiz com essa cara! 🤪 Agora é sua vez, estrague a sua aqui:',
     'Ficou melhor que a original, né? 😂 Duvido você fazer uma pior:',
