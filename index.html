@@ -30,8 +30,12 @@
       <div id="settings" class="settings" role="group" aria-label="Ajustes" data-i18n-aria="settingsAria" hidden>
         <button id="crop-open" class="button" type="button" aria-label="Recortar ou girar a foto" title="Recortar ou girar" data-i18n="crop" data-i18n-aria="cropAria" data-i18n-title="cropTitle">✂️ Recortar</button>
         <label class="toggle">
-          <input id="beauty" type="checkbox" />
-          <span data-i18n="beauty">✨ Luz e beleza</span>
+          <input id="beauty" type="checkbox" checked />
+          <span data-i18n="beauty">✨ Beleza</span>
+        </label>
+        <label class="slider">
+          <span data-i18n="light">☀️ Luz</span>
+          <input id="light-level" type="range" min="0" max="1" step="0.05" value="0.5" />
         </label>
         <label class="toggle">
           <input id="clay" type="checkbox" checked />
@@ -109,7 +113,10 @@
       <div id="camera-flash" class="flash" hidden></div>
       <div id="camera-review" class="camera-review" hidden>
         <p class="review-title" data-i18n="reviewTitle">Ficou boa? 😎</p>
-        <button id="camera-beauty" class="button chip review-beauty" type="button" aria-pressed="true">✨ Com luz e beleza</button>
+        <label class="slider review-light">
+          <span data-i18n="light">☀️ Luz</span>
+          <input id="camera-light-level" type="range" min="0" max="1" step="0.05" value="0.5" />
+        </label>
         <button id="camera-crop" class="button chip review-crop" type="button" aria-label="Recortar ou girar a foto" data-i18n="crop" data-i18n-aria="cropAria">✂️ Recortar</button>
         <div id="camera-review-photo" class="review-photo"></div>
         <div class="camera-bar">

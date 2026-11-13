@@ -670,6 +670,7 @@ body {
   color: #fff;
   font-size: 1.2rem;
   font-weight: 800;
+  white-space: nowrap;
   transform: translateX(-50%);
   animation: pop-in 0.35s ease;
 }
@@ -715,7 +716,7 @@ body {
   }
 }
 
-/* --- ✨ Luz e beleza / 💡 light --- */
+/* --- ☀️ Luz / 💡 light --- */
 
 .camera > .camera-bar {
   gap: min(40px, 6vw);
@@ -751,17 +752,22 @@ body {
   background: #ffd34d;
 }
 
-.review-beauty {
+.review-light {
   position: absolute;
   z-index: 1;
-  top: calc(64px + env(safe-area-inset-top));
+  top: calc(72px + env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  white-space: nowrap;
 }
 
-.review-beauty[aria-pressed='true'] {
-  border-color: #ffd34d;
-  color: #ffd34d;
+.review-light input {
+  width: 140px;
+  accent-color: #ffd34d;
 }
 
 /* --- ✂️ Recortar --- */
@@ -769,7 +775,7 @@ body {
 .review-crop {
   position: absolute;
   z-index: 1;
-  top: calc(112px + env(safe-area-inset-top));
+  top: calc(120px + env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
 }

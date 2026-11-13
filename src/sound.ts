@@ -224,7 +224,7 @@ export class Sounds {
     this.tone({ type: 'square', from: 1800, to: 200, duration: 0.06, gain: 0.1, delay: 0.08 });
   }
 
-  /** ✨ A quick twinkle when the light and beauty filter turns on. */
+  /** ✨ A quick twinkle when ✨ Beleza turns on. */
   sparkle(): void {
     [1568, 2093, 2637].forEach((f, n) =>
       this.tone({ type: 'sine', from: f, to: f * 1.05, duration: 0.12, gain: 0.08, delay: n * 0.06 }),

@@ -6,7 +6,7 @@ import { detectFaces, preloadFaceDetector } from './faces';
 import { Sounds } from './sound';
 import { setupCamera } from './camera';
 import { FULL_CROP, applyCrop, sameCrop, setupCropper, type Framing } from './crop';
-import { enhancePhoto, isDark, measureTone, type Tone } from './beauty';
+import { DEFAULT_LIGHT, enhancePhoto, isDark, measureTone, scaleTone, type Tone } from './beauty';
 import { Sticker, drawSticker, isFriday } from './sticker';
 import { pick } from './jokes';
 import { applyDom, getLocale, onLocaleChange, setupLanguagePicker, t } from './i18n';
@@ -21,6 +21,8 @@ const fileInput = $<HTMLInputElement>('file');
 const radiusInput = $<HTMLInputElement>('radius');
 const clayInput = $<HTMLInputElement>('clay');
 const beautyInput = $<HTMLInputElement>('beauty');
+const lightInput = $<HTMLInputElement>('light-level');
+lightInput.value = String(DEFAULT_LIGHT);
 const muteButton = $<HTMLButtonElement>('mute');
 const bubble = $<HTMLDivElement>('bubble');
 const hint = $<HTMLParagraphElement>('hint');
@@ -50,10 +52,6 @@ let effectBusyUntil = 0;
 interface PhotoOptions {
   /** Look for the faces the effect buttons aim at (false for the cartoon). */
   findFaces?: boolean;
-  /** ✨ Luz e beleza: on, off, or 'auto' (on if the photo is dark). */
-  beauty?: boolean | 'auto';
-  /** The photo with the light already fixed (the camera's review made it). */
-  lit?: HTMLCanvasElement | null;
   /** The uncropped photo and its ✂️ crop (default: `image` is uncropped). */
   framing?: Framing;
 }
@@ -61,61 +59,61 @@ interface PhotoOptions {
 /**
  * Load a new photo: the single entry point for files, the camera and the default face.
  */
-function setImage(
-  image: HTMLCanvasElement,
-  { findFaces = true, beauty = 'auto', lit = null, framing }: PhotoOptions = {},
-): void {
+function setImage(image: HTMLCanvasElement, { findFaces = true, framing }: PhotoOptions = {}): void {
   photo = image;
   photoFraming = framing ?? { source: image, crop: FULL_CROP };
   // ✂️ is for photos; the cartoon's features are at known spots.
   cropButton.disabled = !findFaces;
   photoTone = findFaces ? measureTone(image) : null;
-  litPhoto = lit;
-  beautyOn = !!photoTone && (beauty === 'auto' ? isDark(photoTone) : beauty);
-  beautyInput.checked = beautyOn;
-  beautyInput.disabled = !photoTone;
+  beautyInput.disabled = lightInput.disabled = !photoTone;
   photoFaces = [];
   lensFace = undefined;
-  renderer.setImage(beautyOn ? lightOnly() : image);
+  showLook();
   newMesh(image.height / image.width);
   hint.textContent = pick(t().hints);
   placeSticker();
-  // Faces are easier to find in the brightened photo.
-  facesReady = findFaces ? searchFaces(image, beautyOn ? lightOnly() : image) : Promise.resolve();
+  facesReady = findFaces ? searchFaces(image, faceSearchSource()) : Promise.resolve();
 }
 
-// --- ✨ Luz e beleza ---
+// --- ☀️ Luz and ✨ Beleza ---
+// Both stay as the user left them for the next photo (until reload).
 
-/** How the light correction changes the current photo (null for the cartoon). */
+/** How the full light fix changes the current photo (null for the cartoon). */
 let photoTone: Tone | null = null;
-/** The current photo with only the light fixed (made on first use). */
-let litPhoto: HTMLCanvasElement | null = null;
-let beautyOn = false;
 
-/** The photo with the light fixed, or the original if WebGL2 can't do it. */
-function lightOnly(): HTMLCanvasElement {
-  if (!photoTone) return photo;
-  litPhoto ??= enhancePhoto(photo, photoTone);
-  return litPhoto ?? photo;
+/** ☀️ Luz's strength, 0..1. */
+const lightAmount = () => lightInput.valueAsNumber;
+
+/** Faces are easier to find in a brightened copy of a dark photo (never shown). */
+function faceSearchSource(): HTMLCanvasElement {
+  if (!photoTone || !isDark(photoTone)) return photo;
+  return enhancePhoto(photo, photoTone) ?? photo;
 }
 
 /** Put the right version of the photo on screen. The mesh (and its warps) stays. */
 function showLook(): void {
-  if (!beautyOn || !photoTone) {
+  const light = lightAmount();
+  // ✨ smooths the skin on faces; it's quick, so just redo it when faces change.
+  const faces = beautyInput.checked ? photoFaces : [];
+  if (!photoTone || (light === 0 && !faces.length)) {
     renderer.setImage(photo);
     return;
   }
-  // With faces, also smooth the skin; it's quick, so just redo it when faces change.
-  const look = photoFaces.length ? enhancePhoto(photo, photoTone, photoFaces) : null;
-  renderer.setImage(look ?? lightOnly());
+  renderer.setImage(enhancePhoto(photo, scaleTone(photoTone, light), faces, photoTone) ?? photo);
 }
 
 beautyInput.addEventListener('change', () => {
   sounds.unlock();
-  beautyOn = beautyInput.checked;
   showLook();
-  if (beautyOn) sounds.sparkle();
+  if (beautyInput.checked) sounds.sparkle();
   else sounds.pop();
+});
+
+// The slider redraws at most once a frame while it's dragged.
+let lightFrame = 0;
+lightInput.addEventListener('input', () => {
+  cancelAnimationFrame(lightFrame);
+  lightFrame = requestAnimationFrame(showLook);
 });
 
 // --- The faces: effect buttons aim at every face instead of the whole photo ---
@@ -476,13 +474,19 @@ cropButton.addEventListener('click', async () => {
   const { source, crop: before } = photoFraming;
   const crop = await cropper(source, before);
   if (!crop || sameCrop(crop, before) || photoFraming.source !== source) return;
-  setImage(applyCrop(source, crop), { beauty: beautyOn, framing: { source, crop } });
+  setImage(applyCrop(source, crop), { framing: { source, crop } });
 });
 
-setupCamera((shot, lit, framing) => {
-  setImage(shot, { beauty: !!lit, lit, framing });
-  showEditor();
-}, sounds, cropper);
+setupCamera(
+  (shot, light, framing) => {
+    lightInput.value = String(light);
+    setImage(shot, { framing });
+    showEditor();
+  },
+  sounds,
+  cropper,
+  lightAmount,
+);
 
 radiusInput.addEventListener('input', updateBrushSize);
 clayInput.addEventListener('change', () => (mesh.clay = clayInput.checked));

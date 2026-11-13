@@ -1,5 +1,6 @@
 /**
- * ✨ Luz e beleza: brightens dark photos and smooths the skin on faces.
+ * ☀️ Luz and ✨ Beleza: a light fix for the whole photo (with a strength the user
+ * picks) and skin smoothing on faces (on/off).
  *
  * It runs once per photo (not every frame) in a small offscreen WebGL2 context,
  * and returns a new canvas, so the renderer, face detection, Salvar foto and clips
@@ -22,7 +23,7 @@ const MAX_FACES = 6;
 /** Median brightness the light correction aims for (0..1). */
 const TARGET_MEDIAN = 0.46;
 
-/** Photos whose median brightness is below this count as dark (the filter turns on by itself). */
+/** Photos whose median brightness is below this count as dark (faces are searched on a brightened copy). */
 const DARK_MEDIAN = 0.36;
 
 /** How the light correction changes a photo; measured once per photo. */
@@ -38,8 +39,27 @@ export interface Tone {
   median: number;
 }
 
-/** True if the photo is dark enough that the filter should turn on by itself. */
+/** True if the photo is dark enough that faces are easier to find on a brightened copy. */
 export const isDark = (tone: Tone) => tone.median < DARK_MEDIAN;
+
+/** ☀️ Luz's default strength (0..1): some light, the user can turn it up or down. */
+export const DEFAULT_LIGHT = 0.5;
+
+/**
+ * The light fix at `amount` of its full strength (0 changes nothing, 1 is the full fix).
+ */
+export function scaleTone(tone: Tone, amount: number): Tone {
+  const s = Math.min(1, Math.max(0, amount));
+  const lerp = (full: number, none: number) => none + (full - none) * s;
+  return {
+    black: lerp(tone.black, 0),
+    white: lerp(tone.white, 1),
+    gamma: Math.pow(tone.gamma, s),
+    gain: [lerp(tone.gain[0], 1), lerp(tone.gain[1], 1), lerp(tone.gain[2], 1)],
+    denoise: lerp(tone.denoise, 0),
+    median: tone.median,
+  };
+}
 
 /** Look at a small copy of the photo and work out the correction. */
 export function measureTone(image: CanvasImageSource & { width: number; height: number }): Tone {
@@ -114,6 +134,8 @@ uniform vec2 uTexel;     // 1 / photo size in pixels
 uniform float uAspect;   // height / width
 uniform vec3 uLevels;    // black, white, gamma
 uniform vec3 uGain;
+uniform vec3 uMaskLevels; // the full light fix, only to find skin colours
+uniform vec3 uMaskGain;
 uniform float uDenoise;
 uniform int uFaceCount;
 uniform vec3 uFace[MAX_FACES];     // centre x, y, radius (world units)
@@ -122,9 +144,9 @@ out vec4 outColor;
 
 const vec3 LUMA = vec3(0.2126, 0.7152, 0.0722);
 
-vec3 tone(vec3 c) {
-  c = clamp((c * uGain - uLevels.x) / (uLevels.y - uLevels.x), 0.0, 1.0);
-  c = pow(c, vec3(uLevels.z));
+vec3 tone(vec3 c, vec3 levels, vec3 gain) {
+  c = clamp((c * gain - levels.x) / (levels.y - levels.x), 0.0, 1.0);
+  c = pow(c, vec3(levels.z));
   // Brightening washes colours out: give some back.
   float y = dot(c, LUMA);
   return clamp(mix(vec3(y), c, 1.12), 0.0, 1.0);
@@ -196,12 +218,12 @@ void main() {
     // at twice the reach for blotches and shadows under the eyes.
     float stepPx = max(1.0, faceR * 0.03 / uTexel.x);
     vec3 smooth_ = mix(bilateral(vUv, stepPx, 0.1), bilateral(vUv, stepPx * 2.0, 0.08), 0.4);
-    skinAmount = face * keep * skin(tone(c0));
+    skinAmount = face * keep * skin(tone(c0, uMaskLevels, uMaskGain));
     c = mix(c, smooth_, 0.9 * skinAmount);
     light += 0.16 * face;
   }
 
-  vec3 col = tone(c) * light;
+  vec3 col = tone(c, uLevels, uGain) * light;
   // A soft warm glow on the skin, like a ring light.
   col = mix(col, col * vec3(1.04, 1.01, 0.96) + 0.03, skinAmount);
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
@@ -246,7 +268,7 @@ function getPipeline(): Pipeline | null {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  const names = ['uTexel', 'uAspect', 'uLevels', 'uGain', 'uDenoise', 'uFaceCount', 'uFace', 'uKeep'];
+  const names = ['uTexel', 'uAspect', 'uLevels', 'uGain', 'uDenoise', 'uMaskLevels', 'uMaskGain', 'uFaceCount', 'uFace', 'uKeep'];
   const u = Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(program, n)]));
   // The context can be lost (e.g. a phone under memory pressure): make a new one next time.
   canvas.addEventListener('webglcontextlost', () => (pipeline = undefined));
@@ -255,14 +277,17 @@ function getPipeline(): Pipeline | null {
 }
 
 /**
- * The photo with ✨ Luz e beleza applied, as a new canvas the same size.
- * `faces` (world units) get the skin smoothing; without faces it only fixes the light.
+ * The photo with ☀️ Luz and ✨ Beleza applied, as a new canvas the same size.
+ * `tone` is the light fix to apply (see `scaleTone`). `faces` (world units) get the
+ * skin smoothing; without faces it only fixes the light. `maskTone` is the full light
+ * fix, used only to recognise skin, so a weaker light doesn't miss skin in dark photos.
  * Null if WebGL2 isn't available (the caller just keeps the original photo).
  */
 export function enhancePhoto(
   image: HTMLCanvasElement,
   tone: Tone,
   faces: readonly EffectTarget[] = [],
+  maskTone: Tone = tone,
 ): HTMLCanvasElement | null {
   const p = getPipeline();
   if (!p) return null;
@@ -283,6 +308,8 @@ export function enhancePhoto(
   gl.uniform3f(u.uLevels, tone.black, tone.white, tone.gamma);
   gl.uniform3f(u.uGain, ...tone.gain);
   gl.uniform1f(u.uDenoise, tone.denoise);
+  gl.uniform3f(u.uMaskLevels, maskTone.black, maskTone.white, maskTone.gamma);
+  gl.uniform3f(u.uMaskGain, ...maskTone.gain);
 
   const list = faces.slice(0, MAX_FACES);
   gl.uniform1i(u.uFaceCount, list.length);

@@ -56,13 +56,13 @@ The live mirror was removed: mesh effects can't follow a moving face. The app is
 4. ✅ **😁 Sorrisão.** A fourth lens kind (`smile`), an ear-to-ear grin: lenses can now be ellipses that stretch more along one axis, and the smile is a big oval on the teeth stretched sideways (~2.9×) and up (~1.7×), plus one lens per mouth corner lifting it up and out, with a "boing", a giggle and a "ding" sound. `MAX_LENSES` went from 16 to 24 so six faces can all smile. To check on phones: corner placement on wide or narrow mouths (BlazeFace has no corner keypoints), and how much background the oval drags along on small faces in group photos.
 5. **Next idea:** lens strength could follow a drag (pinch an eye to make it bigger) instead of only being a timed preset.
 
-### 3. ✨ Luz e beleza (dark photos)
-Done: `src/beauty.ts` fixes the light (levels, gamma, white balance, colour denoise) and smooths skin on detected faces; ✨ toggle in ⚙️ Ajustes and in the camera review; 💡 selfie screen light / torch; brightened camera preview. To check on phones:
+### 3. ✨ Beleza and ☀️ Luz
+Done: `src/beauty.ts` fixes the light (levels, gamma, white balance, colour denoise) and smooths skin on detected faces; ✨ Beleza on/off and a ☀️ Luz slider (default 50%) in ⚙️ Ajustes, the slider also in the camera review; 💡 selfie screen light / torch; brightened camera preview. To check on phones:
 - Real selfies in a dim room: is the skin smoothing natural (made stronger: 0.9 mix of two bilateral passes, plus a warm glow; check it doesn't look plastic), and is the noise acceptable after brightening (gamma is capped at 0.5)?
 - Does the 💡 glowing screen actually light the face enough, and does the camera's auto-exposure adapt within the last countdown second?
 - `exposureCompensation` and `torch` on Android Chrome; iOS has neither (only the screen light).
-- Time of `enhancePhoto` on a 2048 px photo on a mid-range phone (it runs when the review opens and again when faces are found).
-- Idea: an intensity choice (Leve / Médio / Turbo) instead of on/off.
+- Time of `enhancePhoto` on a 2048 px photo on a mid-range phone (it runs when faces are found and on every ☀️ slider frame in the editor; is dragging smooth enough?).
+- Is 50% the right default ☀️ for very dark photos, or should dark photos start higher?
 
 ### 4. ✂️ Recortar (crop and rotate)
 Done: optional ✂️ in ⚙️ Ajustes and in the camera's "Ficou boa?" review. Free box or Livre / 1:1 / 3:4 / 4:3 / 9:16, ↺/↻ quarter turns, "Foto inteira". The crop is applied before `setImage()`; the uncropped photo is kept, so cropping again can grow back (warps reset). To check on phones:

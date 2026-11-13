@@ -17,7 +17,8 @@ export const pt = {
     cropAria: 'Recortar ou girar a foto',
     cropTitle: 'Recortar ou girar',
     brush: 'Pincel',
-    beauty: '✨ Luz e beleza',
+    beauty: '✨ Beleza',
+    light: '☀️ Luz',
     clay: 'Modo massinha',
     friday: '🎉 Sextou',
     reset: '↺ Resetar',
@@ -72,8 +73,6 @@ export const pt = {
     soundOff: 'Desligar sons',
     lightOn: 'Ligar luz',
     lightOff: 'Desligar luz',
-    beautyOn: '✨ Com luz e beleza',
-    beautyOff: '✨ Sem filtro',
     imageError: 'Ops! Não consegui abrir essa imagem.',
     noWebgl: 'Seu navegador não suporta WebGL2. Tente um navegador mais recente.',
     cameraDenied:

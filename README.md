@@ -30,18 +30,23 @@ Tap **📸 New photo** (Nova foto) any time to start over with another photo (an
 
 ## Features
 
-- **Made for phones.** The photo gets the screen; everything you tap sits at the bottom, in thumb reach: a row of effects you can swipe sideways, and **📸 New photo**, **⚙️ Settings** (Ajustes) and **📤 Share with friends**. **↺ Reset** sits on the top-right corner of the photo, always one tap away. Settings holds the less used controls: crop, light & beauty, clay mode, the Friday sticker and brush size.
+- **Made for phones.** The photo gets the screen; everything you tap sits at the bottom, in thumb reach: a row of effects you can swipe sideways, and **📸 New photo**, **⚙️ Settings** (Ajustes) and **📤 Share with friends**. **↺ Reset** sits on the top-right corner of the photo, always one tap away. Settings holds the less used controls: crop, beauty, light, clay mode, the Friday sticker and brush size.
 
 ### 📸 Camera
 
 - Full-screen camera with a 3-2-1 countdown, beeps, a flash and a shutter sound.
 - **🔄** switches between the front and back cameras.
 - **💡 Light:** on the front camera the screen glows around the preview to light up your face (it turns on by itself in a dark room); on the back camera it turns on the flashlight, if the phone has one.
-- **Looking good?** (Ficou boa?) Check the photo before using it: **✔ Use this one** (Usar esta) or **🔁 Retake** (Tirar outra).
+- **Looking good?** (Ficou boa?) Check the photo before using it: **✔ Use this one** (Usar esta) or **🔁 Retake** (Tirar outra). The **☀️ Light** slider brightens it right there.
 
-### ✨ Light & beauty (Luz e beleza)
+### ✨ Beauty (Beleza) and ☀️ Light (Luz)
 
-Dark or dull photos get a light fix, a strong skin smoothing and a warm glow on the face, like a ring light, with the eyes and mouth kept sharp. It's on for camera photos and for dark gallery photos, and you can turn it off at any time in **⚙️ Settings**.
+Every photo gets two touch-ups, and you can change both at any time in **⚙️ Settings**:
+
+- **✨ Beauty** (on by default): a strong skin smoothing and a warm glow on the face, like a ring light, with the eyes and mouth kept sharp. Turn it off for the photo as it is.
+- **☀️ Light** (a slider, halfway by default): fixes dark or dull photos. Slide it left for less (all the way for none) or right for the full fix. On camera photos you can also set it in the review.
+
+Your choices stay for the next photo until you reload the page.
 
 ### ✂️ Crop (Recortar)
 
