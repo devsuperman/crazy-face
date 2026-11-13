@@ -99,11 +99,17 @@ body {
   border-color: var(--muted);
 }
 
-.button.whatsapp {
-  background: #25d366;
-  border-color: #25d366;
-  color: #08310f;
+.button.share {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
   font-weight: 600;
+}
+
+/* Open: keep it readable, with a white ring instead of the accent text the other actions get. */
+.button.action.share[aria-expanded='true'] {
+  border-color: #fff;
+  color: #fff;
 }
 
 .button.primary {
@@ -249,7 +255,7 @@ body {
 
 .actions {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1.25fr;
+  grid-template-columns: 1fr 1fr 1.5fr;
   gap: 8px;
   max-width: 640px;
   margin: 0 auto;
@@ -303,6 +309,45 @@ body {
 
 .settings .slider input {
   flex: 1;
+}
+
+/* 📤 Compartilhar com amigos: three full-width choices, each with a line saying what it sends. */
+.share-menu {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px;
+}
+
+.share-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 56px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.share-option:hover,
+.share-option:focus-visible {
+  border-color: var(--accent);
+}
+
+.share-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.share-note {
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
 @keyframes sheet-up {
@@ -656,7 +701,7 @@ body {
   font-weight: 600;
 }
 
-/* Phones: small type so the four actions fit one row. */
+/* Phones: small type so the three actions fit one row. */
 @media (max-width: 520px) {
   .toolbar h1 {
     font-size: 1rem;

@@ -21,11 +21,17 @@ export const pt = {
     clay: 'Modo massinha',
     friday: '🎉 Sextou',
     reset: '↺ Resetar',
-    save: '💾 Salvar',
     settings: '⚙️ Ajustes',
     settingsAria: 'Ajustes',
     actions: 'Ações',
-    whatsappAria: 'Enviar a foto pelo WhatsApp',
+    shareButton: '📤 Compartilhar com amigos',
+    shareMenu: 'Compartilhar com amigos',
+    saveTitle: '💾 Salvar na galeria',
+    saveNote: 'Guarda a foto no celular ou no computador',
+    whatsappTitle: '💬 Enviar no WhatsApp',
+    whatsappNote: 'A foto, com um convite pra galera fazer a dela',
+    inviteTitle: '🔗 Compartilhar o link do Crazy Face',
+    inviteNote: 'Só o link, sem a foto, pra galera entrar na brincadeira',
     effects: 'Efeitos malucos',
     balloon: '🎈 Balão',
     fish: '🐟 Cara de peixe',
@@ -75,6 +81,13 @@ export const pt = {
     cameraMissing: 'Não encontrei nenhuma câmera neste aparelho. Você ainda pode usar o botão "Escolher foto".',
     cameraBusy: 'A câmera está sendo usada por outro app. Feche o outro app e tente de novo.',
     cameraFailed: 'Ops! A câmera não quis funcionar. Você ainda pode usar o botão "Escolher foto".',
+    photoSaved: '💾 Foto salva! Está na galeria ou na pasta Downloads.',
+    whatsappPick: '💬 Escolha o WhatsApp na lista.',
+    whatsappCopied: '📋 Foto copiada! No WhatsApp, escolha a conversa e cole (Ctrl+V).',
+    whatsappSaved: '💾 Foto baixada! No WhatsApp, escolha a conversa e anexe ela no 📎.',
+    invitePick: '🔗 Escolha pra quem mandar o link.',
+    linkCopied: '🔗 Link copiado! Cole numa conversa pra chamar a galera.',
+    linkHere: '🔗 Copie e mande o link: {link}',
   },
 
   /** Dica no rodapé, sorteada a cada foto nova. */
@@ -100,7 +113,14 @@ export const pt = {
   /** Balão de fala quando você puxa demais. */
   ouch: ['AI!', 'EI!', 'CALMA!', 'MEU ROSTO!', 'MEU NARIZ!', 'SOCORRO!', 'GROSSO!', 'PARA!'],
 
-  /** Texto que vai junto com a foto no WhatsApp: um convite (o link do site vem logo depois). */
+  /** 🔗 Convite sem foto: vai com o link do site logo depois. */
+  invite: [
+    'Vem estragar umas caras comigo! 🤪 É de graça e a foto não sai do seu celular:',
+    'Achei um app que deixa qualquer um com cara de massinha 😂 Testa aí:',
+    'Duvido você fazer uma cara mais maluca que a minha 🤪 Bora:',
+  ],
+
+  /** 💬 Texto que vai junto com a foto no WhatsApp: um convite (o link do site vem logo depois). */
   share: [
     'Olha o que eu fiz com essa cara! 🤪 Agora é sua vez, estrague a sua aqui:',
     'Ficou melhor que a original, né? 😂 Duvido você fazer uma pior:',

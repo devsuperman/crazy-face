@@ -204,7 +204,7 @@ export class Renderer {
   }
 
   /**
-   * Salvar foto / 💬: draw the warped photo (and sticker) offscreen at the photo's own
+   * Salvar foto / 📤: draw the warped photo (and sticker) offscreen at the photo's own
    * resolution, cropped to what's drawn, on white, and encode it as a JPEG.
    */
   exportJpeg(mesh: WarpMesh, sticker?: StickerPose | null, quality = 0.9): Promise<Blob | null> {
